@@ -42,11 +42,11 @@ namespace
 		};
 		UINT numElements = ARRAYSIZE(layout);
 
-		DXB(LoadResource(IDR_VERTEXSHADER, &buffer, &size));
-		DXB(Graphics::Device->CreateVertexShader(buffer, size, NULL, &vertexShader));
-		DXB(Graphics::Device->CreateInputLayout(layout, numElements, buffer, size, &vertexLayout));
-		DXB(LoadResource(IDR_PIXELSHADER, &buffer, &size));
-		DXB(Graphics::Device->CreatePixelShader(buffer, size, NULL, &pixelShader));
+		DX(LoadResource(IDR_VERTEXSHADER, &buffer, &size));
+		DX(Graphics::Device->CreateVertexShader(buffer, size, NULL, &vertexShader));
+		DX(Graphics::Device->CreateInputLayout(layout, numElements, buffer, size, &vertexLayout));
+		DX(LoadResource(IDR_PIXELSHADER, &buffer, &size));
+		DX(Graphics::Device->CreatePixelShader(buffer, size, NULL, &pixelShader));
 		return S_OK;
 	}
 
@@ -63,7 +63,7 @@ namespace
 		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		sampDesc.MinLOD = 0;
 		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-		DXB(Graphics::Device->CreateSamplerState(&sampDesc, &sampler));
+		DX(Graphics::Device->CreateSamplerState(&sampDesc, &sampler));
 		return S_OK;
 	}
 
@@ -80,7 +80,7 @@ namespace
 		D3D11_SUBRESOURCE_DATA InitData;
 		ZeroMemory(&InitData, sizeof(InitData));
 		InitData.pSysMem = vert;
-		DXB(Graphics::Device->CreateBuffer(&bd, &InitData, &vertexBuffer));
+		DX(Graphics::Device->CreateBuffer(&bd, &InitData, &vertexBuffer));
 		return S_OK;
 	}
 
@@ -91,7 +91,7 @@ namespace
 		CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 		rasterizerDesc.CullMode = D3D11_CULL_NONE;
 		rasterizerDesc.AntialiasedLineEnable = TRUE;
-		DXB(Graphics::Device->CreateRasterizerState(&rasterizerDesc, &rasterizerState));
+		DX(Graphics::Device->CreateRasterizerState(&rasterizerDesc, &rasterizerState));
 		return S_OK;
 	}
 
@@ -110,7 +110,7 @@ namespace
 		rtBlendDesc.DestBlendAlpha = D3D11_BLEND_ZERO;
 		rtBlendDesc.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 		blendDesc.RenderTarget[0] = rtBlendDesc;
-		DXB(Graphics::Device->CreateBlendState(&blendDesc, &blendState));
+		DX(Graphics::Device->CreateBlendState(&blendDesc, &blendState));
 		return S_OK;
 	}
 }
