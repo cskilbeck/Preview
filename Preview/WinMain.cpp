@@ -4,39 +4,26 @@
 #include "Win32.h"
 #include "D3D.h"
 
-//////////////////////////////////////////////////////////////////////
-
-void ShowCurrentFolder()
-{
-	WCHAR buffer[16384];
-	buffer[0] = 0;
-	GetCurrentDirectory(ARRAYSIZE(buffer), buffer);
-	OutputDebugString(L"Current folder:");
-	OutputDebugString(buffer);
-	OutputDebugString(L"\n");
-}
+#pragma comment(lib, "gdiplus.lib")
+using namespace Gdiplus;
 
 //////////////////////////////////////////////////////////////////////
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
-	ShowCurrentFolder();
-
-	Window::Init(480, 320);
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
 	Preview preview;
-	preview.Init();
+	preview.Show();
 
-	Window::Show();
-
-	while(Window::Update())
+	while(preview.Update())
 	{
-		preview.Update();
-		preview.Draw();
-
-		Window::Present();
 	}
 
-	preview.Release();
+	preview.~Preview();
+
+	GdiplusShutdown(gdiplusToken);
 	return 0;
 }

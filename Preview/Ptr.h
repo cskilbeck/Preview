@@ -1,3 +1,5 @@
+#pragma once
+
 //////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -14,41 +16,38 @@
 #define DXB(x) { HRESULT hr = (x); if(FAILED(hr)) return false; }
 #endif
 
-//////////////////////////////////////////////////////////////////////
-
-template<typename T> struct DXPtr
+template<typename T> struct Ptr
 {
-	DXPtr(T *init = nullptr) : p(init)
+	Ptr(T *ptr = null) : p(ptr)
 	{
 	}
 
-	DXPtr(DXPtr const &ptr) : p(ptr.p)
+	Ptr(Ptr const &ptr) : p(ptr.p)
 	{
 		p->AddRef();
 	}
 
-	DXPtr(DXPtr &&ptr) : p(nullptr)
+	Ptr(Ptr &&ptr) : p(null)
 	{
 		std::swap(p, ptr.p);
 	}
 
-	DXPtr &operator=(DXPtr const &ptr)
+	~Ptr()
 	{
-		reset();
+		Release();
+	}
+
+	Ptr &operator =(Ptr const &ptr)
+	{
 		p = ptr.p;
 		p->AddRef();
 		return *this;
 	}
 
-	DXPtr &operator=(DXPtr&& ptr)
+	Ptr &operator =(Ptr&& ptr)
 	{
 		std::swap(p, ptr.p);
 		return *this;
-	}
-
-	~DXPtr()
-	{
-		Release();
 	}
 
 	T **operator &()
@@ -76,15 +75,21 @@ template<typename T> struct DXPtr
 		return p;
 	}
 
+	bool IsNull() const
+	{
+		return p == null;
+	}
+
 	void Release()
 	{
-		if(p != nullptr)
+		if(!IsNull())
 		{
 			p->Release();
-			p = nullptr;
+			p = null;
 		}
 	}
 
+private:
+
 	T *p;
-	void *leak;
 };

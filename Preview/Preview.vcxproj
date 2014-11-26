@@ -78,29 +78,26 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Color.h" />
-    <ClInclude Include="D3D.h" />
-    <ClInclude Include="Graphics.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="linked_list.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
+    <ClInclude Include="Ptr.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Size.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Texture.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vec2.h" />
     <ClInclude Include="Win32.h" />
     <ClInclude Include="Window.h" />
+    <ClInclude Include="WinMessages.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="Preview.cpp" />
-    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="WinMain.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -110,6 +107,7 @@
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Vec2.cpp" />
     <ClCompile Include="Window.cpp" />
+    <ClCompile Include="WinMessages.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preview.rc" />

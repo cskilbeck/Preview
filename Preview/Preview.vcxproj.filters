@@ -54,13 +54,7 @@
     <ClInclude Include="Rect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Win32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="App.h">
@@ -69,10 +63,13 @@
     <ClInclude Include="ImageLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
+    <ClInclude Include="linked_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="linked_list.h">
+    <ClInclude Include="Ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WinMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -95,16 +92,13 @@
     <ClCompile Include="Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="WinMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageLoader.cpp">
-      <Filter>Header Files</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
+    <ClCompile Include="WinMessages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,7 +124,11 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Debug\PixelShader.cso" />
-    <None Include="..\Debug\VertexShader.cso" />
+    <None Include="..\Debug\PixelShader.cso">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Debug\VertexShader.cso">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

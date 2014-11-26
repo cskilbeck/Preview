@@ -12,6 +12,8 @@
 #include <d3dcommon.h>
 #include <DirectXMath.h>
 
+#include <gdiplus.h>
+
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
@@ -51,10 +53,11 @@ using chs::list_node;
 
 #include "Color.h"
 #include "D3D.h"
-#include "Graphics.h"
-#include "Texture.h"
+#include "Ptr.h"
+#include "WinMessages.h"
 #include "Window.h"
 #include "App.h"
+#include "ImageLoader.h"
 #include "Preview.h"
 
 #include "resource.h"

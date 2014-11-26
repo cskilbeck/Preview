@@ -4,33 +4,43 @@
 
 //////////////////////////////////////////////////////////////////////
 
-namespace Window
+struct Window
 {
-	enum Orientation
-	{
-		Portrait,
-		Landscape
-	};
+	Window(int clientWidth, int clientHeight, TCHAR *caption = null);
+	virtual ~Window();
 
-	extern function<void ()> OnResize;
+	virtual bool OnUpdate() { return false; }
+	virtual void OnClosing() {}
+	virtual void OnResize() {}
+	virtual void OnPaint(HDC dc, PAINTSTRUCT &ps) {}
+	virtual int OnPaintBackground(HDC dc) { return 0; }
+	virtual void OnMouseMove(Point2D pos) {}
+	virtual void OnLeftButtonDown(Point2D pos) {}
+	virtual void OnLeftButtonUp(Point2D pos) {}
+	virtual void OnRightButtonDown(Point2D pos) {}
+	virtual void OnRightButtonUp(Point2D pos) {}
 
-	void Init(int width, int height);
+	bool Update(bool waitForMessages = true);
+
 	void Show();
 	void Hide();
-	void Recenter();
-	bool Update();
-	void Clear(Color color);
-	void Present();
-
-	Orientation CurrentOrientation();
-
-	int Width();
-	int Height();
+	void Center();
+	int Width() const;
+	int Height() const;
 	Size2D GetSize();
-	void ChangeSize(int newWidth, int newHeight);
+	void SetPosition(int x, int y, int width, int height);
+	void Resize(int clientWidth, int clientHeight);
+	void Move(int x, int y);
 
-	void Release();
+protected:
 
-	void EnableScissoring(bool enable);
-	void SetScissorRectangle(Rect2D const &rect);
+	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void Create(int w, int h, TCHAR *caption);
+	void Sized();
+
+	int						mWidth;
+	int						mHeight;
+	HWND					mHWND;
+	HINSTANCE				mHINST;
 };

@@ -169,6 +169,22 @@ std::string Format(char const *fmt, ...)
 
 //////////////////////////////////////////////////////////////////////
 
+tstring TFormat(tchar const *fmt, ...)
+{
+	tchar buffer[512];
+
+	va_list v;
+	va_start(v, fmt);
+	#ifdef UNICODE
+		_vsnwprintf_s(buffer, 512, fmt, v);
+	#else
+		_vsnprintf_s(buffer, 512, fmt, v);
+	#endif
+	return tstring(buffer);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 wstring WideStringFromString(string const &str)
 {
 	vector<wchar> temp;
