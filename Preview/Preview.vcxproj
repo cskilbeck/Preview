@@ -96,6 +96,7 @@
     <ClInclude Include="WinMessages.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GDIPlus.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="Preview.cpp" />
     <ClCompile Include="WinMain.cpp" />

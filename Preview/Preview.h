@@ -15,10 +15,10 @@ struct Preview : Window
 	void OnPaint(HDC dc, PAINTSTRUCT &ps) override;
 	int OnPaintBackground(HDC dc) override;
 
-	Gdiplus::Bitmap *bitmap;
-	Gdiplus::Bitmap *backbuffer;
-
-	Gdiplus::SolidBrush *gridBrush[2];
+	ptr<Gdiplus::Bitmap> bitmap;
+	ptr<Gdiplus::Bitmap> backbuffer;
+	ptr<Gdiplus::SolidBrush> gridBrush[2];
+	ptr<Gdiplus::SolidBrush> backBrush;
 	int gridSize;
 
 	void CreateBackbuffer();

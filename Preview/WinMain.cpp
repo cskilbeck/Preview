@@ -4,26 +4,16 @@
 #include "Win32.h"
 #include "D3D.h"
 
-#pragma comment(lib, "gdiplus.lib")
-using namespace Gdiplus;
-
 //////////////////////////////////////////////////////////////////////
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
-	GdiplusStartupInput gdiplusStartupInput;
-	ULONG_PTR gdiplusToken;
-	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	ptr<Preview> preview(new Preview());
+	preview->Show();
 
-	Preview preview;
-	preview.Show();
-
-	while(preview.Update())
+	while(preview->Update())
 	{
 	}
 
-	preview.~Preview();
-
-	GdiplusShutdown(gdiplusToken);
 	return 0;
 }

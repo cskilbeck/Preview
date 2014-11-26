@@ -38,6 +38,9 @@
 #include <functional>
 #include <algorithm>
 #include <array>
+#include <memory>
+
+template <typename T> using ptr = std::unique_ptr<T>;
 
 #include "linked_list.h"
 

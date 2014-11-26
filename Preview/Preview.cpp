@@ -11,22 +11,33 @@ Preview::Preview()
 	: Window(100, 100)
 	, bitmap(null)
 {
+	backBrush.reset(new SolidBrush(Gdiplus::Color(255, 255, 0, 255)));
+	gridBrush[0].reset(new SolidBrush(Gdiplus::Color(255, 128, 128, 128)));
+	gridBrush[1].reset(new SolidBrush(Gdiplus::Color(255, 192, 192, 192)));
+	gridSize = 32;
+
 	int argc;
 	LPWSTR *argv = CommandLineToArgvW(GetCommandLine(), &argc);
-	if(argc > 0)
+	if(argc > 1)
 	{
 		wstring s(argv[1]);
 		LoadGDIPlusBitmap(s.c_str(), 0, bitmap);
+		if(bitmap != null)
+		{
+			Resize(bitmap->GetWidth(), bitmap->GetHeight());
+			Center();
+			CreateBackbuffer();
+			DrawGrid();
+			RenderBitmap();
+		}
+		else
+		{
+			Center();
+			CreateBackbuffer();
+			DrawGrid();
+		}
 	}
 	LocalFree(argv);
-	gridBrush[0] = new SolidBrush(Gdiplus::Color(255, 128, 128, 128));
-	gridBrush[1] = new SolidBrush(Gdiplus::Color(255, 192, 192, 192));
-	gridSize = 32;
-	Resize(bitmap->GetWidth(), bitmap->GetHeight());
-	Center();
-	CreateBackbuffer();
-	DrawGrid();
-	RenderBitmap();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -35,10 +46,11 @@ Preview::Preview()
 void Preview::CreateBackbuffer()
 {
 	HDC dc = GetDC(null);
-	Graphics *g = Graphics::FromHDC(dc);
-	backbuffer = new Bitmap(bitmap->GetWidth(), bitmap->GetHeight(), g);
-	delete g;
+	ptr<Graphics> g(Graphics::FromHDC(dc));
+	backbuffer.reset(new Bitmap(Width(), Height(), g));
 	ReleaseDC(null, dc);
+	ptr<Graphics> b(Graphics::FromImage(backbuffer.get()));
+	b->FillRectangle(backBrush.get(), 0, 0, Width(), Height());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -46,9 +58,10 @@ void Preview::CreateBackbuffer()
 
 void Preview::RenderBitmap()
 {
-	Graphics *g = Graphics::FromImage(backbuffer);
-	g->DrawImage(bitmap, 0, 0, bitmap->GetWidth(), bitmap->GetHeight());
-	delete g;
+	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
+	int x = (Width() - bitmap->GetWidth()) / 2;
+	int y = (Height() - bitmap->GetHeight()) / 2;
+	g->DrawImage(bitmap.get(), x, y, bitmap->GetWidth(), bitmap->GetHeight());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -56,37 +69,51 @@ void Preview::RenderBitmap()
 
 void Preview::DrawGrid()
 {
-	Graphics *g = Graphics::FromImage(backbuffer);
+	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
 	int b = 0;
-	for(uint y=0; y<backbuffer->GetHeight(); y += gridSize)
+	int w = bitmap->GetWidth();
+	int h = bitmap->GetHeight();
+	int xo = (Width() - w) / 2;
+	int yo = (Height() - h) / 2;
+	int right = xo + w;
+	int bottom = yo + h;
+	for(uint y = 0; y < backbuffer->GetHeight(); y += gridSize)
 	{
 		int c = b;
-		b = 1-b;
-		for(uint x=0; x<backbuffer->GetWidth(); x += gridSize)
+		b = 1 - b;
+		for(uint x = 0; x < backbuffer->GetWidth(); x += gridSize)
 		{
-			g->FillRectangle(gridBrush[c], x, y, gridSize, gridSize);
+			int xp = x + xo;
+			int yp = y + yo;
+			int r1 = Min(xp + gridSize, right);
+			int b1 = Min(yp + gridSize, bottom);
+			int w1 = r1 - xp;
+			int h1 = b1 - yp;
+			g->FillRectangle(gridBrush[c].get(), xp, yp, w1, h1);
 			c = 1-c;
 		}
 	}
-	delete g;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Preview::OnClosing()
 {
-	Delete(bitmap);
+	bitmap.reset();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Preview::OnPaint(HDC dc, PAINTSTRUCT &ps)
 {
-	Graphics *g = Graphics::FromHDC(dc);
-	int x = (Width() - backbuffer->GetWidth()) / 2;
-	int y = (Height() - backbuffer->GetHeight()) / 2;
-	g->DrawImage(backbuffer, x, y, backbuffer->GetWidth(), backbuffer->GetHeight());
-	delete g;
+	ptr<Graphics> g(Graphics::FromHDC(dc));
+	g->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Preview::~Preview()
+{
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -108,13 +135,4 @@ int Preview::OnPaintBackground(HDC dc)
 	return 1;
 }
 
-//////////////////////////////////////////////////////////////////////
-
-Preview::~Preview()
-{
-	Delete(gridBrush[0]);
-	Delete(gridBrush[1]);
-	Delete(backbuffer);
-	Delete(bitmap);
-}
 
