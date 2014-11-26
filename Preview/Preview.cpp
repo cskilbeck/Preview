@@ -11,9 +11,9 @@ Preview::Preview()
 	: Window(100, 100)
 	, bitmap(null)
 {
-	backBrush.reset(new SolidBrush(Gdiplus::Color(255, 255, 0, 255)));
-	gridBrush[0].reset(new SolidBrush(Gdiplus::Color(255, 128, 128, 128)));
-	gridBrush[1].reset(new SolidBrush(Gdiplus::Color(255, 192, 192, 192)));
+	backBrush = ptr<SolidBrush>(new SolidBrush(Gdiplus::Color(255, 255, 0, 255)));
+	gridBrush[0] = ptr<SolidBrush>(new SolidBrush(Gdiplus::Color(255, 128, 128, 128)));
+	gridBrush[1] = ptr<SolidBrush>(new SolidBrush(Gdiplus::Color(255, 192, 192, 192)));
 	gridSize = 32;
 
 	int argc;
@@ -45,10 +45,7 @@ Preview::Preview()
 
 void Preview::CreateBackbuffer()
 {
-	HDC dc = GetDC(null);
-	ptr<Graphics> g(Graphics::FromHDC(dc));
-	backbuffer.reset(new Bitmap(Width(), Height(), g));
-	ReleaseDC(null, dc);
+	backbuffer = ptr<Bitmap>(new Bitmap(Width(), Height(), PixelFormat32bppARGB));
 	ptr<Graphics> b(Graphics::FromImage(backbuffer.get()));
 	b->FillRectangle(backBrush.get(), 0, 0, Width(), Height());
 }
@@ -59,9 +56,9 @@ void Preview::CreateBackbuffer()
 void Preview::RenderBitmap()
 {
 	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
-	int x = (Width() - bitmap->GetWidth()) / 2;
-	int y = (Height() - bitmap->GetHeight()) / 2;
-	g->DrawImage(bitmap.get(), x, y, bitmap->GetWidth(), bitmap->GetHeight());
+	float x = ((float)Width() - bitmap->GetWidth()) / 2;
+	float y = ((float)Height() - bitmap->GetHeight()) / 2;
+	g->DrawImage(bitmap.get(), x, y, (float)bitmap->GetWidth(), (float)bitmap->GetHeight());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -71,24 +68,24 @@ void Preview::DrawGrid()
 {
 	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
 	int b = 0;
-	int w = bitmap->GetWidth();
-	int h = bitmap->GetHeight();
-	int xo = (Width() - w) / 2;
-	int yo = (Height() - h) / 2;
-	int right = xo + w;
-	int bottom = yo + h;
+	float w = (float)bitmap->GetWidth();
+	float h = (float)bitmap->GetHeight();
+	float xo = (Width() - w) / 2;
+	float yo = (Height() - h) / 2;
+	float right = xo + w;
+	float bottom = yo + h;
 	for(uint y = 0; y < backbuffer->GetHeight(); y += gridSize)
 	{
 		int c = b;
 		b = 1 - b;
 		for(uint x = 0; x < backbuffer->GetWidth(); x += gridSize)
 		{
-			int xp = x + xo;
-			int yp = y + yo;
-			int r1 = Min(xp + gridSize, right);
-			int b1 = Min(yp + gridSize, bottom);
-			int w1 = r1 - xp;
-			int h1 = b1 - yp;
+			float xp = x + xo;
+			float yp = y + yo;
+			float r1 = Min(xp + gridSize, right);
+			float b1 = Min(yp + gridSize, bottom);
+			float w1 = r1 - xp;
+			float h1 = b1 - yp;
 			g->FillRectangle(gridBrush[c].get(), xp, yp, w1, h1);
 			c = 1-c;
 		}
@@ -106,8 +103,6 @@ void Preview::OnClosing()
 
 void Preview::OnPaint(HDC dc, PAINTSTRUCT &ps)
 {
-	ptr<Graphics> g(Graphics::FromHDC(dc));
-	g->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -129,9 +124,8 @@ void Preview::OnResize()
 
 int Preview::OnPaintBackground(HDC dc)
 {
-	RECT r;
-	GetClientRect(mHWND, &r);
-	FillRect(dc, &r, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	ptr<Graphics> g(Graphics::FromHDC(dc));
+	g->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
 	return 1;
 }
 
