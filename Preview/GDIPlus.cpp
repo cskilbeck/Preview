@@ -3,14 +3,14 @@
 #pragma comment(lib, "gdiplus.lib")
 using namespace Gdiplus;
 
-GDIPlus::GDIPlus()
+GDI::GDI()
 {
 	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 }
 
-GDIPlus::~GDIPlus()
+GDI::~GDI()
 {
 	GdiplusShutdown(gdiplusToken);
 }
 
-GDIPlus GDIPlus::gdiplusInitializer;
+GDI GDI::initializer;

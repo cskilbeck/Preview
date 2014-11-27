@@ -6,27 +6,28 @@ using Bitmap = Gdiplus::Bitmap;
 using SolidBrush = Gdiplus::SolidBrush;
 using Status = Gdiplus::Status;
 
-class GDIPlus
+class GDI
 {
 public:
 	
-	static inline ptr<Graphics> GraphicsFromImage(ptr<Image> &image)
-	{
-		return ptr<Graphics>(Graphics::FromImage(image.get()));
-	}
-
-	static inline ptr<Graphics> GraphicsFromHDC(HDC dc)
-	{
-		return ptr<Graphics>(Graphics::FromHDC(dc));
-	}
-
 private:
 
-	GDIPlus();
-	~GDIPlus();
+	GDI();
+	~GDI();
 
-	static GDIPlus gdiplusInitializer;
+	static GDI initializer;
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
 };
+
+static inline ptr<Graphics> Gfx(HDC dc)
+{
+	return ptr<Graphics>(Graphics::FromHDC(dc));
+}
+
+static inline ptr<Graphics> Gfx(ptr<Image> &image)
+{
+	return ptr<Graphics>(Graphics::FromImage(image.get()));
+}
+

@@ -46,10 +46,9 @@ void Preview::CreateBackbuffer()
 	// if we already have one, and it's big enough, keep it
 	if(backbuffer == null || backbuffer->GetWidth() < Width() || backbuffer->GetHeight() < Height())
 	{
-		backbuffer = ptr<Bitmap>(new Bitmap(Width(), Height(), PixelFormat32bppARGB));
+		backbuffer.reset(new Bitmap(Width(), Height(), PixelFormat32bppARGB));
 	}
-	ptr<Graphics> b = GDIPlus::GraphicsFromImage(backbuffer);
-	b->FillRectangle(backBrush.get(), 0, 0, Width(), Height());
+	Gfx(backbuffer)->FillRectangle(backBrush.get(), 0, 0, Width(), Height());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -57,10 +56,10 @@ void Preview::CreateBackbuffer()
 
 void Preview::RenderBitmap()
 {
-	ptr<Graphics> g = GDIPlus::GraphicsFromImage(backbuffer);
+	auto gdi(Gfx(backbuffer));
 	float x = ((float)Width() - bitmap->GetWidth()) / 2;
 	float y = ((float)Height() - bitmap->GetHeight()) / 2;
-	g->DrawImage(bitmap.get(), x, y, (float)bitmap->GetWidth(), (float)bitmap->GetHeight());
+	gdi->DrawImage(bitmap.get(), x, y, (float)bitmap->GetWidth(), (float)bitmap->GetHeight());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -68,7 +67,7 @@ void Preview::RenderBitmap()
 
 void Preview::DrawGrid()
 {
-	ptr<Graphics> g = GDIPlus::GraphicsFromImage(backbuffer);
+	auto gdi = Gfx(backbuffer);
 	int b = 0;
 	float w = (float)bitmap->GetWidth();
 	float h = (float)bitmap->GetHeight();
@@ -88,7 +87,7 @@ void Preview::DrawGrid()
 			float b1 = Min(yp + gridSize, bottom);
 			float w1 = r1 - xp;
 			float h1 = b1 - yp;
-			g->FillRectangle(gridBrush[c].get(), xp, yp, w1, h1);
+			gdi->FillRectangle(gridBrush[c].get(), xp, yp, w1, h1);
 			c = 1-c;
 		}
 	}
@@ -138,8 +137,8 @@ void Preview::OnChar(int charCode, uint32 flags)
 
 int Preview::OnPaintBackground(HDC dc)
 {
-	ptr<Graphics> g = GDIPlus::GraphicsFromHDC(dc);
-	g->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
+	auto gdi = Gfx(dc);
+	gdi->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
 	return 1;
 }
 
