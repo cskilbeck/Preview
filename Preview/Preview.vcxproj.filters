@@ -60,9 +60,6 @@
     <ClInclude Include="linked_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ptr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WinMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>

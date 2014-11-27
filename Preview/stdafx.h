@@ -53,12 +53,8 @@ using chs::list_node;
 #include "Point.h"
 #include "Size.h"
 #include "Rect.h"
-
 #include "GDIPlus.h"
-
 #include "Color.h"
-#include "D3D.h"
-#include "Ptr.h"
 #include "WinMessages.h"
 #include "Window.h"
 #include "App.h"

@@ -83,7 +83,6 @@
     <ClInclude Include="linked_list.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
-    <ClInclude Include="Ptr.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Size.h" />
