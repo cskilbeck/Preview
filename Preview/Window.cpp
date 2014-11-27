@@ -51,6 +51,14 @@ Window::~Window()
 
 //////////////////////////////////////////////////////////////////////
 
+void Window::Close()
+{
+	OnClosing();
+	DestroyWindow(mHWND);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void Window::Show()
 {
 	ShowWindow(mHWND, SW_SHOW);
@@ -138,20 +146,16 @@ Size2D GetSizeForClientSize(Size2D clientSize)
 	return Size2D(rc.right - rc.left, rc.bottom - rc.top);
 }
 
-void Window::SetPosition(int x, int y, int w, int h)
-{
-}
-
 //////////////////////////////////////////////////////////////////////
 
-int Window::Width() const
+uint Window::Width() const
 {
 	return mWidth;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-int Window::Height() const
+uint Window::Height() const
 {
 	return mHeight;
 }
@@ -242,13 +246,12 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			PostQuitMessage(0);
 			break;
 
-		case WM_CLOSE:
-			OnClosing();
-			DestroyWindow(mHWND);
-			break;
-
 		case WM_SIZE:
 			Sized();
+			break;
+
+		case WM_CHAR:
+			OnChar((int)wParam, lParam);
 			break;
 
 		case WM_MOUSEMOVE:

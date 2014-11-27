@@ -1,9 +1,7 @@
 
 #include "stdafx.h"
 
-using namespace Gdiplus;
-
-HRESULT LoadGDIPlusBitmap(TCHAR const *filename, size_t maxSize, ptr<Bitmap> &bitmap)
+HRESULT LoadGDIPlusBitmap(TCHAR const *filename, size_t maxSize, ptr<Image> &bitmap)
 {
 	if(!filename)
 	{

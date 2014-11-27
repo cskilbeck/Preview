@@ -3,8 +3,6 @@
 #include "stdafx.h"
 #include <ShellApi.h>
 
-using namespace Gdiplus;
-
 //////////////////////////////////////////////////////////////////////
 
 Preview::Preview()
@@ -45,8 +43,12 @@ Preview::Preview()
 
 void Preview::CreateBackbuffer()
 {
-	backbuffer = ptr<Bitmap>(new Bitmap(Width(), Height(), PixelFormat32bppARGB));
-	ptr<Graphics> b(Graphics::FromImage(backbuffer.get()));
+	// if we already have one, and it's big enough, keep it
+	if(backbuffer == null || backbuffer->GetWidth() < Width() || backbuffer->GetHeight() < Height())
+	{
+		backbuffer = ptr<Bitmap>(new Bitmap(Width(), Height(), PixelFormat32bppARGB));
+	}
+	ptr<Graphics> b = GDIPlus::GraphicsFromImage(backbuffer);
 	b->FillRectangle(backBrush.get(), 0, 0, Width(), Height());
 }
 
@@ -55,7 +57,7 @@ void Preview::CreateBackbuffer()
 
 void Preview::RenderBitmap()
 {
-	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
+	ptr<Graphics> g = GDIPlus::GraphicsFromImage(backbuffer);
 	float x = ((float)Width() - bitmap->GetWidth()) / 2;
 	float y = ((float)Height() - bitmap->GetHeight()) / 2;
 	g->DrawImage(bitmap.get(), x, y, (float)bitmap->GetWidth(), (float)bitmap->GetHeight());
@@ -66,7 +68,7 @@ void Preview::RenderBitmap()
 
 void Preview::DrawGrid()
 {
-	ptr<Graphics> g(Graphics::FromImage(backbuffer.get()));
+	ptr<Graphics> g = GDIPlus::GraphicsFromImage(backbuffer);
 	int b = 0;
 	float w = (float)bitmap->GetWidth();
 	float h = (float)bitmap->GetHeight();
@@ -74,11 +76,11 @@ void Preview::DrawGrid()
 	float yo = (Height() - h) / 2;
 	float right = xo + w;
 	float bottom = yo + h;
-	for(uint y = 0; y < backbuffer->GetHeight(); y += gridSize)
+	for(float y = 0; y < w; y += gridSize)
 	{
 		int c = b;
 		b = 1 - b;
-		for(uint x = 0; x < backbuffer->GetWidth(); x += gridSize)
+		for(float x = 0; x < h; x += gridSize)
 		{
 			float xp = x + xo;
 			float yp = y + yo;
@@ -122,9 +124,21 @@ void Preview::OnResize()
 
 //////////////////////////////////////////////////////////////////////
 
+void Preview::OnChar(int charCode, uint32 flags)
+{
+	switch(charCode)
+	{
+		case VK_ESCAPE:
+			Close();
+			break;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+
 int Preview::OnPaintBackground(HDC dc)
 {
-	ptr<Graphics> g(Graphics::FromHDC(dc));
+	ptr<Graphics> g = GDIPlus::GraphicsFromHDC(dc);
 	g->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
 	return 1;
 }

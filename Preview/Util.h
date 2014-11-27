@@ -28,6 +28,7 @@ wstring Format(wchar const *fmt, ...);
 string Format(char const *fmt, ...);
 tstring TFormat(tchar const *fmt, ...);
 
+void SetCurrentFolder(tchar const *relative);
 tstring GetCurrentFolder();
 
 #ifndef PI

@@ -253,3 +253,21 @@ tstring GetCurrentFolder()
 	s[l] = 0;
 	return Format(L"%s", &s[0]);
 }
+
+//////////////////////////////////////////////////////////////////////
+
+void SetCurrentFolder(tchar const *relative)
+{
+	vector<tchar> s;
+	s.resize(GetCurrentDirectory(0, null));
+	GetCurrentDirectory(s.size(), &s[0]);
+	s.resize(s.size() - 1);
+	s.push_back(L'\\');
+	for(; *relative; ++relative)
+	{
+		s.push_back(*relative);
+	}
+	s.push_back(0);
+	tchar *p = &s[0];
+	SetCurrentDirectory(p);
+}

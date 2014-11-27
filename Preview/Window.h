@@ -19,16 +19,16 @@ struct Window
 	virtual void OnLeftButtonUp(Point2D pos) {}
 	virtual void OnRightButtonDown(Point2D pos) {}
 	virtual void OnRightButtonUp(Point2D pos) {}
+	virtual void OnChar(int key, uint32 flags) {}
 
 	bool Update(bool waitForMessages = true);
 
 	void Show();
 	void Hide();
+	void Close();
 	void Center();
-	int Width() const;
-	int Height() const;
-	Size2D GetSize();
-	void SetPosition(int x, int y, int width, int height);
+	uint Width() const;
+	uint Height() const;
 	void Resize(int clientWidth, int clientHeight);
 	void Move(int x, int y);
 

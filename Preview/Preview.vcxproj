@@ -78,6 +78,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="GDIPlus.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="linked_list.h" />
     <ClInclude Include="Point.h" />
@@ -91,7 +92,6 @@
     <ClInclude Include="Types.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vec2.h" />
-    <ClInclude Include="Win32.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WinMessages.h" />
   </ItemGroup>

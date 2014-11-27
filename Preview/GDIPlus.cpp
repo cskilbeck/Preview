@@ -3,26 +3,14 @@
 #pragma comment(lib, "gdiplus.lib")
 using namespace Gdiplus;
 
-class GDIPlus
+GDIPlus::GDIPlus()
 {
-public:
-	
-	GDIPlus()
-	{
-		GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-	}
+	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+}
 
-	~GDIPlus()
-	{
-		GdiplusShutdown(gdiplusToken);
-	}
-
-private:
-
-	static GDIPlus gdiplusInitializer;
-
-	GdiplusStartupInput gdiplusStartupInput;
-	ULONG_PTR gdiplusToken;
-};
+GDIPlus::~GDIPlus()
+{
+	GdiplusShutdown(gdiplusToken);
+}
 
 GDIPlus GDIPlus::gdiplusInitializer;
