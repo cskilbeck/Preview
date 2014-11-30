@@ -65,7 +65,7 @@ void DBG(int x, int y, wchar const *strMsg, ...)
 
 HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 {
-    HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
+	HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
 	if(myResource == null)
 	{
 		return ERROR_RESOURCE_DATA_NOT_FOUND;
@@ -145,26 +145,26 @@ uint8 *LoadFile(char const *filename, size_t *size)
 
 //////////////////////////////////////////////////////////////////////
 
-std::wstring Format(wchar const *fmt, ...)
+wstring Format(wchar const *fmt, ...)
 {
 	wchar buffer[512];
 
 	va_list v;
 	va_start(v, fmt);
 	_vsnwprintf_s(buffer, 512, fmt, v);
-	return std::wstring(buffer);
+	return wstring(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-std::string Format(char const *fmt, ...)
+string Format(char const *fmt, ...)
 {
 	char buffer[512];
 
 	va_list v;
 	va_start(v, fmt);
 	_vsnprintf_s(buffer, 512, fmt, v);
-	return std::string(buffer);
+	return string(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -251,7 +251,7 @@ tstring GetCurrentFolder()
 	s.resize((size_t)l + 1);
 	GetCurrentDirectory(l, &s[0]);
 	s[l] = 0;
-	return Format(L"%s", &s[0]);
+	return Format(TEXT("%s"), &s[0]);
 }
 
 //////////////////////////////////////////////////////////////////////

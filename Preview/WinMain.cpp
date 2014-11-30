@@ -6,10 +6,9 @@
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
-	ptr<Preview> preview(new Preview());
-	preview->Show();
+	Preview preview;
 
-	while(preview->Update())
+	while(preview.Update())
 	{
 	}
 

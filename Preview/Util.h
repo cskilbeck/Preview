@@ -13,13 +13,6 @@
 void TRACE(char const *strMsg, ...);
 void TRACE(wchar const *strMsg, ...);
 
-#if defined(DEBUG)
-void DBG(int x, int y, char const *strMsg, ...);
-void DBG(int x, int y, wchar const *strMsg, ...);
-#else
-#define DBG if (false) {} else 
-#endif
-
 uint8 *LoadFile(char const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 wstring WideStringFromString(string const &str);
@@ -35,6 +28,13 @@ tstring GetCurrentFolder();
 #define PI 3.14159265f
 #define PI_2 (PI/2)
 #endif
+
+//////////////////////////////////////////////////////////////////////
+
+template <typename T> inline ptr<T> Ptr(T *obj)
+{
+	return ptr<T>(obj);
+}
 
 //////////////////////////////////////////////////////////////////////
 // UTF8 decoding
@@ -141,18 +141,9 @@ inline float Ease(float d)
 
 //////////////////////////////////////////////////////////////////////
 
-inline string ToLower(string const &s)
+template <typename T> inline T ToLower(T const &s)
 {
-	string r(s);
-	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
-	return r;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-inline wstring ToLower(wstring const &s)
-{
-	wstring r(s);
+	T r(s);
 	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
 	return r;
 }
@@ -175,17 +166,17 @@ inline int NextPowerOf2(int v)
 
 template<class T> struct in_reverse
 {
-    T &l;
-    in_reverse(T &list) : l(list) {}
+	T &l;
+	in_reverse(T &list) : l(list) {}
 
-    auto begin() ->         decltype(l.rbegin())   { return l.rbegin(); } 
-    auto begin() const ->   decltype(l.crbegin())  { return l.crbegin(); } 
-    auto end() ->           decltype(l.rend())     { return l.rend(); } 
-    auto end() const ->     decltype(l.crend())    { return l.crend(); } 
+	auto begin() ->         decltype(l.rbegin())   { return l.rbegin(); } 
+	auto begin() const ->   decltype(l.crbegin())  { return l.crbegin(); } 
+	auto end() ->           decltype(l.rend())     { return l.rend(); } 
+	auto end() const ->     decltype(l.crend())    { return l.crend(); } 
 };
 
 template<class T> in_reverse<T> reverse(T &l)
 {
-    return in_reverse<T>(l);
+	return in_reverse<T>(l);
 }
 

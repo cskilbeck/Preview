@@ -76,11 +76,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="App.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="GDIPlus.h" />
     <ClInclude Include="ImageLoader.h" />
-    <ClInclude Include="linked_list.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
     <ClInclude Include="Rect.h" />

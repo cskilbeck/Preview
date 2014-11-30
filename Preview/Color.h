@@ -83,7 +83,7 @@ struct Color
 	void SetGreen(int g)	{	mColor = (mColor & (~0xffffff00 << kGreenOffset))	| (g << kGreenOffset);	}
 	void SetBlue(int b)		{	mColor = (mColor & (~0xffffff00 << kBlueOffset))	| (b << kBlueOffset);	}
 
-	inline Color Lerp(Color &other, int lerp)		// 0 = this, 256 = other, 128 = 50:50
+	inline Color Lerp(Color &other, int lerp)		// 0 = this, 255 = other, 128 = 50:50
 	{
 		int inv = 256 - lerp;
 		return Color(	(GetAlpha()	* lerp + other.GetAlpha()	* inv) >> 8,

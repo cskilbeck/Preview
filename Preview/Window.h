@@ -13,19 +13,22 @@ struct Window
 	virtual void OnClosing() {}
 	virtual void OnResize() {}
 	virtual void OnPaint(HDC dc, PAINTSTRUCT &ps) {}
-	virtual int OnPaintBackground(HDC dc) { return 0; }
+	virtual int OnPaintBackground(HDC dc) { return 1; }
 	virtual void OnMouseMove(Point2D pos) {}
 	virtual void OnLeftButtonDown(Point2D pos) {}
 	virtual void OnLeftButtonUp(Point2D pos) {}
 	virtual void OnRightButtonDown(Point2D pos) {}
 	virtual void OnRightButtonUp(Point2D pos) {}
 	virtual void OnChar(int key, uint32 flags) {}
+	virtual void OnMouseWheel(int delta) {}
 
 	bool Update(bool waitForMessages = true);
 
 	void Show();
 	void Hide();
 	void Close();
+	void CaptureMouse();
+	void ReleaseMouse();
 	void Center();
 	uint Width() const;
 	uint Height() const;

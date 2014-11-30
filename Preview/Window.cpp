@@ -4,6 +4,22 @@
 
 //////////////////////////////////////////////////////////////////////
 
+BOOL UnadjustWindowRectEx(LPRECT prc, DWORD dwStyle, BOOL fMenu, DWORD dwExStyle)
+{
+	RECT rc;
+	SetRectEmpty(&rc);
+	BOOL fRc = AdjustWindowRectEx(&rc, dwStyle, fMenu, dwExStyle);
+	if (fRc) {
+		prc->left -= rc.left;
+		prc->top -= rc.top;
+		prc->right -= rc.right;
+		prc->bottom -= rc.bottom;
+	}
+	return fRc;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 static void CenterRectInMonitor(RECT &rc, HMONITOR hMonitor)
 {
 	MONITORINFO monitorInfo = {0};
@@ -97,11 +113,11 @@ void Window::Create(int width, int height, TCHAR *caption)
 	wcex.hInstance = 0;
 	wcex.hIcon = null;
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = CreateSolidBrush((COLORREF)Color(255, 255, 0, 255));
+	wcex.hbrBackground = NULL;
 	wcex.lpszMenuName = MAKEINTRESOURCE(IDC_PREVIEW);
 	wcex.lpszClassName = L"WindowClass";
 	wcex.hIconSm = null;
-	RegisterClassEx(&wcex);	// checking the return value from this function is pointless - allow CreateWindowEx to fail instead
+	RegisterClassEx(&wcex);
 
 	mWidth = width;
 	mHeight = height;
@@ -197,7 +213,7 @@ bool Window::Update(bool waitForMessage)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	//TRACE(TEXT("%s [%08x,%08x] (%d,%d)\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam);
+	TRACE(TEXT("%s [%08x,%08x] (%d,%d)\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam);
 
 	switch(message)
 	{
@@ -210,10 +226,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	default:
 		{
-			Window *ths = (Window *)GetWindowLongPtr(hWnd, 0);
-			if(ths != null)
+			Window *window = (Window *)GetWindowLongPtr(hWnd, 0);
+			if(window != null)
 			{
-				return ths->HandleMessage(hWnd, message, wParam, lParam);
+				return window->HandleMessage(hWnd, message, wParam, lParam);
 			}
 			else
 			{
@@ -230,6 +246,8 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	PAINTSTRUCT ps;
 	HDC hdc;
 	POINTS p;
+	WINDOWPOS *windowPos;
+	RECT rc;
 
 	switch(message)
 	{
@@ -244,6 +262,15 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case WM_DESTROY:
 			PostQuitMessage(0);
+			break;
+
+		case WM_WINDOWPOSCHANGING:
+			windowPos = (WINDOWPOS *)lParam;
+			SetRect(&rc, windowPos->x, windowPos->y, windowPos->cx + windowPos->x, windowPos->cy + windowPos->y);
+			UnadjustWindowRectEx(&rc, WS_OVERLAPPED, TRUE, 0);
+			mWidth = rc.right - rc.left;
+			mHeight = rc.bottom - rc.top;
+			OnResize();
 			break;
 
 		case WM_SIZE:
@@ -300,7 +327,6 @@ void Window::Sized()
 	{
 		mWidth = rc.right;
 		mHeight = rc.bottom;
-		OnResize();
 	}
 }
 
