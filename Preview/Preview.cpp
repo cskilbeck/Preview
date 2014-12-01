@@ -73,20 +73,18 @@ void Preview::DrawGrid()
 		float yo = (Height() - h) / 2;
 		float right = xo + w;
 		float bottom = yo + h;
-		for(float y = 0; y < w; y += gridSize)
+		for(float y = yo; y < bottom; y += gridSize)
 		{
 			int c = b;
 			b = 1 - b;
-			for(float x = 0; x < h; x += gridSize)
+			for(float x = xo; x < right; x += gridSize)
 			{
-				float xp = x + xo;
-				float yp = y + yo;
-				float r1 = Min(xp + gridSize, right);
-				float b1 = Min(yp + gridSize, bottom);
-				float w1 = r1 - xp;
-				float h1 = b1 - yp;
-				gdi->FillRectangle(gridBrush[c].get(), xp, yp, w1, h1);
-				c = 1-c;
+				float r1 = Min(x + gridSize, right);
+				float b1 = Min(y + gridSize, bottom);
+				float w1 = r1 - x;
+				float h1 = b1 - y;
+				gdi->FillRectangle(gridBrush[c].get(), x, y, w1, h1);
+				c = 1 - c;
 			}
 		}
 	}
@@ -106,6 +104,8 @@ void Preview::OnPaint(HDC dc, PAINTSTRUCT &ps)
 	if(backbuffer != null)
 	{
 		auto gdi = Gfx(dc);
+		gdi->SetInterpolationMode(Gdiplus::InterpolationMode::InterpolationModeNearestNeighbor);
+		gdi->SetCompositingMode(Gdiplus::CompositingMode::CompositingModeSourceCopy);
 		gdi->DrawImage(backbuffer.get(), 0, 0, backbuffer->GetWidth(), backbuffer->GetHeight());
 	}
 }

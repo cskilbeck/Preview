@@ -264,15 +264,6 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			PostQuitMessage(0);
 			break;
 
-		case WM_WINDOWPOSCHANGING:
-			windowPos = (WINDOWPOS *)lParam;
-			SetRect(&rc, windowPos->x, windowPos->y, windowPos->cx + windowPos->x, windowPos->cy + windowPos->y);
-			UnadjustWindowRectEx(&rc, WS_OVERLAPPED, TRUE, 0);
-			mWidth = rc.right - rc.left;
-			mHeight = rc.bottom - rc.top;
-			OnResize();
-			break;
-
 		case WM_SIZE:
 			Sized();
 			break;
@@ -327,6 +318,7 @@ void Window::Sized()
 	{
 		mWidth = rc.right;
 		mHeight = rc.bottom;
+		OnResize();
 	}
 }
 
