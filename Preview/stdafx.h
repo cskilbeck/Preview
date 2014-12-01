@@ -43,6 +43,7 @@ using chs::linked_list;
 using chs::list_node;
 
 #include "Types.h"
+#include "WinMessages.h"
 #include "Util.h"
 #include "Vec2.h"
 #include "Point.h"
@@ -54,7 +55,6 @@ using chs::list_node;
 #include "Graphics.h"
 #include "Texture.h"
 #include "Window.h"
-#include "App.h"
 #include "Preview.h"
 
 #include "resource.h"

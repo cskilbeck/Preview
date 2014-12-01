@@ -22,21 +22,15 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
 	ShowCurrentFolder();
 
-	Window::Init(480, 320);
+	Preview w(640, 480);
 
-	Preview preview;
-	preview.Init();
+	w.Show();
 
-	Window::Show();
-
-	while(Window::Update())
+	while(w.Update())
 	{
-		preview.Update();
-		preview.Draw();
-
-		Window::Present();
+		w.OnDraw();
+		w.Present();
 	}
 
-	preview.Release();
 	return 0;
 }

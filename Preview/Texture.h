@@ -4,32 +4,33 @@
 
 //////////////////////////////////////////////////////////////////////
 
+struct Window;
+
 struct Texture
 {
-	static Texture *Load(char const *name);
-	static Texture *Create(int width, int height, Color color);
+	Texture();
+	Texture(tchar const *name, Window *parent);
+	Texture(int w, int h, Color color, Window *parent);
+	Texture(int w, int h, byte *pixels, Window *parent);
+	~Texture();
 
 	int Width() const { return mSize.w; }
 	int Height() const { return mSize.h; }
-	bool IsValid() const { return impl != null; }
+	bool IsValid() const { return mTexture2D != null; }
 	Size2D const &GetSize() const { return mSize; }
+	string const &GetName() const { return mName; }
 
 	void Activate();
 
-	Size2D	mSize;
-	string	mName;
-
 private:
 
-	Texture();
-	Texture(char const *name);
-	Texture(int w, int h, Color color);
-	~Texture();
-
-	struct TextureImpl;
-	friend struct TextureImpl;
-	TextureImpl *impl;
+	Size2D							mSize;
+	string							mName;
+	DXPtr<ID3D11Device>				mDevice;
+	DXPtr<ID3D11DeviceContext>		mContext;
+	DXPtr<ID3D11Texture2D>			mTexture2D;
+	DXPtr<ID3D11ShaderResourceView>	mShaderResourceView;
+	D3D11_TEXTURE2D_DESC			mTextureDesc;
 };
 
 //////////////////////////////////////////////////////////////////////
-

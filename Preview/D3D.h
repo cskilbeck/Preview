@@ -14,6 +14,14 @@
 #define DXB(x) { HRESULT hr = (x); if(FAILED(hr)) return false; }
 #endif
 
+inline void SetDebugName(ID3D11DeviceChild* child, tchar const *name)
+{
+	if(child != null && name != null)
+	{
+		child->SetPrivateData(WKPDID_D3DDebugObjectName, _tcslen(name), name);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 
 template<typename T> struct DXPtr
@@ -51,6 +59,11 @@ template<typename T> struct DXPtr
 		Release();
 	}
 
+	bool IsNull() const
+	{
+		return p == null;
+	}
+
 	T **operator &()
 	{
 		return &p;
@@ -71,18 +84,30 @@ template<typename T> struct DXPtr
 		return p;
 	}
 
+	bool operator == (nullptr_t) const
+	{
+		return p == null;
+	}
+
+	bool operator != (nullptr_t) const
+	{
+		return p != null;
+	}
+
 	T *get() const
 	{
 		return p;
 	}
 
-	void Release()
+	ULONG Release()
 	{
+		ULONG r = 0;
 		if(p != nullptr)
 		{
-			p->Release();
+			r = p->Release();
 			p = nullptr;
 		}
+		return r;
 	}
 
 	T *p;

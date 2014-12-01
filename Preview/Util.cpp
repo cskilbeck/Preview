@@ -30,39 +30,6 @@ void TRACE(wchar const *strMsg, ...)
 
 //////////////////////////////////////////////////////////////////////
 
-#if defined(DEBUG)
-
-void DBG(int x, int y, char const *strMsg, ...)
-{
-	char strBuffer[512];
-	va_list args;
-	va_start(args, strMsg);
-	_vsnprintf_s(strBuffer, 512, strMsg, args);
-	va_end(args);
-	extern Font *g_DebugFont;
-	extern SpriteList *g_DebugSpriteList;
-	g_DebugSpriteList->ResetTransform();
-	g_DebugFont->DrawString(g_DebugSpriteList, strBuffer, Vec2((float)x, (float)y));
-}
-
-void DBG(int x, int y, wchar const *strMsg, ...)
-{
-	wchar strBuffer[512];
-	va_list args;
-	va_start(args, strMsg);
-	_vsnwprintf_s(strBuffer, 512, strMsg, args);
-	va_end(args);
-	string s(StringFromWideString(wstring(strBuffer)));
-	extern Font *g_DebugFont;
-	extern SpriteList *g_DebugSpriteList;
-	g_DebugSpriteList->ResetTransform();
-	g_DebugFont->DrawString(g_DebugSpriteList, s.c_str(), Vec2((float)x, (float)y));
-}
-
-#endif
-
-//////////////////////////////////////////////////////////////////////
-
 HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 {
     HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
@@ -165,6 +132,17 @@ std::string Format(char const *fmt, ...)
 	va_start(v, fmt);
 	_vsnprintf_s(buffer, 512, fmt, v);
 	return std::string(buffer);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+wstring WideStringFromTString(tstring const &str)
+{
+	#ifdef UNICODE
+		return str;
+	#else
+		return WideStringFromString(str);
+	#endif
 }
 
 //////////////////////////////////////////////////////////////////////
