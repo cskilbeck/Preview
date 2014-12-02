@@ -131,7 +131,7 @@ bool Window::Update()
 
 	while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
-		TRACE(TEXT("%s: %08x,%08x (%d,%d)\n"), GetMessageName(msg.message).c_str(), msg.wParam, msg.lParam, msg.wParam, msg.lParam);
+		//TRACE(TEXT("%s: %08x,%08x (%d,%d)\n"), GetMessageName(msg.message).c_str(), msg.wParam, msg.lParam, msg.wParam, msg.lParam);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
@@ -307,10 +307,10 @@ void Window::Release()
 	#if defined(DEBUG)
 		if(mDevice != null)
 		{
-			DXPtr<ID3D11Debug> D3DDebug;
-			mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
-			D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
-			D3DDebug.Release();
+			//DXPtr<ID3D11Debug> D3DDebug;
+			//mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
+			//D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
+			//D3DDebug.Release();
 		}
 	#endif
 
@@ -329,7 +329,7 @@ bool Window::InitD3D()
 	UINT createDeviceFlags = 0;
 
 	#ifdef _DEBUG
-		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		//createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
 
 	D3D_DRIVER_TYPE driverTypes[] =
