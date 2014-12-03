@@ -8,8 +8,13 @@ Window::Window(int width, int height)
 	: mHWND(null)
 	, mHINST(null)
 	, mMouseDown(false)
+	, mMessageWait(false)
 {
-	Init(width, height);
+	if(!Init(width, height))
+	{
+		Release();
+		DestroyWindow(mHWND);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -72,7 +77,7 @@ bool Window::Init(int width, int height)
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = null;
 	wcex.lpszMenuName = MAKEINTRESOURCE(IDC_PREVIEW);
-	wcex.lpszClassName = L"WindowClass";
+	wcex.lpszClassName = TEXT("WindowClass");
 	wcex.hIconSm = null;
 	RegisterClassEx(&wcex);
 
@@ -81,12 +86,28 @@ bool Window::Init(int width, int height)
 
 	RECT rc = { 0, 0, width, height };
 
-	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, true);
+	{
+		Rect2D r1(rc);
+		TRACE("1: %d,%d\n", r1.mSize.w, r1.mSize.h);
+	}
+
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
+
+	{
+		Rect2D r1(rc);
+		TRACE("2: %d,%d\n", r1.mSize.w, r1.mSize.h);
+	}
+
 	CentreRectInMonitorWithMouseInIt(rc);
 
-	mHWND = CreateWindowEx(	0,
-							L"WindowClass",
-							L"Screen",
+	{
+		Rect2D r1(rc);
+		TRACE("3: %d,%d\n", r1.mSize.w, r1.mSize.h);
+	}
+
+	mHWND = CreateWindowEx(0,
+							TEXT("WindowClass"),
+							TEXT("Screen"),
 							WS_OVERLAPPEDWINDOW,
 							rc.left,
 							rc.top,
@@ -95,7 +116,7 @@ bool Window::Init(int width, int height)
 							NULL,
 							mHINST,
 							this);
-	if(!mHWND)
+	if(mHWND == null)
 	{
 		TRACE("Window Create Failed: %08x\n", GetLastError());
 		return false;
@@ -104,11 +125,26 @@ bool Window::Init(int width, int height)
 	SetWindowLongPtr(mHWND, GWLP_USERDATA, (LONG_PTR)this);
 
 	GetClientRect(mHWND, &rc);
+
+	{
+		Rect2D r1(rc);
+		TRACE("4: %d,%d\n", r1.mSize.w, r1.mSize.h);
+	}
+
 	if(!InitD3D())
 	{
 		Release();
 		return false;
 	}
+
+	GetClientRect(mHWND, &rc);
+
+	{
+		Rect2D r1(rc);
+		TRACE("5: %d,%d\n", r1.mSize.w, r1.mSize.h);
+	}
+
+
 	return true;
 }
 
@@ -129,12 +165,16 @@ bool Window::Update()
 {
 	MSG msg;
 
+	if(mMessageWait && WaitMessage() == 0)
+	{
+		return false;
+	}
 	while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 	{
-		//TRACE(TEXT("%s: %08x,%08x (%d,%d)\n"), GetMessageName(msg.message).c_str(), msg.wParam, msg.lParam, msg.wParam, msg.lParam);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+	OnUpdate();
 	return msg.message != WM_QUIT;
 }
 
@@ -142,6 +182,7 @@ bool Window::Update()
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	//TRACE(TEXT("%s: %08x,%08x (%d,%d)\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam);
 	switch(message)
 	{
 	case WM_NCCREATE:
@@ -183,31 +224,10 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 			break;
 
-		case WM_SIZE:
-			switch(wParam)
-			{
-			case SIZE_MINIMIZED:	// pause it
-				break;
-
-			case SIZE_MAXIMIZED:
-			case SIZE_RESTORED:
-				if(!mInResizingLoop)
-				{
-					DoResize();
-				}
-				break;
-			default:
-				break;
-			}
-			break;
-
-		case WM_ENTERSIZEMOVE:
-			mInResizingLoop = true;
-			break;
-
-		case WM_EXITSIZEMOVE:
-			mInResizingLoop = false;
+		case WM_SIZING:
 			DoResize();
+			OnDraw();
+			Present();
 			break;
 
 		case WM_MOUSEMOVE:
@@ -252,10 +272,14 @@ void Window::DoResize()
 {
 	RECT rc;
 	GetClientRect(mHWND, &rc);
-	if(rc.right != mWidth || rc.bottom != mHeight)
+	int width = rc.right - rc.left;
+	int height = rc.bottom - rc.top;
+
+	if(width != mWidth || height != mHeight)
 	{
-		mWidth = rc.right;
-		mHeight = rc.bottom;
+		TRACE("DoResize: %d,%d\n", width, height);
+		mWidth = width;
+		mHeight = height;
 
 		if(mContext != null)
 		{
@@ -293,7 +317,8 @@ Window::~Window()
 
 void Window::Release()
 {
-	mRenderTargetView.Release();
+	ReleaseBackBuffer();
+
 	mSwapChain.Release();
 
 	if(mContext != null)
@@ -307,10 +332,10 @@ void Window::Release()
 	#if defined(DEBUG)
 		if(mDevice != null)
 		{
-			//DXPtr<ID3D11Debug> D3DDebug;
-			//mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
-			//D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
-			//D3DDebug.Release();
+			DXPtr<ID3D11Debug> D3DDebug;
+			mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
+			D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
+			D3DDebug.Release();
 		}
 	#endif
 
@@ -323,13 +348,10 @@ bool Window::InitD3D()
 {
 	CoInitializeEx(null, 0);
 
-	RECT rc;
-	GetClientRect(mHWND, &rc);
-
 	UINT createDeviceFlags = 0;
 
 	#ifdef _DEBUG
-		//createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
 
 	D3D_DRIVER_TYPE driverTypes[] =
@@ -353,8 +375,8 @@ bool Window::InitD3D()
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;
-	sd.BufferDesc.Width = Window::Width();
-	sd.BufferDesc.Height = Window::Height();
+	sd.BufferDesc.Width = Width();
+	sd.BufferDesc.Height = Height();
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
@@ -363,6 +385,7 @@ bool Window::InitD3D()
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	HRESULT hr;
 
@@ -391,20 +414,17 @@ bool Window::InitD3D()
 
 bool Window::GetBackBuffer()
 {
-	// Create a render target view
-	ID3D11Texture2D* pBackBuffer = NULL;
+	DXPtr<ID3D11Texture2D> pBackBuffer;
 	DXB(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer));
-
 	DXB(mDevice->CreateRenderTargetView(pBackBuffer, NULL, &mRenderTargetView));
-	pBackBuffer->Release();
 
 	D3D11_VIEWPORT vp;
-	vp.Width = (FLOAT)Window::Width();
-	vp.Height = (FLOAT)Window::Height();
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
 	vp.TopLeftY = 0;
+	vp.Width = (FLOAT)Width();
+	vp.Height = (FLOAT)Height();
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
 
 	mContext->RSSetViewports(1, &vp);
 	mContext->OMSetRenderTargets(1, &mRenderTargetView, NULL);
@@ -415,8 +435,8 @@ bool Window::GetBackBuffer()
 
 void Window::ReleaseBackBuffer()
 {
-	ULONG refCount = mRenderTargetView.Release();
-	TRACE("RELEASE BACK BUFFER: %d\n", refCount);
+	mContext->OMSetRenderTargets(0, NULL, NULL);
+	mRenderTargetView.Release();
 }
 
 //////////////////////////////////////////////////////////////////////

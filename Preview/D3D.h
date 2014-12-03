@@ -26,7 +26,7 @@ inline void SetDebugName(ID3D11DeviceChild* child, tchar const *name)
 
 template<typename T> struct DXPtr
 {
-	DXPtr(T *init = nullptr) : p(init)
+	DXPtr(T *init = null) : p(init)
 	{
 	}
 
@@ -99,9 +99,9 @@ template<typename T> struct DXPtr
 		return p;
 	}
 
-	ULONG Release()
+	LONG Release()
 	{
-		ULONG r = 0;
+		LONG r = 0;
 		if(p != nullptr)
 		{
 			r = p->Release();
@@ -111,5 +111,4 @@ template<typename T> struct DXPtr
 	}
 
 	T *p;
-	void *leak;
 };

@@ -21,15 +21,8 @@ typedef uint8			byte;
 static const nullptr_t null = nullptr;
 
 using std::vector;
-using std::function;
 using std::string;
 using std::wstring;
-using std::wstringstream;
-using std::map;
-using std::multimap;
-using std::list;
-using std::pair;
-using std::sort;
 
 typedef std::basic_string<tchar> tstring;
 

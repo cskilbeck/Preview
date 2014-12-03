@@ -108,6 +108,10 @@ HRESULT Preview::CreateBlendState()
 
 Preview::Preview(int width, int height) : Window(width, height)
 {
+	// Load the image
+	// Resize the window
+	// Show the window
+	Show();
 }
 
 //////////////////////////////////////////////////////////////////////

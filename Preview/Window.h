@@ -48,7 +48,12 @@ struct Window
 	void EnableScissoring(bool enable);
 	void SetScissorRectangle(Rect2D const &rect);
 
-protected:
+	bool SetMessageWait(bool wait)
+	{
+		mMessageWait = wait;
+	}
+
+//protected:
 
 	void DoResize();
 	bool Init(int width, int height);
@@ -67,6 +72,7 @@ protected:
 	HINSTANCE						mHINST;
 	bool							mInResizingLoop;
 	bool							mMouseDown;
+	bool							mMessageWait;
 
 	DXPtr<ID3D11Device>				mDevice;
 	DXPtr<ID3D11DeviceContext>		mContext;
