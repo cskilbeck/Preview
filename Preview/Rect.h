@@ -1,39 +1,96 @@
+//////////////////////////////////////////////////////////////////////
 
-struct Rect2D
+struct Rect: RECT
 {
-	Point2D	mTopLeft;
-	Size2D	mSize;
+	//////////////////////////////////////////////////////////////////////
 
-	Rect2D()
+	Rect()
 	{
 	}
 
-	Rect2D(RECT const &rc)
-		: mTopLeft(rc.left, rc.top)
-		, mSize(rc.right - rc.left, rc.bottom - rc.top)
+	//////////////////////////////////////////////////////////////////////
+
+	Rect(Point2D topLeft, Size2D size)
 	{
+		left = topLeft.x;
+		top = topLeft.y;
+		right = left + size.w;
+		bottom = top + size.h;
 	}
 
-	operator RECT() const
+	//////////////////////////////////////////////////////////////////////
+
+	Rect(Vec2 topLeft, Vec2 size)
 	{
-		RECT r = { mTopLeft.x, mTopLeft.y, mTopLeft.x + mSize.w, mTopLeft.y + mSize.h };
-		return r;
+		left = (LONG)topLeft.x;
+		top = (LONG)topLeft.y;
+		right = (LONG)(left + size.x);
+		bottom = (LONG)(top + size.y);
 	}
 
-	Rect2D(Point2D topLeft, Size2D size)
-		: mTopLeft(topLeft)
-		, mSize(size)
+	//////////////////////////////////////////////////////////////////////
+
+	Rect(int x, int y, int width, int height)
 	{
+		left = x;
+		top = y;
+		right = x + width;
+		bottom = y + height;
 	}
 
-	Rect2D(Vec2 topLeft, Vec2 size)
-		: mTopLeft(topLeft)
-		, mSize(size)
-	{
-	}
+	//////////////////////////////////////////////////////////////////////
 
 	bool Contains(Point2D p) const
 	{
-		return p.x >= mTopLeft.x && p.x < mTopLeft.x + mSize.w && p.y >= mTopLeft.y && p.y < mTopLeft.y + mSize.h;
+		return p.x >= left && p.x < right && p.y >= top && p.y < bottom;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	int Width() const
+	{
+		return right - left;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	int Height() const
+	{
+		return bottom - top;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Size2D Size() const
+	{
+		return Size2D(Width(), Height());
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void MoveTo(Point2D pos)
+	{
+		right = pos.x + Width();
+		bottom = pos.y + Height();
+		left = pos.x;
+		top = pos.y;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void Translate(Point2D offset)
+	{
+		left += offset.x;
+		top += offset.y;
+		right += offset.x;
+		bottom += offset.y;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void Resize(Size2D newSize)
+	{
+		right = left + newSize.w;
+		bottom = top + newSize.h;
 	}
 };

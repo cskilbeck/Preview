@@ -43,8 +43,9 @@ using chs::linked_list;
 using chs::list_node;
 
 #include "Types.h"
-#include "WinMessages.h"
 #include "Util.h"
+#include "Win32.h"
+#include "WinMessages.h"
 #include "Vec2.h"
 #include "Point.h"
 #include "Size.h"

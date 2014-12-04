@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////////////////
 
-#include "graphics.h"
+#pragma once
 
 //////////////////////////////////////////////////////////////////////
 
-inline void CD(wchar const *relative)
+inline void CD(tchar const *relative)
 {
-	vector<wchar> s;
+	vector<tchar> s;
 	s.resize(GetCurrentDirectory(0, null));
 	GetCurrentDirectory(s.size(), &s[0]);
 	s.resize(s.size() - 1);
@@ -16,12 +16,11 @@ inline void CD(wchar const *relative)
 		s.push_back(*relative);
 	}
 	s.push_back(0);
-	wchar_t* p = &s[0];
-	SetCurrentDirectory(p);
+	SetCurrentDirectory(&s[0]);
 }
 
-namespace chs
-{
-	void *memory_alloc(size_t size);
-	void memory_free(void *p);
-}
+//////////////////////////////////////////////////////////////////////
+
+tstring Win32ErrorMessage(DWORD err = 0);
+
+void ErrorMessageBox(tchar const *format, ...);

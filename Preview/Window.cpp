@@ -4,11 +4,13 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Window::Window(int width, int height)
+Window::Window(int width, int height, tchar const *caption)
 	: mHWND(null)
 	, mHINST(null)
+	, mMenu(null)
 	, mMouseDown(false)
 	, mMessageWait(false)
+	, mCaption(caption)
 {
 	if(!Init(width, height))
 	{
@@ -19,7 +21,7 @@ Window::Window(int width, int height)
 
 //////////////////////////////////////////////////////////////////////
 
-static void CenterRectInMonitor(RECT &rc, HMONITOR hMonitor)
+static void CenterRectInMonitor(Rect &rc, HMONITOR hMonitor)
 {
 	MONITORINFO monitorInfo = {0};
 	monitorInfo.cbSize = sizeof(monitorInfo);
@@ -38,7 +40,7 @@ static void CenterRectInMonitor(RECT &rc, HMONITOR hMonitor)
 
 //////////////////////////////////////////////////////////////////////
 
-static void CentreRectInMonitorWithMouseInIt(RECT &rc)
+static void CentreRectInMonitorWithMouseInIt(Rect &rc)
 {
 	POINT ptCursorPos;
 	GetCursorPos(&ptCursorPos);
@@ -53,10 +55,10 @@ static void CentreRectInMonitorWithMouseInIt(RECT &rc)
 
 void Window::Center()
 {
-	RECT rc;
+	Rect rc;
 	GetClientRect(mHWND, &rc);
 	CenterRectInMonitor(rc, MonitorFromWindow(mHWND, MONITOR_DEFAULTTOPRIMARY));
-	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, true);
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
 	SetWindowPos(mHWND, null, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOSIZE|SWP_NOZORDER);
 }
 
@@ -65,18 +67,19 @@ void Window::Center()
 bool Window::Init(int width, int height)
 {
 	mHINST = GetModuleHandle(null);
+	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wcex.lpfnWndProc = WndProc;
 	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = sizeof(this);
+	wcex.cbWndExtra = sizeof(Window *);
 	wcex.hInstance = 0;
 	wcex.hIcon = null;
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = null;
-	wcex.lpszMenuName = MAKEINTRESOURCE(IDC_PREVIEW);
+	wcex.hbrBackground = NULL;
+	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = TEXT("WindowClass");
 	wcex.hIconSm = null;
 	RegisterClassEx(&wcex);
@@ -84,68 +87,21 @@ bool Window::Init(int width, int height)
 	mWidth = width;
 	mHeight = height;
 
-	RECT rc = { 0, 0, width, height };
+	Rect rect(100, 100, width, height);
+	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, true, 0);
 
-	{
-		Rect2D r1(rc);
-		TRACE("1: %d,%d\n", r1.mSize.w, r1.mSize.h);
-	}
+	CentreRectInMonitorWithMouseInIt(rect);
 
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
-
-	{
-		Rect2D r1(rc);
-		TRACE("2: %d,%d\n", r1.mSize.w, r1.mSize.h);
-	}
-
-	CentreRectInMonitorWithMouseInIt(rc);
-
-	{
-		Rect2D r1(rc);
-		TRACE("3: %d,%d\n", r1.mSize.w, r1.mSize.h);
-	}
-
-	mHWND = CreateWindowEx(0,
-							TEXT("WindowClass"),
-							TEXT("Screen"),
-							WS_OVERLAPPEDWINDOW,
-							rc.left,
-							rc.top,
-							rc.right - rc.left, rc.bottom - rc.top,
-							NULL,
-							NULL,
-							mHINST,
-							this);
+	mHWND = CreateWindowEx(0, TEXT("WindowClass"), mCaption.c_str(), WS_OVERLAPPEDWINDOW,
+						   rect.left, rect.top, rect.Width(), rect.Height(),
+						   NULL, mMenu, mHINST, this);
 	if(mHWND == null)
 	{
-		TRACE("Window Create Failed: %08x\n", GetLastError());
+		DWORD err = GetLastError();
+		ErrorMessageBox(TEXT("Failed to create window (%08x) - %s"), err, Win32ErrorMessage(err).c_str());
 		return false;
 	}
-
-	SetWindowLongPtr(mHWND, GWLP_USERDATA, (LONG_PTR)this);
-
-	GetClientRect(mHWND, &rc);
-
-	{
-		Rect2D r1(rc);
-		TRACE("4: %d,%d\n", r1.mSize.w, r1.mSize.h);
-	}
-
-	if(!InitD3D())
-	{
-		Release();
-		return false;
-	}
-
-	GetClientRect(mHWND, &rc);
-
-	{
-		Rect2D r1(rc);
-		TRACE("5: %d,%d\n", r1.mSize.w, r1.mSize.h);
-	}
-
-
-	return true;
+	return OpenD3D();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -154,15 +110,20 @@ void Window::ChangeSize(int newWidth, int newHeight)
 {
 	mWidth = newWidth;
 	mHeight = newHeight;
-	RECT rc = { 0, 0, mWidth, mHeight };
-	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, true);
-	SetWindowPos(mHWND, null, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE|SWP_NOZORDER);
+	Rect rc(0, 0, mWidth, mHeight);
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
+	SetWindowPos(mHWND, null, 0, 0, rc.Width(), rc.Height(), SWP_NOMOVE|SWP_NOZORDER);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 bool Window::Update()
 {
+	if(mHWND == null)
+	{
+		return false;
+	}
+
 	MSG msg;
 
 	if(mMessageWait && WaitMessage() == 0)
@@ -182,33 +143,35 @@ bool Window::Update()
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	//TRACE(TEXT("%s: %08x,%08x (%d,%d)\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam);
+	CREATESTRUCT *cs;
+	Window *window;
+	LRESULT rc;
 	switch(message)
 	{
 	case WM_NCCREATE:
-		SetWindowLongPtr(hWnd, 0, (LONG_PTR)(((CREATESTRUCT *)lParam)->lpCreateParams));
+		cs = (CREATESTRUCT *)lParam;
+		window = (Window *)cs->lpCreateParams;
+		SetWindowLongPtr(hWnd, 0, (LONG_PTR)window);
+		window->mHWND = hWnd;
+		rc = 1;
+		break;
 
 	case WM_GETMINMAXINFO:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		rc = DefWindowProc(hWnd, message, wParam, lParam);
+		break;
 
 	default:
-		{
-			Window *ths = (Window *)GetWindowLongPtr(hWnd, 0);
-			if(ths != null)
-			{
-				return ths->HandleMessage(message, wParam, lParam);
-			}
-			else
-			{
-				return DefWindowProc(hWnd, message, wParam, lParam);
-			}
-		}
+		window = (Window *)GetWindowLongPtr(hWnd, 0);
+		assert(window != null);
+		rc = window->HandleMessage(hWnd, message, wParam, lParam);
 	}
+	//TRACE(TEXT("%s: %08x,%08x (%d,%d) returns %d\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam, rc);
+	return rc;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-LRESULT Window::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
@@ -216,8 +179,9 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
 	switch(message)
 	{
 		case WM_PAINT:
-			hdc = BeginPaint(mHWND, &ps);
-			EndPaint(mHWND, &ps);
+			hdc = BeginPaint(hWnd, &ps);
+			OnPaint(ps.hdc, ps);
+			EndPaint(hWnd, &ps);
 			break;
 
 		case WM_DESTROY:
@@ -230,37 +194,33 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
 			Present();
 			break;
 
+		case WM_EXITSIZEMOVE:
+			DoResize();
+			OnDraw();
+			Present();
+			break;
+
 		case WM_MOUSEMOVE:
-			if(mMouseDown)
-			{
-				POINTS p = MAKEPOINTS(lParam);
-			}
 			break;
 
 		case WM_LBUTTONDOWN:
-			{
-				POINTS p = MAKEPOINTS(lParam);
-				if(!mMouseDown)
-				{
-				}
-				mMouseDown = true;
-				SetCapture(mHWND);
-			}
+			SetCapture(hWnd);
 			break;
 
 		case WM_LBUTTONUP:
-			mMouseDown = false;
 			ReleaseCapture();
 			break;
 
 		case WM_RBUTTONDOWN:
+			SetCapture(hWnd);
 			break;
 
 		case WM_RBUTTONUP:
+			ReleaseCapture();
 			break;
 
 		default:
-			return DefWindowProc(mHWND, message, wParam, lParam);
+			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	return 0;
@@ -270,40 +230,30 @@ LRESULT Window::HandleMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
 void Window::DoResize()
 {
-	RECT rc;
+	Rect rc;
 	GetClientRect(mHWND, &rc);
-	int width = rc.right - rc.left;
-	int height = rc.bottom - rc.top;
-
-	if(width != mWidth || height != mHeight)
+	if(rc.Width() != mWidth || rc.Height() != mHeight)
 	{
-		TRACE("DoResize: %d,%d\n", width, height);
-		mWidth = width;
-		mHeight = height;
-
-		if(mContext != null)
-		{
-			mContext->ClearState();
-			mContext->OMSetRenderTargets(0, null, null);
-			mContext->Flush();
-		}
-
-		ReleaseBackBuffer();
-
-		DXGI_MODE_DESC d;
-		d.Width = mWidth;
-		d.Height = mHeight;
-		d.RefreshRate.Numerator = 60;
-		d.RefreshRate.Denominator = 1;
-		d.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		d.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
-		d.Scaling = DXGI_MODE_SCALING_STRETCHED;
-
-		mSwapChain->ResizeTarget(&d);
-		mSwapChain->ResizeBuffers(0, mWidth, mHeight, DXGI_FORMAT_UNKNOWN, 0);
-
-		GetBackBuffer();
+		mWidth = rc.Width();
+		mHeight = rc.Height();
+		ResizeD3D();
 	}
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::ResizeD3D()
+{
+	if(mContext != null)
+	{
+		mContext->ClearState();
+		mContext->OMSetRenderTargets(0, null, null);
+		mContext->Flush();
+	}
+
+	ReleaseBackBuffer();
+	mSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+	GetBackBuffer();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -317,34 +267,12 @@ Window::~Window()
 
 void Window::Release()
 {
-	ReleaseBackBuffer();
-
-	mSwapChain.Release();
-
-	if(mContext != null)
-	{
-		mContext->ClearState();
-		mContext->Flush();
-	}
-
-	mContext.Release();
-
-	#if defined(DEBUG)
-		if(mDevice != null)
-		{
-			DXPtr<ID3D11Debug> D3DDebug;
-			mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
-			D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
-			D3DDebug.Release();
-		}
-	#endif
-
-	mDevice.Release();
+	CloseD3D();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-bool Window::InitD3D()
+bool Window::OpenD3D()
 {
 	CoInitializeEx(null, 0);
 
@@ -402,12 +330,41 @@ bool Window::InitD3D()
 	}
 	if(FAILED(hr))
 	{
-		MessageBox(null, L"Failed to initialize D3D!\nExiting...", L"Fatal Error", MB_ICONEXCLAMATION);
+		ErrorMessageBox(TEXT("Failed to initialize Direct3D!\nExiting..."));
 		Release();
 		return false;
 	}
 	GetBackBuffer();
 	return true;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::CloseD3D()
+{
+	ReleaseBackBuffer();
+
+	mSwapChain.Release();
+
+	if(mContext != null)
+	{
+		mContext->ClearState();
+		mContext->Flush();
+	}
+
+	mContext.Release();
+
+#if defined(DEBUG)
+	if(mDevice != null)
+	{
+		DXPtr<ID3D11Debug> D3DDebug;
+		mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
+		D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
+		D3DDebug.Release();
+	}
+#endif
+
+	mDevice.Release();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -435,7 +392,10 @@ bool Window::GetBackBuffer()
 
 void Window::ReleaseBackBuffer()
 {
-	mContext->OMSetRenderTargets(0, NULL, NULL);
+	if(mContext != null)
+	{
+		mContext->OMSetRenderTargets(0, NULL, NULL);
+	}
 	mRenderTargetView.Release();
 }
 

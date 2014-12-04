@@ -6,7 +6,7 @@
 
 struct Window
 {
-	Window(int width = 640, int height = 480);
+	Window(int width = 640, int height = 480, tchar const *caption = TEXT("Window"));
 	~Window();
 
 	virtual bool OnUpdate();
@@ -46,7 +46,7 @@ struct Window
 	void ChangeSize(int newWidth, int newHeight);
 
 	void EnableScissoring(bool enable);
-	void SetScissorRectangle(Rect2D const &rect);
+	void SetScissorRectangle(Rect const &rect);
 
 	bool SetMessageWait(bool wait)
 	{
@@ -57,10 +57,12 @@ struct Window
 
 	void DoResize();
 	bool Init(int width, int height);
-	bool InitD3D();
+	bool OpenD3D();
+	void ResizeD3D();
+	void CloseD3D();
 	bool GetBackBuffer();
 	void ReleaseBackBuffer();
-	LRESULT HandleMessage(UINT message, WPARAM wParam, LPARAM lParam);
+	LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -70,9 +72,11 @@ struct Window
 	int								mHeight;
 	HWND							mHWND;
 	HINSTANCE						mHINST;
+	HMENU							mMenu;
 	bool							mInResizingLoop;
 	bool							mMouseDown;
 	bool							mMessageWait;
+	tstring							mCaption;
 
 	DXPtr<ID3D11Device>				mDevice;
 	DXPtr<ID3D11DeviceContext>		mContext;
