@@ -18,23 +18,26 @@ __declspec (align(4)) struct Vertex
 	}
 };
 
-static const float s = 5;
+static const float topleft = -1;
+static const float bottomright = 1;
 
 static Vertex vert[6] = 
 {
-	{ { 0, 0 }, { 0, 0 } },
-	{ { s, 0 }, { s, 0 } },
-	{ { s, s }, { s, s } },
+	{ { topleft,		topleft		}, { 0, 1 } },
+	{ { bottomright,	topleft		}, { 1, 1 } },
+	{ { bottomright,	bottomright	}, { 1, 0 } },
 
-	{ { s, s }, { s, s } },
-	{ { 0, s }, { 0, s } },
-	{ { 0, 0 }, { 0, 0 } },
+	{ { bottomright,	bottomright	}, { 1, 0 } },
+	{ { topleft,		bottomright	}, { 0, 0 } },
+	{ { topleft,		topleft		}, { 0, 1 } },
 };
 
 //////////////////////////////////////////////////////////////////////
 
 HRESULT Preview::LoadShaders()
 {
+	vertexShader.Release();
+	pixelShader.Release();
 	size_t size;
 	void *buffer;
 	D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -55,9 +58,10 @@ HRESULT Preview::LoadShaders()
 
 HRESULT Preview::CreateSampler()
 {
+	sampler.Release();
 	D3D11_SAMPLER_DESC sampDesc;
 	ZeroMemory(&sampDesc, sizeof(sampDesc));
-	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -72,6 +76,7 @@ HRESULT Preview::CreateSampler()
 
 HRESULT Preview::CreateVertexBuffer()
 {
+	vertexBuffer.Release();
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -89,6 +94,7 @@ HRESULT Preview::CreateVertexBuffer()
 
 HRESULT Preview::CreateRasterizerState()
 {
+	rasterizerState.Release();
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.CullMode = D3D11_CULL_NONE;
 	rasterizerDesc.AntialiasedLineEnable = TRUE;
@@ -100,6 +106,7 @@ HRESULT Preview::CreateRasterizerState()
 
 HRESULT Preview::CreateBlendState()
 {
+	blendState.Release();
 	CD3D11_BLEND_DESC blendDesc(D3D11_DEFAULT);
 	D3D11_RENDER_TARGET_BLEND_DESC rtBlendDesc;
 	rtBlendDesc.BlendEnable = true;
@@ -126,14 +133,8 @@ Preview::Preview(int width, int height) : Window(width, height)
 	DXV(CreateBlendState());
 
 	mTexture.reset(new Texture(TEXT("D:\\test.png"), this));
-
 	ChangeSize(mTexture->Width(), mTexture->Height());
 	Center();
-
-	OnDraw();
-	Present();
-
-	Show();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -153,10 +154,11 @@ bool Preview::OnUpdate()
 
 void Preview::OnDraw()
 {
-	static byte r = 16, g = 64, b = 32;
-	Clear(Color(r, g, b));
 	UINT strides[] = { sizeof(Vertex) };
 	UINT offsets[] = { 0 };
+
+	Clear(Color(16, 64, 32));
+
 	mContext->PSSetSamplers(0, 1, &sampler);
 	mTexture->Activate();
 	mContext->OMSetBlendState(blendState, 0, 0xffffffff);
