@@ -36,6 +36,7 @@
 #include <functional>
 #include <algorithm>
 #include <array>
+#include <memory>
 
 #include "linked_list.h"
 

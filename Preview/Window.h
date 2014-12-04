@@ -13,8 +13,6 @@ struct Window
 	virtual void OnDraw();
 	virtual void OnClosing();
 	virtual void OnResize();
-	virtual void OnPaint(HDC dc, PAINTSTRUCT &ps);
-	virtual LRESULT OnPaintBackground(HDC dc);
 	virtual void OnMouseMove(Point2D pos);
 	virtual void OnLeftButtonDown(Point2D pos);
 	virtual void OnLeftButtonUp(Point2D pos);

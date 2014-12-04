@@ -9,8 +9,8 @@ struct VS_INPUT
 
 struct PS_INPUT
 {
-    float4 Pos : SV_Position;
-    float2 Tex : TEXCOORD0;
+	float4 Pos : SV_Position;
+	float2 Tex : TEXCOORD0;
 };
 
 float4 main(PS_INPUT input) : SV_Target

@@ -71,7 +71,7 @@ bool Window::Init(int width, int height)
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc = WndProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = sizeof(Window *);
@@ -143,17 +143,16 @@ bool Window::Update()
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	CREATESTRUCT *cs;
 	Window *window;
 	LRESULT rc;
+
 	switch(message)
 	{
 	case WM_NCCREATE:
-		cs = (CREATESTRUCT *)lParam;
-		window = (Window *)cs->lpCreateParams;
+		window = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
 		SetWindowLongPtr(hWnd, 0, (LONG_PTR)window);
 		window->mHWND = hWnd;
-		rc = 1;
+		rc = true;
 		break;
 
 	case WM_GETMINMAXINFO:
@@ -161,9 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	default:
-		window = (Window *)GetWindowLongPtr(hWnd, 0);
-		assert(window != null);
-		rc = window->HandleMessage(hWnd, message, wParam, lParam);
+		rc = ((Window *)GetWindowLongPtr(hWnd, 0))->HandleMessage(hWnd, message, wParam, lParam);
 	}
 	//TRACE(TEXT("%s: %08x,%08x (%d,%d) returns %d\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam, rc);
 	return rc;
@@ -173,28 +170,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	PAINTSTRUCT ps;
-	HDC hdc;
-
 	switch(message)
 	{
-		case WM_PAINT:
-			hdc = BeginPaint(hWnd, &ps);
-			OnPaint(ps.hdc, ps);
-			EndPaint(hWnd, &ps);
-			break;
-
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
 
-		case WM_SIZING:
-			DoResize();
-			OnDraw();
-			Present();
-			break;
+		case WM_ERASEBKGND:
+			return true;
 
-		case WM_EXITSIZEMOVE:
+		case WM_SIZING:
 			DoResize();
 			OnDraw();
 			Present();
@@ -413,12 +398,6 @@ void Window::Clear(Color color)
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnPaint(HDC dc, PAINTSTRUCT &ps)
-{
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void Window::OnDraw()
 {
 }
@@ -435,13 +414,6 @@ void Window::Show()
 void Window::Hide()
 {
 	ShowWindow(mHWND, SW_HIDE);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-LRESULT Window::OnPaintBackground(HDC dc)
-{
-	return TRUE;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -26,3 +26,4 @@ using std::wstring;
 
 typedef std::basic_string<tchar> tstring;
 
+template< typename T> using Ptr = std::unique_ptr<T>;

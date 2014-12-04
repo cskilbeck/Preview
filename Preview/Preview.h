@@ -9,16 +9,16 @@ struct Preview : Window
 	Preview(int width, int height);
 	~Preview();
 
-	void InitPreview();
 	bool OnUpdate() override;
 	void OnDraw() override;
-	void Release() override;
 
 	HRESULT LoadShaders();
 	HRESULT CreateSampler();
 	HRESULT CreateVertexBuffer();
 	HRESULT CreateRasterizerState();
 	HRESULT CreateBlendState();
+
+	Ptr<Texture> mTexture;
 
 	DXPtr<ID3D11InputLayout>		vertexLayout;
 	DXPtr<ID3D11PixelShader>		pixelShader;

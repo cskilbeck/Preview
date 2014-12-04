@@ -5,10 +5,10 @@
 
 //////////////////////////////////////////////////////////////////////
 
+Preview w(640, 480);
+
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
-	Preview w(640, 480);
-
 	while(w.Update())
 	{
 		w.OnDraw();

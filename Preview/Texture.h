@@ -14,18 +14,32 @@ struct Texture
 	Texture(int w, int h, byte *pixels, Window *parent);
 	~Texture();
 
-	int Width() const { return mSize.w; }
-	int Height() const { return mSize.h; }
-	bool IsValid() const { return mTexture2D != null; }
-	Size2D const &GetSize() const { return mSize; }
-	string const &GetName() const { return mName; }
+	int Width() const
+	{
+		return mTextureDesc.Width;
+	}
+
+	int Height() const
+	{
+		return mTextureDesc.Height;
+	}
+
+	bool IsValid() const
+	{
+		return mTexture2D != null;
+	}
+
+	tstring const &GetName() const
+	{
+		return mName;
+	}
 
 	void Activate();
 
 private:
 
 	Size2D							mSize;
-	string							mName;
+	tstring							mName;
 	DXPtr<ID3D11Device>				mDevice;
 	DXPtr<ID3D11DeviceContext>		mContext;
 	DXPtr<ID3D11Texture2D>			mTexture2D;

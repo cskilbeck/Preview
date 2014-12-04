@@ -6,7 +6,7 @@
 //////////////////////////////////////////////////////////////////////
 
 
-struct Vertex
+__declspec (align(4)) struct Vertex
 {
 	Vec2 mPos;
 	Vec2 mTexCoord;
@@ -18,7 +18,18 @@ struct Vertex
 	}
 };
 
-static Vertex vert[4];
+static const float s = 5;
+
+static Vertex vert[6] = 
+{
+	{ { 0, 0 }, { 0, 0 } },
+	{ { s, 0 }, { s, 0 } },
+	{ { s, s }, { s, s } },
+
+	{ { s, s }, { s, s } },
+	{ { 0, s }, { 0, s } },
+	{ { 0, 0 }, { 0, 0 } },
+};
 
 //////////////////////////////////////////////////////////////////////
 
@@ -108,9 +119,20 @@ HRESULT Preview::CreateBlendState()
 
 Preview::Preview(int width, int height) : Window(width, height)
 {
-	// Load the image
-	// Resize the window
-	// Show the window
+	DXV(LoadShaders());
+	DXV(CreateSampler());
+	DXV(CreateVertexBuffer());
+	DXV(CreateRasterizerState());
+	DXV(CreateBlendState());
+
+	mTexture.reset(new Texture(TEXT("D:\\test.png"), this));
+
+	ChangeSize(mTexture->Width(), mTexture->Height());
+	Center();
+
+	OnDraw();
+	Present();
+
 	Show();
 }
 
@@ -118,17 +140,6 @@ Preview::Preview(int width, int height) : Window(width, height)
 
 Preview::~Preview()
 {
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void Preview::InitPreview()
-{
-	DXV(LoadShaders());
-	DXV(CreateSampler());
-	DXV(CreateVertexBuffer());
-	DXV(CreateRasterizerState());
-	DXV(CreateBlendState());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -142,20 +153,18 @@ bool Preview::OnUpdate()
 
 void Preview::OnDraw()
 {
-	Clear(Color::Red);
+	static byte r = 16, g = 64, b = 32;
+	Clear(Color(r, g, b));
+	UINT strides[] = { sizeof(Vertex) };
+	UINT offsets[] = { 0 };
+	mContext->PSSetSamplers(0, 1, &sampler);
+	mTexture->Activate();
+	mContext->OMSetBlendState(blendState, 0, 0xffffffff);
+	mContext->RSSetState(rasterizerState);
+	mContext->IASetInputLayout(vertexLayout);
+	mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	mContext->IASetVertexBuffers(0, 1, &vertexBuffer, strides, offsets);
+	mContext->PSSetShader(pixelShader, NULL, 0);
+	mContext->VSSetShader(vertexShader, NULL, 0);
+	mContext->Draw(6, 0);
 }
-
-//////////////////////////////////////////////////////////////////////
-
-void Preview::Release()
-{
-	vertexLayout.Release();
-	pixelShader.Release();
-	vertexShader.Release();
-	vertexBuffer.Release();
-	rasterizerState.Release();
-	blendState.Release();
-	sampler.Release();
-	Window::Release();
-}
-

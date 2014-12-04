@@ -11,6 +11,7 @@ Texture::Texture(tchar const *name, Window *parent)
 	, mShaderResourceView(null)
 	, mContext(parent->mContext)
 	, mDevice(parent->mDevice)
+	, mName(name)
 {
 	mTextureDesc.MipLevels = 0;
 	mTextureDesc.Width = 0;
@@ -86,8 +87,6 @@ Texture::Texture(int width, int height, Color color, Window *parent)
 
 Texture::~Texture()
 {
-	mShaderResourceView.Release();
-	mTexture2D.Release();
 }
 
 //////////////////////////////////////////////////////////////////////
