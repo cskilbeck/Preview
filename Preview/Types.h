@@ -15,7 +15,6 @@ typedef int64_t			int64;
 typedef unsigned int	uint;
 typedef wchar_t			wchar;
 typedef TCHAR			tchar;
-
 typedef uint8			byte;
 
 static const nullptr_t null = nullptr;
@@ -24,6 +23,6 @@ using std::vector;
 using std::string;
 using std::wstring;
 
-typedef std::basic_string<tchar> tstring;
+using tstring = std::basic_string<tchar>;
 
-template< typename T> using Ptr = std::unique_ptr<T>;
+template <typename T> using Ptr = std::unique_ptr<T>;

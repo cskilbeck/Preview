@@ -91,7 +91,7 @@ Texture::~Texture()
 
 //////////////////////////////////////////////////////////////////////
 
-void Texture::Activate()
+void Texture::Activate(int channel /* = 0 */)
 {
-	mContext->PSSetShaderResources(0, 1, &mShaderResourceView);
+	mContext->PSSetShaderResources(channel, 1, &mShaderResourceView);
 }

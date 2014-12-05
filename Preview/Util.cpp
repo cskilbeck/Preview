@@ -6,33 +6,21 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void TRACE(char const *strMsg, ...)
+void TRACE(tchar const *strMsg, ...)
 {
-	char strBuffer[512];
+	tchar strBuffer[512];
 	va_list args;
 	va_start(args, strMsg);
-	vsprintf_s(strBuffer, 512, strMsg, args);
+	_vstprintf_s(strBuffer, strMsg, args);
 	va_end(args);
-	OutputDebugStringA(strBuffer);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void TRACE(wchar const *strMsg, ...)
-{
-	wchar strBuffer[512];
-	va_list args;
-	va_start(args, strMsg);
-	_vsnwprintf_s(strBuffer, 512, strMsg, args);
-	va_end(args);
-	OutputDebugStringW(strBuffer);
+	OutputDebugString(strBuffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 {
-    HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
+	HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
 	if(myResource == null)
 	{
 		return ERROR_RESOURCE_DATA_NOT_FOUND;
@@ -69,12 +57,12 @@ HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 
 //////////////////////////////////////////////////////////////////////
 
-uint8 *LoadFile(char const *filename, size_t *size)
+uint8 *LoadFile(tchar const *filename, size_t *size)
 {
 	uint8 *buf = null;
 	FILE *f = null;
 
-	if(fopen_s(&f, filename, "rb") == 0)
+	if(_tfopen_s(&f, filename, TEXT("rb")) == 0)
 	{
 		fseek(f, 0, SEEK_END);
 		uint32 len = ftell(f);
@@ -93,7 +81,7 @@ uint8 *LoadFile(char const *filename, size_t *size)
 			}
 			else
 			{
-				*((wchar *)(((char *)buf) + len)) = L'\0';
+				*((tchar *)(((tchar *)buf) + len)) = (tchar)'\0';
 				if(size != null)
 				{
 					*size = len;
@@ -105,33 +93,20 @@ uint8 *LoadFile(char const *filename, size_t *size)
 	}
 	else
 	{
-		MessageBoxA(null, Format("File not found: %s", filename).c_str(), "LoadFile", MB_ICONERROR);
+		MessageBox(null, Format(TEXT("File not found: %s"), filename).c_str(), TEXT("LoadFile"), MB_ICONERROR);
 	}
 	return buf;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-std::wstring Format(wchar const *fmt, ...)
+tstring Format(tchar const *fmt, ...)
 {
-	wchar buffer[512];
-
+	tchar buffer[1024];
 	va_list v;
 	va_start(v, fmt);
-	_vsnwprintf_s(buffer, 512, fmt, v);
-	return std::wstring(buffer);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-std::string Format(char const *fmt, ...)
-{
-	char buffer[512];
-
-	va_list v;
-	va_start(v, fmt);
-	_vsnprintf_s(buffer, 512, fmt, v);
-	return std::string(buffer);
+	_vstprintf_s(buffer, fmt, v);
+	return tstring(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -170,37 +145,6 @@ string StringFromWideString(wstring const &str)
 		return string(&temp[0]);
 	}
 	return string();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-static char const *sDateTimeFormat = "%Y-%m-%d %H:%M:%S";
-
-string FormatTime(time_t t)
-{
-	char buffer[512];
-	struct tm stm;
-	buffer[0] = 0;
-	if(gmtime_s(&stm, &t) == 0)
-	{
-		strftime(buffer, 512, sDateTimeFormat, &stm);
-	}
-	return string(buffer);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-time_t ParseTime(char const *t)
-{
-	struct tm stm = { 0 };
-	extern char * strptime(const char *buf, const char *fmt, struct tm *tm);
-	char *p = strptime(t, sDateTimeFormat, &stm);
-	time_t time(0);
-	if(p != null)
-	{
-		time = mktime(&stm);
-	}
-	return time;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -80,7 +80,6 @@
     <ClInclude Include="D3D.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="ImageLoader.h" />
-    <ClInclude Include="linked_list.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
     <ClInclude Include="Rect.h" />
@@ -95,6 +94,7 @@
     <ClInclude Include="Win32.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WinMessages.h" />
+    <ClInclude Include="WinResource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp" />
@@ -107,11 +107,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="strptime.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="Vec2.cpp" />
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="WinMessages.cpp" />
+    <ClCompile Include="WinResource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preview.rc" />
@@ -124,10 +124,17 @@
     <FxCompile Include="PixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0_level_9_1</ShaderModel>
+      <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AssemblerOutput>
+      <AssemblerOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AssemblerOutputFile>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DisableOptimizations>
     </FxCompile>
     <FxCompile Include="VertexShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0_level_9_1</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

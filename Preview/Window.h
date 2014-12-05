@@ -19,25 +19,43 @@ struct Window
 	virtual void OnRightButtonDown(Point2D pos);
 	virtual void OnRightButtonUp(Point2D pos);
 	virtual void OnChar(int key, uint32 flags);
+	virtual void OnKeyDown(int key, uint32 flags);
+	virtual void OnKeyUp(int key, uint32 flags);
 	virtual void OnMouseWheel(int delta);
 
 	virtual void Release();
 
 	void Show();
 	void Hide();
+	void Close();
 	void Center();
 	bool Update();
 	void Clear(Color color);
 	void Present();
 
-	int Width()
+	int Width() const
 	{
 		return mWidth;
 	}
 
-	int Height()
+	int Height() const
 	{
 		return mHeight;
+	}
+
+	float FWidth() const
+	{
+		return (float)mWidth;
+	}
+
+	float FHeight() const
+	{
+		return (float)mHeight;
+	}
+
+	Vec2 FSize() const
+	{
+		return Vec2(FWidth(), FHeight());
 	}
 
 	Size2D GetSize();
@@ -66,12 +84,12 @@ struct Window
 
 	friend struct Texture;
 
+	int								mFrame;
 	int								mWidth;
 	int								mHeight;
 	HWND							mHWND;
 	HINSTANCE						mHINST;
 	HMENU							mMenu;
-	bool							mInResizingLoop;
 	bool							mMouseDown;
 	bool							mMessageWait;
 	tstring							mCaption;

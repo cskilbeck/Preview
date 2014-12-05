@@ -6,17 +6,22 @@
 
 struct Preview : Window
 {
-	Preview(int width, int height);
+	Preview();
 	~Preview();
 
 	bool OnUpdate() override;
 	void OnDraw() override;
+
+	void OnChar(int key, uint32 flags) override;
 
 	HRESULT LoadShaders();
 	HRESULT CreateSampler();
 	HRESULT CreateVertexBuffer();
 	HRESULT CreateRasterizerState();
 	HRESULT CreateBlendState();
+	HRESULT CreateDepthStencilState();
+	HRESULT CreateVertexShaderConstants();
+	HRESULT CreatePixelShaderConstants();
 
 	Ptr<Texture> mTexture;
 
@@ -27,5 +32,8 @@ struct Preview : Window
 	DXPtr<ID3D11RasterizerState>	rasterizerState;
 	DXPtr<ID3D11BlendState>			blendState;
 	DXPtr<ID3D11SamplerState>		sampler;
+	DXPtr<ID3D11Buffer>				vertexShaderConstants;
+	DXPtr<ID3D11Buffer>				pixelShaderConstants;
+	DXPtr<ID3D11DepthStencilState>	mDepthStencilState;
 
 };

@@ -4,37 +4,23 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Window::Window(int width, int height, tchar const *caption)
-	: mHWND(null)
-	, mHINST(null)
-	, mMenu(null)
-	, mMouseDown(false)
-	, mMessageWait(false)
-	, mCaption(caption)
-{
-	if(!Init(width, height))
-	{
-		Release();
-		DestroyWindow(mHWND);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////
-
 static void CenterRectInMonitor(Rect &rc, HMONITOR hMonitor)
 {
-	MONITORINFO monitorInfo = {0};
-	monitorInfo.cbSize = sizeof(monitorInfo);
-	if(GetMonitorInfo(hMonitor, &monitorInfo))
+	if(hMonitor != INVALID_HANDLE_VALUE)
 	{
-		int iMidX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2;
-		int iMidY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2;
-		int iRectWidth = rc.right - rc.left;
-		int iRectHeight = rc.bottom - rc.top;
-		rc.left = iMidX - iRectWidth / 2;
-		rc.top = iMidY - iRectHeight / 2;
-		rc.right = rc.left + iRectWidth;
-		rc.bottom = rc.top + iRectHeight;
+		MONITORINFO monitorInfo = { 0 };
+		monitorInfo.cbSize = sizeof(monitorInfo);
+		if(GetMonitorInfo(hMonitor, &monitorInfo))
+		{
+			int iMidX = (monitorInfo.rcWork.left + monitorInfo.rcWork.right) / 2;
+			int iMidY = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom) / 2;
+			int iRectWidth = rc.right - rc.left;
+			int iRectHeight = rc.bottom - rc.top;
+			rc.left = iMidX - iRectWidth / 2;
+			rc.top = iMidY - iRectHeight / 2;
+			rc.right = rc.left + iRectWidth;
+			rc.bottom = rc.top + iRectHeight;
+		}
 	}
 }
 
@@ -44,10 +30,31 @@ static void CentreRectInMonitorWithMouseInIt(Rect &rc)
 {
 	POINT ptCursorPos;
 	GetCursorPos(&ptCursorPos);
-	HMONITOR hMonitor = MonitorFromPoint(ptCursorPos, MONITOR_DEFAULTTOPRIMARY);
-	if(hMonitor != INVALID_HANDLE_VALUE)
+	CenterRectInMonitor(rc, MonitorFromPoint(ptCursorPos, MONITOR_DEFAULTTOPRIMARY));
+}
+
+//////////////////////////////////////////////////////////////////////
+
+static void CentreRectInDefaultMonitor(Rect &rc)
+{
+	CenterRectInMonitor(rc, MonitorFromPoint(POINT { 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Window::Window(int width, int height, tchar const *caption)
+	: mHWND(null)
+	, mHINST(null)
+	, mMenu(null)
+	, mMouseDown(false)
+	, mMessageWait(false)
+	, mCaption(caption)
+	, mFrame(0)
+{
+	if(!Init(width, height))
 	{
-		CenterRectInMonitor(rc, hMonitor);
+		Release();
+		DestroyWindow(mHWND);
 	}
 }
 
@@ -87,10 +94,9 @@ bool Window::Init(int width, int height)
 	mWidth = width;
 	mHeight = height;
 
-	Rect rect(100, 100, width, height);
+	Rect rect(0, 0, width, height);
 	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, true, 0);
-
-	CentreRectInMonitorWithMouseInIt(rect);
+	CentreRectInDefaultMonitor(rect);
 
 	mHWND = CreateWindowEx(0, TEXT("WindowClass"), mCaption.c_str(), WS_OVERLAPPEDWINDOW,
 						   rect.left, rect.top, rect.Width(), rect.Height(),
@@ -108,25 +114,19 @@ bool Window::Init(int width, int height)
 
 void Window::ChangeSize(int newWidth, int newHeight)
 {
-	mWidth = newWidth;
-	mHeight = newHeight;
-	Rect rc(0, 0, mWidth, mHeight);
+	Rect rc(0, 0, newWidth, newHeight);
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
 	SetWindowPos(mHWND, null, 0, 0, rc.Width(), rc.Height(), SWP_NOMOVE|SWP_NOZORDER);
+	DoResize();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 bool Window::Update()
 {
-	if(mHWND == null)
-	{
-		return false;
-	}
-
 	MSG msg;
 
-	if(mMessageWait && WaitMessage() == 0)
+	if(mHWND == null || mMessageWait && WaitMessage() == 0)
 	{
 		return false;
 	}
@@ -135,8 +135,7 @@ bool Window::Update()
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	OnUpdate();
-	return msg.message != WM_QUIT;
+	return msg.message != WM_QUIT ? OnUpdate() : false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -179,10 +178,28 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		case WM_ERASEBKGND:
 			return true;
 
+		case WM_SIZE:
+			DoResize();
+			OnDraw();
+			Present();
+			break;
+
 		case WM_SIZING:
 			DoResize();
 			OnDraw();
 			Present();
+			break;
+
+		case WM_CHAR:
+			OnChar((int)wParam, (uint32)lParam);
+			break;
+
+		case WM_KEYDOWN:
+			OnKeyDown((int)wParam, (uint32)lParam);
+			break;
+
+		case WM_KEYUP:
+			OnKeyUp((int)wParam, (uint32)lParam);
 			break;
 
 		case WM_MOUSEMOVE:
@@ -207,7 +224,6 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
-
 	return 0;
 }
 
@@ -300,14 +316,12 @@ bool Window::OpenD3D()
 	sd.Windowed = TRUE;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
-	HRESULT hr;
-
 	for(UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++)
 	{
 		mDriverType = driverTypes[driverTypeIndex];
 
-		hr = D3D11CreateDeviceAndSwapChain(NULL, mDriverType, NULL, createDeviceFlags, featureLevels, numFeatureLevels,
-										   D3D11_SDK_VERSION, &sd, &mSwapChain, &mDevice, &mFeatureLevel, &mContext);
+		hr = DXB(D3D11CreateDeviceAndSwapChain(NULL, mDriverType, NULL, createDeviceFlags, featureLevels, numFeatureLevels,
+					D3D11_SDK_VERSION, &sd, &mSwapChain, &mDevice, &mFeatureLevel, &mContext));
 		if(SUCCEEDED(hr))
 		{
 			break;
@@ -319,9 +333,11 @@ bool Window::OpenD3D()
 		Release();
 		return false;
 	}
+
 	GetBackBuffer();
 	return true;
 }
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -357,7 +373,7 @@ void Window::CloseD3D()
 bool Window::GetBackBuffer()
 {
 	DXPtr<ID3D11Texture2D> pBackBuffer;
-	DXB(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer));
+	DXB(mSwapChain->GetBuffer(0, __uuidof(pBackBuffer), (LPVOID*)&pBackBuffer));
 	DXB(mDevice->CreateRenderTargetView(pBackBuffer, NULL, &mRenderTargetView));
 
 	D3D11_VIEWPORT vp;
@@ -420,6 +436,7 @@ void Window::Hide()
 
 bool Window::OnUpdate()
 {
+	++mFrame;
 	return true;
 }
 
@@ -473,6 +490,18 @@ void Window::OnChar(int key, uint32 flags)
 
 //////////////////////////////////////////////////////////////////////
 
+void Window::OnKeyDown(int key, uint32 flags)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::OnKeyUp(int key, uint32 flags)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void Window::OnMouseWheel(int delta)
 {
 }
@@ -482,4 +511,11 @@ void Window::OnMouseWheel(int delta)
 void Window::Present()
 {
 	mSwapChain->Present(1, 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::Close()
+{
+	DestroyWindow(mHWND);
 }

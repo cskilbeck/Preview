@@ -11,12 +11,6 @@ struct Size2D;
 
 //////////////////////////////////////////////////////////////////////
 
-#if defined(IOS)
-	#define ALIGNED(x) __attribute__ ((aligned(x)))
-#else
-	#define ALIGNED(x)
-#endif
-
 #pragma pack(push, 4)
 
 struct Vec2

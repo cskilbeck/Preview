@@ -1,13 +1,38 @@
+//////////////////////////////////////////////////////////////////////
+
+cbuffer Projection : register(b0)
+{
+	matrix projection;
+	float2 textureSize;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+struct VS_INPUT
+{
+	float2 pos : POSITION;
+	float2 uv : TEXCOORD;
+};
+
+//////////////////////////////////////////////////////////////////////
+
 struct PS_INPUT
 {
 	float4 Pos : SV_Position;
-	float2 Tex : TEXCOORD0;
+	float2 Tex0 : TEXCOORD0;
+	float2 Tex1 : TEXCOORD1;
 };
 
-PS_INPUT main(float2 pos : POSITION, float2 uv : TEXCOORD)
+//////////////////////////////////////////////////////////////////////
+
+PS_INPUT main(VS_INPUT input)
 {
 	PS_INPUT o;
-	o.Pos = float4(pos.x, pos.y, 0, 1);
-	o.Tex = uv;
+	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), projection);
+	o.Tex0 = input.uv;
+	o.Tex1 = input.uv * textureSize;
 	return o;
 }
+
+//////////////////////////////////////////////////////////////////////
+

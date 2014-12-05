@@ -24,6 +24,21 @@ struct Texture
 		return mTextureDesc.Height;
 	}
 
+	float FWidth() const
+	{
+		return (float)mTextureDesc.Width;
+	}
+
+	float FHeight() const
+	{
+		return (float)mTextureDesc.Height;
+	}
+
+	Vec2 FSize() const
+	{
+		return Vec2((float)Width(), (float)Height());
+	}
+
 	bool IsValid() const
 	{
 		return mTexture2D != null;
@@ -34,7 +49,7 @@ struct Texture
 		return mName;
 	}
 
-	void Activate();
+	void Activate(int channel = 0);
 
 private:
 

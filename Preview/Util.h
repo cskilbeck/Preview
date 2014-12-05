@@ -10,25 +10,13 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void TRACE(char const *strMsg, ...);
-void TRACE(wchar const *strMsg, ...);
-
-#if defined(DEBUG)
-void DBG(int x, int y, char const *strMsg, ...);
-void DBG(int x, int y, wchar const *strMsg, ...);
-#else
-#define DBG if (false) {} else 
-#endif
-
+void TRACE(tchar const *strMsg, ...);
 uint8 *LoadFile(char const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 wstring WideStringFromString(string const &str);
 wstring WideStringFromTString(tstring const &str);
 string StringFromWideString(wstring const &str);
-wstring Format(wchar const *fmt, ...);
-string Format(char const *fmt, ...);
-
-
+tstring Format(tchar const *fmt, ...);
 tstring GetCurrentFolder();
 
 #ifndef PI
@@ -41,11 +29,6 @@ tstring GetCurrentFolder();
 
 bool GetUTF8Length(uint8 *bytes, uint32 *length);
 bool DecodeUTF8(uint8 *bytes, wchar *buffer, uint32 bufferSize);
-
-//////////////////////////////////////////////////////////////////////
-
-string FormatTime(time_t t);
-time_t ParseTime(char const *t);
 
 //////////////////////////////////////////////////////////////////////
 
@@ -175,17 +158,17 @@ inline int NextPowerOf2(int v)
 
 template<class T> struct in_reverse
 {
-    T &l;
-    in_reverse(T &list) : l(list) {}
+	T &l;
+	in_reverse(T &list) : l(list) {}
 
-    auto begin() ->         decltype(l.rbegin())   { return l.rbegin(); } 
-    auto begin() const ->   decltype(l.crbegin())  { return l.crbegin(); } 
-    auto end() ->           decltype(l.rend())     { return l.rend(); } 
-    auto end() const ->     decltype(l.crend())    { return l.crend(); } 
+	auto begin() ->         decltype(l.rbegin())   { return l.rbegin(); } 
+	auto begin() const ->   decltype(l.crbegin())  { return l.crbegin(); } 
+	auto end() ->           decltype(l.rend())     { return l.rend(); } 
+	auto end() const ->     decltype(l.crend())    { return l.crend(); } 
 };
 
 template<class T> in_reverse<T> reverse(T &l)
 {
-    return in_reverse<T>(l);
+	return in_reverse<T>(l);
 }
 
