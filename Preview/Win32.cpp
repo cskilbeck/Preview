@@ -39,7 +39,7 @@ void ChangeDirectory(tchar const *relative)
 {
 	vector<tchar> s;
 	s.resize(GetCurrentDirectory(0, null));
-	GetCurrentDirectory(s.size(), &s[0]);
+	GetCurrentDirectory((DWORD)s.size(), &s[0]);
 	s.resize(s.size() - 1);
 	s.push_back(L'\\');
 	for(; *relative; ++relative)

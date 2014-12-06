@@ -6,28 +6,27 @@
 
 using Matrix = DirectX::XMMATRIX;
 
-extern HRESULT hr;
+extern HRESULT __hr;
 
 #if defined(DEBUG)
 #define DX(x) 			\
-	hr = (x);			\
-	if(FAILED(hr))		\
+	__hr = (x);			\
+	if(FAILED(__hr))	\
 	{					\
-		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), hr);	\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), __hr);	\
 		assert(false);	\
-		return hr;		\
+		return __hr;	\
 	}					\
 	else				\
 	{					\
 		TRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
-	hr;
 
 #define DXV(x) 			\
-	hr = (x);			\
-	if(FAILED(hr))		\
+	__hr = (x);			\
+	if(FAILED(__hr))	\
 	{					\
-		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), hr);	\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), __hr);	\
 		assert(false);	\
 		return;			\
 	}					\
@@ -35,13 +34,12 @@ extern HRESULT hr;
 	{					\
 		TRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
-	hr;
 
 #define DXB(x) 			\
-	hr = (x);			\
-	if(FAILED(hr))		\
+	__hr = (x);			\
+	if(FAILED(__hr))	\
 	{					\
-		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), hr);	\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), __hr);	\
 		assert(false);	\
 		return false;	\
 	}					\
@@ -49,19 +47,18 @@ extern HRESULT hr;
 	{					\
 		TRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
-	hr;
 
 #else
-#define DX(x) hr = (x); if(FAILED(hr)) return hr;
-#define DXV(x) hr = (x); if(FAILED(hr)) return;
-#define DXB(x) hr = (x); if(FAILED(hr)) return false;
+#define DX(x) __hr = (x); if(FAILED(__hr)) return __hr;
+#define DXV(x) __hr = (x); if(FAILED(__hr)) return;
+#define DXB(x) __hr = (x); if(FAILED(__hr)) return false;
 #endif
 
 inline void SetDebugName(ID3D11DeviceChild* child, tchar const *name)
 {
 	if(child != null && name != null)
 	{
-		child->SetPrivateData(WKPDID_D3DDebugObjectName, _tcslen(name), name);
+		child->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)_tcslen(name), name);
 	}
 }
 

@@ -16,6 +16,8 @@ typedef unsigned int	uint;
 typedef wchar_t			wchar;
 typedef TCHAR			tchar;
 typedef uint8			byte;
+typedef LONG_PTR		intptr;
+typedef ULONG_PTR		uintptr;
 
 static const nullptr_t null = nullptr;
 

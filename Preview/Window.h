@@ -13,15 +13,15 @@ struct Window
 	virtual void OnDraw();
 	virtual void OnClosing();
 	virtual void OnResize();
-	virtual void OnMouseMove(Point2D pos);
-	virtual void OnLeftButtonDown(Point2D pos);
-	virtual void OnLeftButtonUp(Point2D pos);
-	virtual void OnRightButtonDown(Point2D pos);
-	virtual void OnRightButtonUp(Point2D pos);
-	virtual void OnChar(int key, uint32 flags);
-	virtual void OnKeyDown(int key, uint32 flags);
-	virtual void OnKeyUp(int key, uint32 flags);
-	virtual void OnMouseWheel(int delta);
+	virtual void OnMouseMove(Point pos, uintptr flags);
+	virtual void OnMouseWheel(Point pos, int delta, uintptr flags);
+	virtual void OnLeftButtonDown(Point pos, uintptr flags);
+	virtual void OnLeftButtonUp(Point pos, uintptr flags);
+	virtual void OnRightButtonDown(Point pos, uintptr flags);
+	virtual void OnRightButtonUp(Point pos, uintptr flags);
+	virtual void OnChar(int key, uintptr flags);
+	virtual void OnKeyDown(int key, uintptr flags);
+	virtual void OnKeyUp(int key, uintptr flags);
 
 	virtual void Release();
 
@@ -58,7 +58,7 @@ struct Window
 		return Vec2(FWidth(), FHeight());
 	}
 
-	Size2D GetSize();
+	Size GetSize();
 	void ChangeSize(int newWidth, int newHeight);
 
 	void EnableScissoring(bool enable);
@@ -90,7 +90,8 @@ struct Window
 	HWND							mHWND;
 	HINSTANCE						mHINST;
 	HMENU							mMenu;
-	bool							mMouseDown;
+	bool							mLeftMouseDown;
+	bool							mRightMouseDown;
 	bool							mMessageWait;
 	tstring							mCaption;
 

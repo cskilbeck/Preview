@@ -2,6 +2,9 @@
 // Split Window object into plain and DirectX versions
 // Timer
 // Load from command line, pop file choose dialog if empty
+// Options Menu
+// Load/Save options
+// Don't churn messageloop when not necessary
 // Window sizing/stretching/squeezing etc
 // Pan/Zoom
 // Selection/Copy/Save As
@@ -171,6 +174,12 @@ HRESULT Preview::CreateBlendState()
 
 Preview::Preview()
 	: Window(100, 100)
+	, mBackgroundColor(255, 0, 255)
+	, mScale(1)
+	, mCurrentScale(1)
+	, mLastZoomTime(0)
+	, mOffset(0, 0)
+	, mDrag(false)
 {
 	DXV(LoadShaders());
 	DXV(CreateSampler());
@@ -184,6 +193,8 @@ Preview::Preview()
 	mTexture.reset(new Texture(TEXT("D:\\test.png"), this));
 	ChangeSize(mTexture->Width(), mTexture->Height());
 	Center();
+	mTranslation = FSize() / 2;
+	mTimer.Reset();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -194,7 +205,7 @@ Preview::~Preview()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnChar(int key, uint32 flags)
+void Preview::OnChar(int key, uintptr flags)
 {
 	switch(key)
 	{
@@ -205,14 +216,85 @@ void Preview::OnChar(int key, uint32 flags)
 }
 
 //////////////////////////////////////////////////////////////////////
+// make it stick at 1.0
+
+void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
+{
+	double time = mTimer.Elapsed();
+	double deltaZ = time - mLastZoomTime;
+	mLastZoomTime = time;
+
+	float d = 1.0f + delta / 600.0f;
+	float newScale = Constrain(mScale * d, 0.1f, 32.0f);
+	if(mScale < 1 && newScale >= 1 || mScale > 1 && newScale <= 1 || mScale == 1 && mCurrentScale == 1)
+	{
+		if(deltaZ < 0.25f)
+		{
+			newScale = 1.0f;
+			mCurrentScale = 1.0f;
+		}
+	}
+	mScale = newScale;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnResize()
+{
+	mTranslation = FSize() / 2;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnRightButtonDown(Point pos, uintptr flags)
+{
+	mDrag = true;
+	mDragPos = pos;
+	SetCursor(LoadCursor(NULL, IDC_CROSS));
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnRightButtonUp(Point pos, uintptr flags)
+{
+	mDrag = false;
+	mTranslation += mOffset;
+	mOffset = Vec2::zero;
+	SetCursor(null);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnMouseMove(Point pos, uintptr flags)
+{
+	if(mDrag)
+	{
+		mOffset = Vec2(pos - mDragPos);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
 
 bool Preview::OnUpdate()
 {
+	mDeltaTime = mTimer.Delta();
+
 	Window::OnUpdate();
 	if(mFrame == 1)
 	{
 		Show();
 	}
+
+	if(mCurrentScale != mScale)
+	{
+		float diff = mScale - mCurrentScale;
+		mCurrentScale += diff * 10.0f * (float)mDeltaTime;
+		if(fabsf(mCurrentScale - mScale) < 0.01f)
+		{
+			mCurrentScale = mScale;
+		}
+	}
+
 	return true;
 }
 
@@ -238,22 +320,18 @@ void Preview::OnDraw()
 				  0.0f, 0.0f, 1.0f, 0.0f,
 				  -1.0f, 1.0f, 0.0f, 1.0f);
 
-	float scale = 1;
 	float rotation = 0;
 	//scale = sinf(mFrame * 0.0125f) * 3.25f + 4;
 	//rotation = mFrame * 0.025f + (sinf(mFrame * 0.033f) * 0.1f + 0.2f);
-	Vec2 translation = FSize() / 2;
 
 	XMVECTOR scalingOrigin = XMVec2(Vec2(0.5f, 0.5f));
 	XMVECTOR rotationOrigin = XMVec2(Vec2::zero);
-	XMVECTOR xscale = XMVec2(mTexture->FSize() * scale);
-	XMVECTOR translate = XMVec2(translation);
+	XMVECTOR xscale = XMVec2(mTexture->FSize() * mCurrentScale);
+	XMVECTOR translate = XMVec2(mTranslation + mOffset);
 	XMMATRIX m2d = XMMatrixTransformation2D(scalingOrigin, 0, xscale, rotationOrigin, rotation, translate);
 
 	UINT strides[] = { sizeof(Vertex) };
 	UINT offsets[] = { 0 };
-
-	Clear(Color(16, 64, 32));
 
 	float gridSize = 16;
 
@@ -288,5 +366,6 @@ void Preview::OnDraw()
 
 	mTexture->Activate();
 
+	Clear(mBackgroundColor);
 	mContext->Draw(ARRAYSIZE(vert), 0);
 }

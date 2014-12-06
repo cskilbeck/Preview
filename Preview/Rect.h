@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////
 
-struct Rect: RECT
+struct Rect : RECT
 {
 	//////////////////////////////////////////////////////////////////////
 
@@ -10,12 +10,12 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	Rect(Point2D topLeft, Size2D size)
+	Rect(Point topLeft, Size size)
 	{
 		left = topLeft.x;
 		top = topLeft.y;
-		right = left + size.w;
-		bottom = top + size.h;
+		right = left + size.Width();
+		bottom = top + size.Height();
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -40,7 +40,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	bool Contains(Point2D p) const
+	bool Contains(Point p) const
 	{
 		return p.x >= left && p.x < right && p.y >= top && p.y < bottom;
 	}
@@ -61,14 +61,14 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	Size2D Size() const
+	Size GetSize() const
 	{
-		return Size2D(Width(), Height());
+		return Size(Width(), Height());
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	void MoveTo(Point2D pos)
+	void MoveTo(Point pos)
 	{
 		right = pos.x + Width();
 		bottom = pos.y + Height();
@@ -78,7 +78,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	void Translate(Point2D offset)
+	void Translate(Point offset)
 	{
 		left += offset.x;
 		top += offset.y;
@@ -88,9 +88,9 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	void Resize(Size2D newSize)
+	void Resize(Size newSize)
 	{
-		right = left + newSize.w;
-		bottom = top + newSize.h;
+		right = left + newSize.Width();
+		bottom = top + newSize.Height();
 	}
 };

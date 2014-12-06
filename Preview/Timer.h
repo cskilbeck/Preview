@@ -1,0 +1,55 @@
+//////////////////////////////////////////////////////////////////////
+
+#pragma once
+
+//////////////////////////////////////////////////////////////////////
+
+struct Timer
+{
+	//////////////////////////////////////////////////////////////////////
+
+	Timer()
+	{
+		Reset();
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void Reset()
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *)&mStartTime);
+		mOldTime = mStartTime;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	double Elapsed()
+	{
+		uint64 time;
+		uint64 frequency;
+		QueryPerformanceCounter((LARGE_INTEGER *)&time);
+		QueryPerformanceFrequency((LARGE_INTEGER *)&frequency);
+		return (double)(time - mStartTime) / (double)frequency;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	double Delta()
+	{
+		uint64 time;
+		uint64 frequency;
+		QueryPerformanceCounter((LARGE_INTEGER *)&time);
+		QueryPerformanceFrequency((LARGE_INTEGER *)&frequency);
+		double delta = (double)(time - mOldTime) / (double)frequency;
+		mOldTime = time;
+		return delta;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+private:
+
+	uint64 mStartTime;
+	uint64 mOldTime;
+};
+

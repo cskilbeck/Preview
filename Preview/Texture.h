@@ -53,7 +53,7 @@ struct Texture
 
 private:
 
-	Size2D							mSize;
+	Size							mSize;
 	tstring							mName;
 	DXPtr<ID3D11Device>				mDevice;
 	DXPtr<ID3D11DeviceContext>		mContext;

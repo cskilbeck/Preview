@@ -127,7 +127,7 @@ wstring WideStringFromString(string const &str)
 	vector<wchar> temp;
 	temp.resize(str.size() + 1);
 	temp[0] = (wchar)0;
-	MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.size(), &temp[0], str.size());
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), (int)str.size(), &temp[0], (int)str.size());
 	temp[str.size()] = 0;
 	return wstring(&temp[0]);
 }
@@ -137,11 +137,11 @@ wstring WideStringFromString(string const &str)
 string StringFromWideString(wstring const &str)
 {
 	vector<char> temp;
-	int bufSize = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), str.size() + 1, NULL, 0, NULL, FALSE);
+	int bufSize = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.size() + 1, NULL, 0, NULL, FALSE);
 	if(bufSize > 0)
 	{
 		temp.resize(bufSize);
-		WideCharToMultiByte(CP_UTF8, 0, str.c_str(), str.size() + 1, &temp[0], bufSize, NULL, FALSE);
+		WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.size() + 1, &temp[0], bufSize, NULL, FALSE);
 		return string(&temp[0]);
 	}
 	return string();
@@ -157,5 +157,5 @@ tstring GetCurrentFolder()
 	s.resize((size_t)l + 1);
 	GetCurrentDirectory(l, &s[0]);
 	s[l] = 0;
-	return Format(L"%s", &s[0]);
+	return Format(TEXT("%s"), &s[0]);
 }

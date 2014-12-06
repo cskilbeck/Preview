@@ -4,34 +4,43 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct Size2D
+struct Size : SIZE
 {
-	int w;
-	int h;
-
-	Size2D()
+	Size()
 	{
 	}
 
-	Size2D(int w, int h) : w(w), h(h)
+	Size(int w, int h)
 	{
+		cx = w;
+		cy = h;
 	}
 
-	explicit Size2D(Vec2 const &o)
+	explicit Size(Vec2 const &o)
 	{
-		w = (int)o.x;
-		h = (int)o.y;
+		cx = (int)o.x;
+		cy = (int)o.y;
 	}
 
-	explicit Size2D(Point2D const &o)
+	explicit Size(Point const &o)
 	{
-		w = o.x;
-		h = o.y;
+		cx = o.x;
+		cy = o.y;
+	}
+
+	long Width() const
+	{
+		return cx;
+	}
+
+	long Height() const
+	{
+		return cy;
 	}
 
 	void Clear()
 	{
-		w = 0;
-		h = 0;
+		cx = 0;
+		cy = 0;
 	}
 };

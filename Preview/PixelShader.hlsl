@@ -32,5 +32,7 @@ float4 main(PS_INPUT input) : SV_Target
 	float x = trunc(fmod(input.Tex1.x + y, gridSize2.x) / gridSize.x);
 	float4 picColour = pic.Sample(smplr, input.Tex0) * mask + offset;
 	float4 gridColor = lerp(gridColor0, gridColor1, x);
-	return lerp(gridColor, picColour, picColour.a);
+	picColour = lerp(gridColor, picColour, picColour.a);
+	picColour.a = 1;
+	return picColour;
 }

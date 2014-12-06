@@ -1,3 +1,3 @@
 #include "stdafx.h"
 
-HRESULT hr;
+HRESULT __hr;

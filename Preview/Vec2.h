@@ -6,8 +6,8 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct Point2D;
-struct Size2D;
+struct Point;
+struct Size;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -36,8 +36,8 @@ struct Vec2
 		y = o.y;
 	}
 
-	explicit Vec2(Point2D const &p);
-	explicit Vec2(Size2D const &s);
+	explicit Vec2(Point const &p);
+	explicit Vec2(Size const &s);
 
 	Vec2 const &operator = (Vec2 const &b)
 	{

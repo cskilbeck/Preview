@@ -11,8 +11,12 @@ struct Preview : Window
 
 	bool OnUpdate() override;
 	void OnDraw() override;
-
-	void OnChar(int key, uint32 flags) override;
+	void OnResize() override;
+	void OnChar(int key, uintptr flags) override;
+	void OnMouseWheel(Point pos, int delta, uintptr flags) override;
+	void OnRightButtonDown(Point pos, uintptr flags) override;
+	void OnRightButtonUp(Point pos, uintptr flags) override;
+	void OnMouseMove(Point pos, uintptr flags) override;
 
 	HRESULT LoadShaders();
 	HRESULT CreateSampler();
@@ -24,6 +28,16 @@ struct Preview : Window
 	HRESULT CreatePixelShaderConstants();
 
 	Ptr<Texture> mTexture;
+	Color mBackgroundColor;
+	Vec2 mTranslation;
+	Vec2 mOffset;
+	float mScale;
+	float mCurrentScale;
+	Timer mTimer;
+	double mDeltaTime;
+	double mLastZoomTime;
+	bool mDrag;
+	Point mDragPos;
 
 	DXPtr<ID3D11InputLayout>		vertexLayout;
 	DXPtr<ID3D11PixelShader>		pixelShader;

@@ -46,7 +46,8 @@ Window::Window(int width, int height, tchar const *caption)
 	: mHWND(null)
 	, mHINST(null)
 	, mMenu(null)
-	, mMouseDown(false)
+	, mLeftMouseDown(false)
+	, mRightMouseDown(false)
 	, mMessageWait(false)
 	, mCaption(caption)
 	, mFrame(0)
@@ -167,6 +168,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////////////////
 
+static inline Point Pointer(uintptr param)
+{
+	return Point(LOWORD(param), HIWORD(param));
+}
+
 LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch(message)
@@ -191,34 +197,47 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 
 		case WM_CHAR:
-			OnChar((int)wParam, (uint32)lParam);
+			OnChar((int)wParam, lParam);
 			break;
 
 		case WM_KEYDOWN:
-			OnKeyDown((int)wParam, (uint32)lParam);
+			OnKeyDown((int)wParam, lParam);
 			break;
 
 		case WM_KEYUP:
-			OnKeyUp((int)wParam, (uint32)lParam);
+			OnKeyUp((int)wParam, lParam);
+			break;
+
+		case WM_MOUSEWHEEL:
+			OnMouseWheel(Pointer(lParam), (int16)HIWORD(wParam), wParam); 
 			break;
 
 		case WM_MOUSEMOVE:
+			OnMouseMove(Pointer(lParam), wParam);
 			break;
 
 		case WM_LBUTTONDOWN:
 			SetCapture(hWnd);
+			mLeftMouseDown = true;
+			OnLeftButtonDown(Pointer(lParam), wParam);
 			break;
 
 		case WM_LBUTTONUP:
 			ReleaseCapture();
+			mLeftMouseDown = false;
+			OnLeftButtonUp(Pointer(lParam), wParam);
 			break;
 
 		case WM_RBUTTONDOWN:
 			SetCapture(hWnd);
+			mRightMouseDown = true;
+			OnRightButtonDown(Pointer(lParam), wParam);
 			break;
 
 		case WM_RBUTTONUP:
 			ReleaseCapture();
+			mRightMouseDown = false;
+			OnRightButtonUp(Pointer(lParam), wParam);
 			break;
 
 		default:
@@ -239,6 +258,7 @@ void Window::DoResize()
 		mHeight = rc.Height();
 		ResizeD3D();
 	}
+	OnResize();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -316,6 +336,7 @@ bool Window::OpenD3D()
 	sd.Windowed = TRUE;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
+	HRESULT hr;
 	for(UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++)
 	{
 		mDriverType = driverTypes[driverTypeIndex];
@@ -404,9 +425,9 @@ void Window::ReleaseBackBuffer()
 
 void Window::Clear(Color color)
 {
-	float r = color.GetRed() / 255.0f;
-	float g = color.GetGreen() / 255.0f;
-	float b = color.GetBlue() / 255.0f;
+	float r = color.Red() / 255.0f;
+	float g = color.Green() / 255.0f;
+	float b = color.Blue() / 255.0f;
 	float a = 1.0f;
 	float ClearColor[4] = { r, g, b, a };
 	mContext->ClearRenderTargetView(mRenderTargetView, ClearColor);
@@ -454,55 +475,55 @@ void Window::OnClosing()
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnMouseMove(Point2D pos)
+void Window::OnMouseMove(Point pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnLeftButtonDown(Point2D pos)
+void Window::OnLeftButtonDown(Point pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnLeftButtonUp(Point2D pos)
+void Window::OnLeftButtonUp(Point pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnRightButtonDown(Point2D pos)
+void Window::OnRightButtonDown(Point pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnRightButtonUp(Point2D pos)
+void Window::OnRightButtonUp(Point pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnChar(int key, uint32 flags)
+void Window::OnChar(int key, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnKeyDown(int key, uint32 flags)
+void Window::OnKeyDown(int key, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnKeyUp(int key, uint32 flags)
+void Window::OnKeyUp(int key, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnMouseWheel(int delta)
+void Window::OnMouseWheel(Point pos, int delta, uintptr flags)
 {
 }
 

@@ -12,6 +12,14 @@ struct Color
 		kBlueOffset = 0
 	};
 
+	enum
+	{
+		kAlphaMask	= 0xff << kAlphaOffset,
+		kRedMask	= 0xff << kRedOffset,
+		kGreenMask	= 0xff << kGreenOffset,
+		kBlueMask	= 0xff << kBlueOffset,
+	};
+
 	Color()
 	{
 	}
@@ -31,28 +39,28 @@ struct Color
 	{
 	}
 
-	Color(int a, int r, int g, int b)
+	Color(byte a, byte r, byte g, byte b)
 	{
-		mColor =	a << kAlphaOffset |
-					r << kRedOffset |
-					g << kGreenOffset |
-					b << kBlueOffset;
+		mColor =	(uint32)a << kAlphaOffset |
+					(uint32)r << kRedOffset |
+					(uint32)g << kGreenOffset |
+					(uint32)b << kBlueOffset;
 	}
 	
-	Color(int r, int g, int b)
+	Color(byte r, byte g, byte b)
 	{
-		mColor =	0xff << kAlphaOffset |
-					r << kRedOffset |
-					g << kGreenOffset |
-					b << kBlueOffset;
+		mColor =	0xff		<< kAlphaOffset |
+					(uint32)r	<< kRedOffset |
+					(uint32)g	<< kGreenOffset |
+					(uint32)b	<< kBlueOffset;
 	}
 	
 	void GetFloats(float *f)
 	{
-		f[0] = GetRed() / 255.0f;
-		f[1] = GetGreen() / 255.0f;
-		f[2] = GetBlue() / 255.0f;
-		f[3] = GetAlpha() / 255.0f;
+		f[0] = Red() / 255.0f;
+		f[1] = Green() / 255.0f;
+		f[2] = Blue() / 255.0f;
+		f[3] = Alpha() / 255.0f;
 	}
 
 	Color &operator = (Color o)
@@ -73,34 +81,31 @@ struct Color
 		return *this;
 	}
 
-	uint32 GetAlpha() const	{ 	return (mColor >> kAlphaOffset)	& 0xff;	}
-	uint32 GetRed() const	{	return (mColor >> kRedOffset)	& 0xff;	}
-	uint32 GetGreen() const	{	return (mColor >> kGreenOffset)	& 0xff;	}
-	uint32 GetBlue() const	{	return (mColor >> kBlueOffset)	& 0xff;	}
+	uint32 Alpha() const	{ 	return (mColor >> kAlphaOffset)	& 0xff;	}
+	uint32 Red() const		{	return (mColor >> kRedOffset)	& 0xff;	}
+	uint32 Green() const	{	return (mColor >> kGreenOffset)	& 0xff;	}
+	uint32 Blue() const		{	return (mColor >> kBlueOffset)	& 0xff;	}
 
-	void SetAlpha(int a)	{	mColor = (mColor & (~0xffffff00 << kAlphaOffset))	| (a << kAlphaOffset);	}
-	void SetRed(int r)		{	mColor = (mColor & (~0xffffff00 << kRedOffset))		| (r << kRedOffset);	}
-	void SetGreen(int g)	{	mColor = (mColor & (~0xffffff00 << kGreenOffset))	| (g << kGreenOffset);	}
-	void SetBlue(int b)		{	mColor = (mColor & (~0xffffff00 << kBlueOffset))	| (b << kBlueOffset);	}
+	void SetAlpha(byte a)	{	mColor = (mColor & kAlphaMask)	| ((uint32)a << kAlphaOffset);	}
+	void SetRed(byte r)		{	mColor = (mColor & kRedMask)	| ((uint32)r << kRedOffset);	}
+	void SetGreen(byte g)	{	mColor = (mColor & kGreenMask)	| ((uint32)g << kGreenOffset);	}
+	void SetBlue(byte b)	{	mColor = (mColor & kBlueMask)	| ((uint32)b << kBlueOffset);	}
 
-	inline Color Lerp(Color &other, int lerp)		// 0 = this, 256 = other, 128 = 50:50
+	inline Color Lerp(Color &other, byte lerp)		// 0 = this, 255 = other, 128 = 50:50
 	{
-		int inv = 256 - lerp;
-		return Color(	(GetAlpha()	* lerp + other.GetAlpha()	* inv) >> 8,
-						(GetRed()	* lerp + other.GetRed()		* inv) >> 8,
-						(GetGreen()	* lerp + other.GetGreen()	* inv) >> 8,
-						(GetBlue()	* lerp + other.GetBlue()	* inv) >> 8);
+		int inv = 255 - lerp;
+		return Color(	(Alpha()	* lerp + other.Alpha()	* inv) >> 8,
+						(Red()		* lerp + other.Red()	* inv) >> 8,
+						(Green()	* lerp + other.Green()	* inv) >> 8,
+						(Blue()		* lerp + other.Blue()	* inv) >> 8);
 	}
 
-	Color operator * (Color const &other)
+	Color operator * (Color const &o)
 	{
-		return Color(
-			
-			GetAlpha()	* other.GetAlpha() >> 8,
-			GetRed()	* other.GetRed() >> 8,
-			GetGreen()	* other.GetGreen() >> 8,
-			GetBlue()	* other.GetBlue() >> 8
-			);
+		return Color(	Alpha()	* o.Alpha()	>> 8,
+						Red()	* o.Red()	>> 8,
+						Green()	* o.Green()	>> 8,
+						Blue()	* o.Blue()	>> 8 );
 	}
 
 	enum : uint32
@@ -114,7 +119,9 @@ struct Color
 		Bisque = 0xFFFFE4C4,
 		Black = 0xFF000000,
 		BlanchedAlmond = 0xFFFFEBCD,
-		Blue = 0xFF0000FF,
+		BrightBlue = 0xFF0000FF,
+		BrightGreen = 0xFF008000,
+		BrightRed = 0xFFFF0000,
 		BlueViolet = 0xFF8A2BE2,
 		Brown = 0xFFA52A2A,
 		BurlyWood = 0xFFDEB887,
@@ -156,7 +163,6 @@ struct Color
 		Gold = 0xFFFFD700,
 		Goldenrod = 0xFFDAA520,
 		Gray = 0xFF808080,
-		Green = 0xFF008000,
 		GreenYellow = 0xFFADFF2F,
 		Honeydew = 0xFFF0FFF0,
 		HotPink = 0xFFFF69B4,
@@ -218,7 +224,6 @@ struct Color
 		Plum = 0xFFDDA0DD,
 		PowderBlue = 0xFFB0E0E6,
 		Purple = 0xFF800080,
-		Red = 0xFFFF0000,
 		RosyBrown = 0xFFBC8F8F,
 		RoyalBlue = 0xFF4169E1,
 		SaddleBrown = 0xFF8B4513,

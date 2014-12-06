@@ -10,10 +10,10 @@ Vec2 Vec2::half(0.5f, 0.5f);
 
 //////////////////////////////////////////////////////////////////////
 
-Vec2::Vec2(Point2D const &p) : x((float)p.x), y((float)p.y)
+Vec2::Vec2(Point const &p) : x((float)p.x), y((float)p.y)
 {
 }
 
-Vec2::Vec2(Size2D const &s) : x((float)s.w), y((float)s.h)
+Vec2::Vec2(Size const &s) : x((float)s.Width()), y((float)s.Height())
 {
 }
