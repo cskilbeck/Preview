@@ -182,6 +182,7 @@
     <ResourceCompile Include="Preview.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\Desktop\cursor_drag_hand.png" />
     <Image Include="Preview.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
@@ -216,6 +217,8 @@
   <ItemGroup>
     <None Include="..\Debug\PixelShader.cso" />
     <None Include="..\Debug\VertexShader.cso" />
+    <None Include="cursor1.cur" />
+    <None Include="drag.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <memory>
 
+#include "Resource.h"
+
 #include "Types.h"
 #include "Util.h"
 #include "Win32.h"
@@ -41,4 +43,3 @@
 #include "Window.h"
 #include "Preview.h"
 
-#include "resource.h"

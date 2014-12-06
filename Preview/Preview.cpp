@@ -250,7 +250,7 @@ void Preview::OnRightButtonDown(Point pos, uintptr flags)
 {
 	mDrag = true;
 	mDragPos = pos;
-	SetCursor(LoadCursor(NULL, IDC_CROSS));
+	SetCursor(LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG)));
 }
 
 //////////////////////////////////////////////////////////////////////
