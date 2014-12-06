@@ -28,7 +28,6 @@
 
 #include "Types.h"
 #include "Util.h"
-#include "Win32.h"
 #include "WinResource.h"
 #include "WinMessages.h"
 #include "Timer.h"
@@ -36,10 +35,12 @@
 #include "Point.h"
 #include "Size.h"
 #include "Rect.h"
+#include "Win32.h"
 
 #include "Color.h"
 #include "D3D.h"
 #include "Texture.h"
 #include "Window.h"
+#include "DXWindow.h"
 #include "Preview.h"
 

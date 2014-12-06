@@ -8,10 +8,16 @@ struct Window;
 
 struct Texture
 {
+	static DXPtr<ID3D11Device> sDevice;
+	static DXPtr<ID3D11DeviceContext> sContext;
+
+	static void SetDeviceAndContext(DXPtr<ID3D11Device> device, DXPtr<ID3D11DeviceContext> context);
+	static void ReleaseDeviceAndContext();
+
 	Texture();
-	Texture(tchar const *name, Window *parent);
-	Texture(int w, int h, Color color, Window *parent);
-	Texture(int w, int h, byte *pixels, Window *parent);
+	Texture(tchar const *name);
+	Texture(int w, int h, Color color);
+	Texture(int w, int h, byte *pixels);
 	~Texture();
 
 	int Width() const
@@ -53,10 +59,7 @@ struct Texture
 
 private:
 
-	Size							mSize;
 	tstring							mName;
-	DXPtr<ID3D11Device>				mDevice;
-	DXPtr<ID3D11DeviceContext>		mContext;
 	DXPtr<ID3D11Texture2D>			mTexture2D;
 	DXPtr<ID3D11ShaderResourceView>	mShaderResourceView;
 	D3D11_TEXTURE2D_DESC			mTextureDesc;

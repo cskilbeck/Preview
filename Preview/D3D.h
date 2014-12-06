@@ -82,7 +82,7 @@ template<typename T> struct DXPtr
 
 	DXPtr &operator=(DXPtr const &ptr)
 	{
-		reset();
+		Release();
 		p = ptr.p;
 		p->AddRef();
 		return *this;

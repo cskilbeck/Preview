@@ -55,12 +55,13 @@ struct Color
 					(uint32)b	<< kBlueOffset;
 	}
 	
-	void GetFloats(float *f)
+	float *GetFloats(float *f)
 	{
 		f[0] = Red() / 255.0f;
 		f[1] = Green() / 255.0f;
 		f[2] = Blue() / 255.0f;
 		f[3] = Alpha() / 255.0f;
+		return f;
 	}
 
 	Color &operator = (Color o)

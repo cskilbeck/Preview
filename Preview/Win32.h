@@ -7,3 +7,11 @@
 void ChangeDirectory(tchar const *relative);
 tstring Win32ErrorMessage(DWORD err = 0);
 void ErrorMessageBox(tchar const *format, ...);
+
+//////////////////////////////////////////////////////////////////////
+
+inline Point GetPointFromParam(uintptr param)
+{
+	return Point((int16)LOWORD(param), (int16)HIWORD(param));
+}
+

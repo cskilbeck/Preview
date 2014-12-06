@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="Color.h" />
     <ClInclude Include="D3D.h" />
+    <ClInclude Include="DXWindow.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
@@ -161,6 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D.cpp" />
+    <ClCompile Include="DXWindow.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="Preview.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -217,7 +219,6 @@
   <ItemGroup>
     <None Include="..\Debug\PixelShader.cso" />
     <None Include="..\Debug\VertexShader.cso" />
-    <None Include="cursor1.cur" />
     <None Include="drag.cur" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

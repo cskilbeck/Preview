@@ -4,11 +4,12 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct Preview : Window
+struct Preview : DXWindow
 {
 	Preview();
 	~Preview();
 
+	bool OnCreate() override;
 	bool OnUpdate() override;
 	void OnDraw() override;
 	void OnResize() override;
@@ -17,6 +18,7 @@ struct Preview : Window
 	void OnRightButtonDown(Point pos, uintptr flags) override;
 	void OnRightButtonUp(Point pos, uintptr flags) override;
 	void OnMouseMove(Point pos, uintptr flags) override;
+	void OnDestroy() override;
 
 	HRESULT LoadShaders();
 	HRESULT CreateSampler();
@@ -29,6 +31,7 @@ struct Preview : Window
 
 	Ptr<Texture> mTexture;
 	Color mBackgroundColor;
+	HCURSOR mHandCursor;
 	Vec2 mTranslation;
 	Vec2 mOffset;
 	float mScale;

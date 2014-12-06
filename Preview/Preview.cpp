@@ -1,17 +1,19 @@
 //////////////////////////////////////////////////////////////////////
-// Split Window object into plain and DirectX versions
-// Timer
-// Load from command line, pop file choose dialog if empty
+// Load from command line, pop file choose dialog if empty?
 // Options Menu
 // Load/Save options
 // Don't churn messageloop when not necessary
-// Window sizing/stretching/squeezing etc
-// Pan/Zoom
+// Window sizing/stretching/squeezing etc on startup
 // Selection/Copy/Save As
 // ?? Use GDI+ to load the textures?
 // Support GIFs
 // Full screen mode
 // ?? Cycle through images in a folder
+//////////////////////////////////////////////////////////////////////
+// - Pan/Zoom
+//////////////////////////////////////////////////////////////////////
+// -- Split Window object into plain and DirectX versions
+// -- Timer
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -69,8 +71,8 @@ HRESULT Preview::LoadShaders()
 {
 	vertexShader.Release();
 	pixelShader.Release();
-	WinResource vertData(IDR_VERTEXSHADER);
-	WinResource pixelData(IDR_PIXELSHADER);
+	Resource vertData(IDR_VERTEXSHADER);
+	Resource pixelData(IDR_PIXELSHADER);
 	if(vertData.IsValid() && pixelData.IsValid())
 	{
 		D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -173,28 +175,50 @@ HRESULT Preview::CreateBlendState()
 //////////////////////////////////////////////////////////////////////
 
 Preview::Preview()
-	: Window(100, 100)
+	: DXWindow(100, 100)
 	, mBackgroundColor(255, 0, 255)
 	, mScale(1)
 	, mCurrentScale(1)
 	, mLastZoomTime(0)
 	, mOffset(0, 0)
 	, mDrag(false)
+	, mHandCursor(NULL)
 {
-	DXV(LoadShaders());
-	DXV(CreateSampler());
-	DXV(CreateVertexBuffer());
-	DXV(CreateRasterizerState());
-	DXV(CreateBlendState());
-	DXV(CreateVertexShaderConstants());
-	DXV(CreateDepthStencilState());
-	DXV(CreatePixelShaderConstants());
+}
 
-	mTexture.reset(new Texture(TEXT("D:\\test.png"), this));
-	ChangeSize(mTexture->Width(), mTexture->Height());
-	Center();
-	mTranslation = FSize() / 2;
-	mTimer.Reset();
+//////////////////////////////////////////////////////////////////////
+
+bool Preview::OnCreate()
+{
+	if(DXWindow::OnCreate())
+	{
+		DXB(LoadShaders());
+		DXB(CreateSampler());
+		DXB(CreateVertexBuffer());
+		DXB(CreateRasterizerState());
+		DXB(CreateBlendState());
+		DXB(CreateVertexShaderConstants());
+		DXB(CreatePixelShaderConstants());
+		DXB(CreateDepthStencilState());
+
+		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
+
+		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		ChangeSize(mTexture->Width(), mTexture->Height());
+		Center();
+		mTranslation = FSize() / 2;
+		mTimer.Reset();
+		return true;
+	}
+	return false;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnDestroy()
+{
+	DXWindow::OnDestroy();
+	DestroyCursor(mHandCursor);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -241,6 +265,7 @@ void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
 
 void Preview::OnResize()
 {
+	DXWindow::OnResize();
 	mTranslation = FSize() / 2;
 }
 
@@ -250,7 +275,7 @@ void Preview::OnRightButtonDown(Point pos, uintptr flags)
 {
 	mDrag = true;
 	mDragPos = pos;
-	SetCursor(LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG)));
+	SetCursor(mHandCursor);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -277,9 +302,10 @@ void Preview::OnMouseMove(Point pos, uintptr flags)
 
 bool Preview::OnUpdate()
 {
+	DXWindow::OnUpdate();
+
 	mDeltaTime = mTimer.Delta();
 
-	Window::OnUpdate();
 	if(mFrame == 1)
 	{
 		Show();
@@ -320,15 +346,11 @@ void Preview::OnDraw()
 				  0.0f, 0.0f, 1.0f, 0.0f,
 				  -1.0f, 1.0f, 0.0f, 1.0f);
 
-	float rotation = 0;
-	//scale = sinf(mFrame * 0.0125f) * 3.25f + 4;
-	//rotation = mFrame * 0.025f + (sinf(mFrame * 0.033f) * 0.1f + 0.2f);
-
 	XMVECTOR scalingOrigin = XMVec2(Vec2(0.5f, 0.5f));
 	XMVECTOR rotationOrigin = XMVec2(Vec2::zero);
 	XMVECTOR xscale = XMVec2(mTexture->FSize() * mCurrentScale);
 	XMVECTOR translate = XMVec2(mTranslation + mOffset);
-	XMMATRIX m2d = XMMatrixTransformation2D(scalingOrigin, 0, xscale, rotationOrigin, rotation, translate);
+	XMMATRIX m2d = XMMatrixTransformation2D(scalingOrigin, 0, xscale, rotationOrigin, 0, translate);
 
 	UINT strides[] = { sizeof(Vertex) };
 	UINT offsets[] = { 0 };

@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-WinResource::WinResource(DWORD resourceid)
+Resource::Resource(DWORD resourceid)
 	: data(null)
 	, size(0)
 {
@@ -25,7 +25,7 @@ WinResource::WinResource(DWORD resourceid)
 
 //////////////////////////////////////////////////////////////////////
 
-WinResource::~WinResource()
+Resource::~Resource()
 {
 	if(data != null)
 	{

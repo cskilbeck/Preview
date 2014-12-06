@@ -159,3 +159,4 @@ tstring GetCurrentFolder()
 	s[l] = 0;
 	return Format(TEXT("%s"), &s[0]);
 }
+

@@ -10,8 +10,6 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 
 	while(preview.Update())
 	{
-		preview.OnDraw();
-		preview.Present();
 	}
 	return 0;
 }
