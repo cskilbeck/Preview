@@ -11,6 +11,7 @@ struct Window
 
 	virtual bool OnCreate();
 	virtual bool OnUpdate();
+	virtual void OnPaint(PAINTSTRUCT &ps);
 	virtual void OnDestroy();
 	virtual void OnResize();
 	virtual void OnMouseMove(Point pos, uintptr flags);
@@ -33,6 +34,7 @@ struct Window
 	float FWidth() const;
 	float FHeight() const;
 	Vec2 FSize() const;
+	Rect ClientRect() const;
 	bool SetMessageWait(bool wait);
 	bool GetMessageWait() const;
 	Size GetSize();
@@ -91,6 +93,15 @@ inline float Window::FHeight() const
 inline Vec2 Window::FSize() const
 {
 	return Vec2(FWidth(), FHeight());
+}
+
+//////////////////////////////////////////////////////////////////////
+
+inline Rect Window::ClientRect() const
+{
+	Rect r;
+	GetClientRect(mHWND, &r);
+	return r;
 }
 
 //////////////////////////////////////////////////////////////////////

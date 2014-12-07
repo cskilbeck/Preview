@@ -13,13 +13,14 @@ protected:
 
 	virtual void OnDraw();
 
+	void OnPaint(PAINTSTRUCT &ps) override;
 	bool OnUpdate() override;
 	bool OnCreate() override;
 	void OnResize() override;
 	void OnDestroy() override;
 
 	bool OpenD3D();
-	void ResizeD3D();
+	bool ResizeD3D();
 	void CloseD3D();
 	bool GetBackBuffer();
 	void ReleaseBackBuffer();

@@ -8,6 +8,7 @@ DXWindow::DXWindow(int width, int height, tchar const *caption)
 	: Window(width, height, caption)
 	, mFrame(0)
 {
+	mMessageWait = false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -32,17 +33,26 @@ DXWindow::~DXWindow()
 
 //////////////////////////////////////////////////////////////////////
 
+void DXWindow::OnPaint(PAINTSTRUCT &ps)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void DXWindow::OnDraw()
 {
+	Clear(Color(16, 64, 32));
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void DXWindow::OnResize()
 {
-	ResizeD3D();
-	OnDraw();
-	Present();
+	if(ResizeD3D())
+	{
+		OnDraw();
+		Present();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -52,6 +62,10 @@ bool DXWindow::OnUpdate()
 	OnDraw();
 	Present();
 	++mFrame;
+	if(mFrame == 1)
+	{
+		Show();
+	}
 	return true;
 }
 
@@ -135,7 +149,7 @@ bool DXWindow::OpenD3D()
 
 //////////////////////////////////////////////////////////////////////
 
-void DXWindow::ResizeD3D()
+bool DXWindow::ResizeD3D()
 {
 	if(mContext != null)
 	{
@@ -145,8 +159,12 @@ void DXWindow::ResizeD3D()
 	}
 
 	ReleaseBackBuffer();
-	mSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-	GetBackBuffer();
+	if(mSwapChain != null)
+	{
+		mSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+		return GetBackBuffer();
+	}
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////

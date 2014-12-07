@@ -29,7 +29,7 @@ struct Color
 	{
 	}
 
-	operator uint32()
+	operator uint32() const
 	{
 		return mColor;
 	}
@@ -55,7 +55,7 @@ struct Color
 					(uint32)b	<< kBlueOffset;
 	}
 	
-	float *GetFloats(float *f)
+	float *GetFloats(float *f) const
 	{
 		f[0] = Red() / 255.0f;
 		f[1] = Green() / 255.0f;
@@ -92,13 +92,18 @@ struct Color
 	void SetGreen(byte g)	{	mColor = (mColor & kGreenMask)	| ((uint32)g << kGreenOffset);	}
 	void SetBlue(byte b)	{	mColor = (mColor & kBlueMask)	| ((uint32)b << kBlueOffset);	}
 
-	inline Color Lerp(Color &other, byte lerp)		// 0 = this, 255 = other, 128 = 50:50
+	inline Color Lerp(Color const &other, byte lerp) const		// 0 = this, 255 = other, 128 = 50:50
 	{
 		int inv = 255 - lerp;
-		return Color(	(Alpha()	* lerp + other.Alpha()	* inv) >> 8,
-						(Red()		* lerp + other.Red()	* inv) >> 8,
-						(Green()	* lerp + other.Green()	* inv) >> 8,
-						(Blue()		* lerp + other.Blue()	* inv) >> 8);
+		return Color(	(Alpha()	* inv + other.Alpha()	* lerp) >> 8,
+						(Red()		* inv + other.Red()		* lerp) >> 8,
+						(Green()	* inv + other.Green()	* lerp) >> 8,
+						(Blue()		* inv + other.Blue()	* lerp) >> 8);
+	}
+
+	inline Color Lerp(Color const &other, float lerp) const
+	{
+		return Lerp(other, (byte)(lerp * 255.0f));
 	}
 
 	Color operator * (Color const &o)

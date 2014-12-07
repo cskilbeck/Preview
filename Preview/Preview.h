@@ -6,7 +6,7 @@
 
 struct Preview : DXWindow
 {
-	Preview();
+	Preview(int width = 640, int height = 480);
 	~Preview();
 
 	bool OnCreate() override;

@@ -48,7 +48,7 @@ Window::Window(int width, int height, tchar const *caption)
 	, mMenu(null)
 	, mLeftMouseDown(false)
 	, mRightMouseDown(false)
-	, mMessageWait(false)
+	, mMessageWait(true)
 	, mCaption(caption)
 {
 	if(!Init(width, height))
@@ -115,6 +115,7 @@ bool Window::Init(int width, int height)
 
 bool Window::OnCreate()
 {
+	Show();
 	return true;
 }
 
@@ -177,6 +178,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+
 	switch(message)
 	{
 		case WM_USER:
@@ -200,6 +203,12 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case WM_SIZING:
 			DoResize();
+			break;
+
+		case WM_PAINT:
+			BeginPaint(mHWND, &ps);
+			OnPaint(ps);
+			EndPaint(mHWND, &ps);
 			break;
 
 		case WM_CHAR:
@@ -281,6 +290,14 @@ void Window::Show()
 void Window::Hide()
 {
 	ShowWindow(mHWND, SW_HIDE);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::OnPaint(PAINTSTRUCT &ps)
+{
+	FillRect(ps.hdc, &ClientRect(), (HBRUSH)GetStockObject(WHITE_BRUSH));
+	TextOut(ps.hdc, 0, 0, TEXT("Hello World"), 11);
 }
 
 //////////////////////////////////////////////////////////////////////

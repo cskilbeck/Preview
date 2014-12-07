@@ -9,6 +9,7 @@
 // Support GIFs
 // Full screen mode
 // ?? Cycle through images in a folder
+// Make MENU optional in Window
 //////////////////////////////////////////////////////////////////////
 // - Pan/Zoom
 //////////////////////////////////////////////////////////////////////
@@ -162,20 +163,14 @@ HRESULT Preview::CreateBlendState()
 {
 	blendState.Release();
 	CD3D11_BLEND_DESC blendDesc(D3D11_DEFAULT);
-	D3D11_RENDER_TARGET_BLEND_DESC &bd = blendDesc.RenderTarget[0];
-	bd.BlendEnable = true;
-	bd.SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	bd.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	bd.SrcBlendAlpha = D3D11_BLEND_ZERO;
-	bd.DestBlendAlpha = D3D11_BLEND_ZERO;
 	DX(mDevice->CreateBlendState(&blendDesc, &blendState));
 	return S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-Preview::Preview()
-	: DXWindow(100, 100)
+Preview::Preview(int width, int height)
+	: DXWindow(width, height)
 	, mBackgroundColor(255, 0, 255)
 	, mScale(1)
 	, mCurrentScale(1)
@@ -305,11 +300,6 @@ bool Preview::OnUpdate()
 	DXWindow::OnUpdate();
 
 	mDeltaTime = mTimer.Delta();
-
-	if(mFrame == 1)
-	{
-		Show();
-	}
 
 	if(mCurrentScale != mScale)
 	{
