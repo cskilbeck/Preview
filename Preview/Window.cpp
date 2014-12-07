@@ -45,7 +45,6 @@ static void CentreRectInDefaultMonitor(Rect &rc)
 Window::Window(int width, int height, tchar const *caption)
 	: mHWND(null)
 	, mHINST(null)
-	, mMenu(null)
 	, mLeftMouseDown(false)
 	, mRightMouseDown(false)
 	, mMessageWait(true)
@@ -61,11 +60,10 @@ Window::Window(int width, int height, tchar const *caption)
 
 void Window::Center()
 {
-	Rect rc;
-	GetClientRect(mHWND, &rc);
+	Rect rc = ClientRect();
 	CenterRectInMonitor(rc, MonitorFromWindow(mHWND, MONITOR_DEFAULTTOPRIMARY));
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
-	SetWindowPos(mHWND, null, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_NOSIZE|SWP_NOZORDER);
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != null, 0);
+	SetWindowPos(mHWND, null, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOSIZE|SWP_NOZORDER);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -73,7 +71,6 @@ void Window::Center()
 bool Window::Init(int width, int height)
 {
 	mHINST = GetModuleHandle(null);
-	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -94,12 +91,10 @@ bool Window::Init(int width, int height)
 	mHeight = height;
 
 	Rect rect(0, 0, width, height);
-	AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, true, 0);
-	CentreRectInDefaultMonitor(rect);
 
 	mHWND = CreateWindowEx(0, TEXT("WindowClass"), mCaption.c_str(), WS_OVERLAPPEDWINDOW,
 						   rect.left, rect.top, rect.Width(), rect.Height(),
-						   NULL, mMenu, mHINST, this);
+						   NULL, null, mHINST, this);
 	if(mHWND == null)
 	{
 		DWORD err = GetLastError();
@@ -115,7 +110,7 @@ bool Window::Init(int width, int height)
 
 bool Window::OnCreate()
 {
-	Show();
+	Center();
 	return true;
 }
 
@@ -170,7 +165,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	default:
 		rc = ((Window *)GetWindowLongPtr(hWnd, 0))->HandleMessage(hWnd, message, wParam, lParam);
 	}
-	TRACE(TEXT("%s: %08x,%08x (%d,%d) returns %d\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam, rc);
+	//TRACE(TEXT("%s: %08x,%08x (%d,%d) returns %d\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam, rc);
 	return rc;
 }
 
@@ -179,6 +174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
+	Point mousePos;
 
 	switch(message)
 	{
@@ -186,6 +182,10 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			if(!OnCreate())
 			{
 				Close();
+			}
+			else
+			{
+				Show();
 			}
 			break;
 
@@ -224,7 +224,9 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 
 		case WM_MOUSEWHEEL:
-			OnMouseWheel(GetPointFromParam(lParam), (int16)HIWORD(wParam), wParam); 
+			mousePos = GetPointFromParam(lParam);
+			ScreenToClient(hWnd, &mousePos);
+			OnMouseWheel(mousePos, (int16)HIWORD(wParam), wParam);
 			break;
 
 		case WM_MOUSEMOVE:
@@ -297,7 +299,8 @@ void Window::Hide()
 void Window::OnPaint(PAINTSTRUCT &ps)
 {
 	FillRect(ps.hdc, &ClientRect(), (HBRUSH)GetStockObject(WHITE_BRUSH));
-	TextOut(ps.hdc, 0, 0, TEXT("Hello World"), 11);
+	tchar hello[] = TEXT("Override your OnPaint function, fool!");
+	TextOut(ps.hdc, 0, 0, hello, ARRAYSIZE(hello) - 1);
 }
 
 //////////////////////////////////////////////////////////////////////

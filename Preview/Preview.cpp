@@ -9,16 +9,16 @@
 // Support GIFs
 // Full screen mode
 // ?? Cycle through images in a folder
-// Make MENU optional in Window
 //////////////////////////////////////////////////////////////////////
-// - Pan/Zoom
+// - Pan/Zoom (ditch that crazy matrix function)
 //////////////////////////////////////////////////////////////////////
 // -- Split Window object into plain and DirectX versions
 // -- Timer
+// -- Make MENU optional in Window
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "D3D.h"
+#include "resource.h"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -45,6 +45,18 @@ static Vertex vert[6] =
 	{ { 0, 1 }, { 0, 1 } },
 	{ { 0, 0 }, { 0, 0 } },
 };
+
+static void SetQuad(Vec2 const &tl, Vec2 const &br)
+{
+	Vec2 tr(br.x, tl.y);
+	Vec2 bl(tl.x, br.y);
+	vert[0].mPos = tl;
+	vert[1].mPos = tr;
+	vert[2].mPos = br;
+	vert[3].mPos = br;
+	vert[4].mPos = bl;
+	vert[5].mPos = tl;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -176,8 +188,10 @@ Preview::Preview(int width, int height)
 	, mCurrentScale(1)
 	, mLastZoomTime(0)
 	, mOffset(0, 0)
+	, mMenu(null)
 	, mDrag(false)
 	, mHandCursor(NULL)
+	, mScaleOrg(0.5f, 0.5f)
 {
 }
 
@@ -185,6 +199,9 @@ Preview::Preview(int width, int height)
 
 bool Preview::OnCreate()
 {
+	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
+	SetMenu(mHWND, mMenu);
+
 	if(DXWindow::OnCreate())
 	{
 		DXB(LoadShaders());
@@ -214,6 +231,7 @@ void Preview::OnDestroy()
 {
 	DXWindow::OnDestroy();
 	DestroyCursor(mHandCursor);
+	DestroyMenu(mMenu);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -253,6 +271,14 @@ void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
 			mCurrentScale = 1.0f;
 		}
 	}
+	Vec2 mousePos = Vec2(pos);
+	Vec2 ts = mTexture->FSize();
+	Vec2 hs = ts / 2;
+	Vec2 tl = mTranslation - hs;
+	Vec2 br = mTranslation + hs;
+	Vec2 m = (Vec2(pos) - tl) / hs;
+	TRACE(TEXT("Mouse: %f,%f, Translation: %f,%f, Result: %f,%f\n"), mousePos.x, mousePos.y, mTranslation.x, mTranslation.y, m.x, m.y);
+	mScaleOrg = m;
 	mScale = newScale;
 }
 
@@ -287,6 +313,10 @@ void Preview::OnRightButtonUp(Point pos, uintptr flags)
 
 void Preview::OnMouseMove(Point pos, uintptr flags)
 {
+	// work out where in the image the mouse is
+	// normalize it
+	// that's the scale origin
+
 	if(mDrag)
 	{
 		mOffset = Vec2(pos - mDragPos);
@@ -336,11 +366,7 @@ void Preview::OnDraw()
 				  0.0f, 0.0f, 1.0f, 0.0f,
 				  -1.0f, 1.0f, 0.0f, 1.0f);
 
-	XMVECTOR scalingOrigin = XMVec2(Vec2(0.5f, 0.5f));
-	XMVECTOR rotationOrigin = XMVec2(Vec2::zero);
-	XMVECTOR xscale = XMVec2(mTexture->FSize() * mCurrentScale);
-	XMVECTOR translate = XMVec2(mTranslation + mOffset);
-	XMMATRIX m2d = XMMatrixTransformation2D(scalingOrigin, 0, xscale, rotationOrigin, 0, translate);
+	XMMATRIX m2d = XMMatrixTransformation2D(mScaleOrg, 0, mTexture->FSize() * mCurrentScale, Vec2::zero, 0, mTranslation + mOffset);
 
 	UINT strides[] = { sizeof(Vertex) };
 	UINT offsets[] = { 0 };

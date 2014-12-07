@@ -29,6 +29,7 @@ struct Preview : DXWindow
 	HRESULT CreateVertexShaderConstants();
 	HRESULT CreatePixelShaderConstants();
 
+	HMENU mMenu;
 	Ptr<Texture> mTexture;
 	Color mBackgroundColor;
 	HCURSOR mHandCursor;
@@ -36,6 +37,7 @@ struct Preview : DXWindow
 	Vec2 mOffset;
 	float mScale;
 	float mCurrentScale;
+	Vec2 mScaleOrg;
 	Timer mTimer;
 	double mDeltaTime;
 	double mLastZoomTime;

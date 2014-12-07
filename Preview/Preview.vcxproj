@@ -184,7 +184,6 @@
     <ResourceCompile Include="Preview.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Desktop\cursor_drag_hand.png" />
     <Image Include="Preview.ico" />
     <Image Include="small.ico" />
   </ItemGroup>

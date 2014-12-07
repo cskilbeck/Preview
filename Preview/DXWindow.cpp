@@ -15,7 +15,7 @@ DXWindow::DXWindow(int width, int height, tchar const *caption)
 
 bool DXWindow::OnCreate()
 {
-	return OpenD3D();
+	return Window::OnCreate() && OpenD3D();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -35,13 +35,14 @@ DXWindow::~DXWindow()
 
 void DXWindow::OnPaint(PAINTSTRUCT &ps)
 {
+	// Don't call Window::OnPaint(ps);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void DXWindow::OnDraw()
 {
-	Clear(Color(16, 64, 32));
+	Clear(Color::Black);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -62,10 +63,6 @@ bool DXWindow::OnUpdate()
 	OnDraw();
 	Present();
 	++mFrame;
-	if(mFrame == 1)
-	{
-		Show();
-	}
 	return true;
 }
 

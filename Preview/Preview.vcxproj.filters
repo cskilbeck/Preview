@@ -132,9 +132,6 @@
     <Image Include="Preview.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\..\Desktop\cursor_drag_hand.png">
-      <Filter>Resource Files</Filter>
-    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">

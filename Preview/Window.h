@@ -52,7 +52,6 @@ protected:
 	int								mHeight;
 	HWND							mHWND;
 	HINSTANCE						mHINST;
-	HMENU							mMenu;
 	bool							mLeftMouseDown;
 	bool							mRightMouseDown;
 	bool							mMessageWait;

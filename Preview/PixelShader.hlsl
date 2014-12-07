@@ -28,9 +28,9 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_Target
 {
+	float4 picColour = pic.Sample(smplr, input.Tex0) * mask + offset;
 	float y = trunc(fmod(input.Tex1.y, gridSize2.y) / gridSize.y) * gridSize.x;
 	float x = trunc(fmod(input.Tex1.x + y, gridSize2.x) / gridSize.x);
 	float4 gridColor = lerp(gridColor0, gridColor1, x);
-	float4 picColour = pic.Sample(smplr, input.Tex0) * mask + offset;
 	return lerp(gridColor, picColour, picColour.a);
 }

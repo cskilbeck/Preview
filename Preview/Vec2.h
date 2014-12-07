@@ -124,6 +124,11 @@ struct Vec2
 		return sqrtf(LengthSquared());
 	}
 
+	operator DirectX::XMVECTOR() const
+	{
+		return DirectX::XMLoadFloat2((CONST DirectX::XMFLOAT2*)this);
+	}
+
 	Vec2 Normalize();
 };
 
