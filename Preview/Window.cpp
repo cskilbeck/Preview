@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-static void CenterRectInMonitor(Rect &rc, HMONITOR hMonitor)
+static void CenterRectInMonitor(Rect2D &rc, HMONITOR hMonitor)
 {
 	if(hMonitor != INVALID_HANDLE_VALUE)
 	{
@@ -26,18 +26,18 @@ static void CenterRectInMonitor(Rect &rc, HMONITOR hMonitor)
 
 //////////////////////////////////////////////////////////////////////
 
-static void CentreRectInMonitorWithMouseInIt(Rect &rc)
+static void CentreRectInMonitorWithMouseInIt(Rect2D &rc)
 {
-	Point ptCursorPos;
+	Point2D ptCursorPos;
 	GetCursorPos(&ptCursorPos);
 	CenterRectInMonitor(rc, MonitorFromPoint(ptCursorPos, MONITOR_DEFAULTTOPRIMARY));
 }
 
 //////////////////////////////////////////////////////////////////////
 
-static void CentreRectInDefaultMonitor(Rect &rc)
+static void CentreRectInDefaultMonitor(Rect2D &rc)
 {
-	CenterRectInMonitor(rc, MonitorFromPoint(Point(0, 0), MONITOR_DEFAULTTOPRIMARY));
+	CenterRectInMonitor(rc, MonitorFromPoint(Point2D(0, 0), MONITOR_DEFAULTTOPRIMARY));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -58,9 +58,9 @@ Window::Window(int width, int height, tchar const *caption)
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::Center()
+void Window::MoveToMiddleOfMonitor()
 {
-	Rect rc = ClientRect();
+	Rect2D rc = ClientRect();
 	CenterRectInMonitor(rc, MonitorFromWindow(mHWND, MONITOR_DEFAULTTOPRIMARY));
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != null, 0);
 	SetWindowPos(mHWND, null, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOSIZE|SWP_NOZORDER);
@@ -74,7 +74,7 @@ bool Window::Init(int width, int height)
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wcex.lpfnWndProc = WndProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = sizeof(Window *);
@@ -90,7 +90,7 @@ bool Window::Init(int width, int height)
 	mWidth = width;
 	mHeight = height;
 
-	Rect rect(0, 0, width, height);
+	Rect2D rect(0, 0, width, height);
 
 	mHWND = CreateWindowEx(0, TEXT("WindowClass"), mCaption.c_str(), WS_OVERLAPPEDWINDOW,
 						   rect.left, rect.top, rect.Width(), rect.Height(),
@@ -101,7 +101,6 @@ bool Window::Init(int width, int height)
 		ErrorMessageBox(TEXT("Failed to create window (%08x) - %s"), err, Win32ErrorMessage(err).c_str());
 		return false;
 	}
-	TRACE(TEXT("Window create complete\n"));
 	PostMessage(mHWND, WM_USER, 0, 0);				// this won't get processed until message handler picks it up
 	return true;
 }
@@ -110,18 +109,64 @@ bool Window::Init(int width, int height)
 
 bool Window::OnCreate()
 {
-	Center();
+	MoveToMiddleOfMonitor();
 	return true;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Rect2D Window::GetWindowRectFromClientRect(Rect2D const &clientRect)
+{
+	Rect2D rc(0, 0, 0, 0);
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != 0, 0);
+	int minWidth = GetSystemMetrics(SM_CXMINTRACK);
+	rc.left += clientRect.left;
+	rc.top += clientRect.top;
+	rc.right += clientRect.right;
+	rc.bottom += clientRect.bottom;
+	rc.right = rc.left + Max(rc.Width(), minWidth);
+	return rc;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::SetWindowRect(Rect2D const &r)
+{
+	SetWindowPos(mHWND, null, r.left, r.top, r.Width(), r.Height(), SWP_NOZORDER);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Rect2D Window::GetClientRectFromWindowRect(Rect2D const &windowRect)
+{
+	Rect2D rc(0, 0, 0, 0);
+	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != 0, 0);
+	Point2D tl(windowRect.left - rc.left, windowRect.top - rc.top);
+	Point2D br(windowRect.right - rc.right, windowRect.bottom - rc.bottom);
+	Size2D sz(br - tl);
+	return Rect2D(tl, sz);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::ResizeWindow(int newWidth, int newHeight)
+{
+	Rect2D oldRect;
+	Rect2D rc = GetWindowRectFromClientRect(Rect2D(0, 0, newWidth, newHeight));
+	GetWindowRect(mHWND, &oldRect);
+	rc.MoveTo(oldRect.MidPoint() - rc.HalfSize());
+	rc.left = Max(0L, rc.left);
+	rc.top = Max(0L, rc.top);
+	SetWindowPos(mHWND, null, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOZORDER);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Window::ChangeSize(int newWidth, int newHeight)
 {
-	Rect rc(0, 0, newWidth, newHeight);
+	Rect2D rc(0, 0, newWidth, newHeight);
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
-	SetWindowPos(mHWND, null, 0, 0, rc.Width(), rc.Height(), SWP_NOMOVE|SWP_NOZORDER);
-	DoResize();
+	SetWindowPos(mHWND, null, 0, 0, rc.Width(), rc.Height(), SWP_NOMOVE | SWP_NOZORDER);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -146,6 +191,7 @@ bool Window::Update()
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	MINMAXINFO *mminfo;
 	Window *window;
 	LRESULT rc;
 
@@ -159,7 +205,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_GETMINMAXINFO:
-		rc = DefWindowProc(hWnd, message, wParam, lParam);
+		mminfo = (MINMAXINFO *)lParam;
+		mminfo->ptMinTrackSize.y = 16 + GetSystemMetrics(SM_CYMINTRACK) + ((GetMenu(hWnd) != null) ? GetSystemMetrics(SM_CYMENU) : 0);
+		rc = 0;
 		break;
 
 	default:
@@ -174,7 +222,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
-	Point mousePos;
+	Point2D mousePos;
 
 	switch(message)
 	{
@@ -233,6 +281,14 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			OnMouseMove(GetPointFromParam(lParam), wParam);
 			break;
 
+		case WM_LBUTTONDBLCLK:
+			OnLeftMouseDoubleClick(GetPointFromParam(lParam));
+			break;
+
+		case WM_RBUTTONDBLCLK:
+			OnRightMouseDoubleClick(GetPointFromParam(lParam));
+			break;
+
 		case WM_LBUTTONDOWN:
 			SetCapture(hWnd);
 			mLeftMouseDown = true;
@@ -267,7 +323,7 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 void Window::DoResize()
 {
-	Rect rc;
+	Rect2D rc;
 	GetClientRect(mHWND, &rc);
 	mWidth = rc.Width();
 	mHeight = rc.Height();
@@ -324,31 +380,43 @@ void Window::OnDestroy()
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnMouseMove(Point pos, uintptr flags)
+void Window::OnMouseMove(Point2D pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnLeftButtonDown(Point pos, uintptr flags)
+void Window::OnLeftMouseDoubleClick(Point2D pos)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnLeftButtonUp(Point pos, uintptr flags)
+void Window::OnRightMouseDoubleClick(Point2D pos)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnRightButtonDown(Point pos, uintptr flags)
+void Window::OnLeftButtonDown(Point2D pos, uintptr flags)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnRightButtonUp(Point pos, uintptr flags)
+void Window::OnLeftButtonUp(Point2D pos, uintptr flags)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::OnRightButtonDown(Point2D pos, uintptr flags)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::OnRightButtonUp(Point2D pos, uintptr flags)
 {
 }
 
@@ -372,7 +440,7 @@ void Window::OnKeyUp(int key, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnMouseWheel(Point pos, int delta, uintptr flags)
+void Window::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 {
 }
 

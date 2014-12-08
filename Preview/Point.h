@@ -4,25 +4,25 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct Point : POINT
+struct Point2D : POINT
 {
-	Point()
+	Point2D()
 	{
 	}
 
-	Point(int x, int y)
+	Point2D(int x, int y)
 	{
 		this->x = x;
 		this->y = y;
 	}
 
-	Point(Point const &o)
+	Point2D(Point2D const &o)
 	{
 		x = o.x;
 		y = o.y;
 	}
 
-	explicit Point(Vec2 const &o)
+	explicit Point2D(Vec2 const &o)
 	{
 		x = (int)o.x;
 		y = (int)o.y;
@@ -33,21 +33,21 @@ struct Point : POINT
 		x = y = 0;
 	}
 
-	Point const &operator = (Point const &b)
+	Point2D const &operator = (Point2D const &b)
 	{
 		x = b.x;
 		y = b.y;
 		return *this;
 	}
 
-	Point const &operator += (Point const &b)
+	Point2D const &operator += (Point2D const &b)
 	{
 		x += b.x;
 		y += b.y;
 		return *this;
 	}
 
-	Point const &operator -= (Point const &b)
+	Point2D const &operator -= (Point2D const &b)
 	{
 		x -= b.x;
 		y -= b.y;
@@ -62,79 +62,78 @@ struct Point : POINT
 
 //////////////////////////////////////////////////////////////////////
 
-inline bool operator == (Point const &a, Point const &b)
+inline bool operator == (Point2D const &a, Point2D const &b)
 {
 	return a.x == b.x && a.y == b.y;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator + (Point const &a, Point const &b)
+inline Point2D operator + (Point2D const &a, Point2D const &b)
 {
-	return Point (a.x + b.x, a.y + b.y);
+	return Point2D (a.x + b.x, a.y + b.y);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator - (Point const &a, Point const &b)
+inline Point2D operator - (Point2D const &a, Point2D const &b)
 {
-	return Point (a.x - b.x, a.y - b.y);
+	return Point2D (a.x - b.x, a.y - b.y);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator - (Point const &a, Vec2 const &b)
+inline Point2D operator - (Point2D const &a, Vec2 const &b)
 {
-	return Point ((int)(a.x - b.x), (int)(a.y - b.y));
+	return Point2D ((int)(a.x - b.x), (int)(a.y - b.y));
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator * (Point const &a, Point const &b)
+inline Point2D operator * (Point2D const &a, Point2D const &b)
 {
-	return Point (a.x * b.x, a.y * b.y);
+	return Point2D (a.x * b.x, a.y * b.y);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator * (Point const &a, int b)
+inline Point2D operator * (Point2D const &a, int b)
 {
-	return Point (a.x * b, a.y * b);
+	return Point2D (a.x * b, a.y * b);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator / (Point const &a, Point const &b)
+inline Point2D operator / (Point2D const &a, Point2D const &b)
 {
-	return Point (a.x / b.x, a.y / b.y);
+	return Point2D (a.x / b.x, a.y / b.y);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point operator / (Point const &a, int b)
+inline Point2D operator / (Point2D const &a, int b)
 {
-	return Point(a.x / b, a.y / b);
+	return Point2D(a.x / b, a.y / b);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-template <> inline Point Min(Point a, Point b)
+template <> inline Point2D Min(Point2D a, Point2D b)
 {
-	return Point(Min(a.x, b.x), Min(a.y, b.y));
+	return Point2D(Min(a.x, b.x), Min(a.y, b.y));
 }
 
 //////////////////////////////////////////////////////////////////////
 
-template <> inline Point Max(Point a, Point b)
+template <> inline Point2D Max(Point2D a, Point2D b)
 {
-	return Point(Max(a.x, b.x), Max(a.y, b.y));
+	return Point2D(Max(a.x, b.x), Max(a.y, b.y));
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point Sgn(Point a)
+inline Point2D Sgn(Point2D a)
 {
-	return Point(sgn(a.x), sgn(a.y));
+	return Point2D(sgn(a.x), sgn(a.y));
 }
 
-//////////////////////////////////////////////////////////////////////

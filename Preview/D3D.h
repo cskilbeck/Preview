@@ -8,6 +8,9 @@ using Matrix = DirectX::XMMATRIX;
 
 extern HRESULT __hr;
 
+//#define DXTRACE TRACE
+#define DXTRACE if (true) {} else
+
 #if defined(DEBUG)
 #define DX(x) 			\
 	__hr = (x);			\
@@ -19,7 +22,7 @@ extern HRESULT __hr;
 	}					\
 	else				\
 	{					\
-		TRACE(TEXT(#x) TEXT( " ok\n"));		\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
 
 #define DXV(x) 			\
@@ -32,7 +35,7 @@ extern HRESULT __hr;
 	}					\
 	else				\
 	{					\
-		TRACE(TEXT(#x) TEXT( " ok\n"));		\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
 
 #define DXB(x) 			\
@@ -45,7 +48,7 @@ extern HRESULT __hr;
 	}					\
 	else				\
 	{					\
-		TRACE(TEXT(#x) TEXT( " ok\n"));		\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
 
 #else

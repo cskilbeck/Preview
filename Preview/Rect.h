@@ -1,16 +1,22 @@
 //////////////////////////////////////////////////////////////////////
 
-struct Rect: RECT
+struct RectF;
+
+struct Rect2D: RECT
 {
 	//////////////////////////////////////////////////////////////////////
 
-	Rect()
+	Rect2D()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	Rect(Point topLeft, Size size)
+	explicit Rect2D(RectF const &rf);
+
+	//////////////////////////////////////////////////////////////////////
+
+	Rect2D(Point2D topLeft, Size2D size)
 	{
 		left = topLeft.x;
 		top = topLeft.y;
@@ -20,7 +26,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	Rect(Vec2 topLeft, Vec2 size)
+	Rect2D(Vec2 topLeft, Vec2 size)
 	{
 		left = (LONG)topLeft.x;
 		top = (LONG)topLeft.y;
@@ -30,7 +36,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	Rect(int x, int y, int width, int height)
+	Rect2D(int x, int y, int width, int height)
 	{
 		left = x;
 		top = y;
@@ -40,7 +46,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	bool Contains(Point p) const
+	bool Contains(Point2D p) const
 	{
 		return p.x >= left && p.x < right && p.y >= top && p.y < bottom;
 	}
@@ -61,9 +67,51 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	Size GetSize() const
+	Point2D TopLeft() const
 	{
-		return Size(Width(), Height());
+		return Point2D(left, top);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Point2D TopRight() const
+	{
+		return Point2D(right, top);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Point2D BottomLeft() const
+	{
+		return Point2D(left, bottom);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Point2D BottomRight() const
+	{
+		return Point2D(right, bottom);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Size2D GetSize() const
+	{
+		return Size2D(Width(), Height());
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Size2D HalfSize() const
+	{
+		return Size2D(Width() / 2, Height() / 2);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Point2D MidPoint() const
+	{
+		return TopLeft() + HalfSize();
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -75,7 +123,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	void MoveTo(Point pos)
+	void MoveTo(Point2D pos)
 	{
 		right = pos.x + Width();
 		bottom = pos.y + Height();
@@ -85,7 +133,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	void Translate(Point offset)
+	void Translate(Point2D offset)
 	{
 		left += offset.x;
 		top += offset.y;
@@ -95,7 +143,7 @@ struct Rect: RECT
 
 	//////////////////////////////////////////////////////////////////////
 
-	void Resize(Size newSize)
+	void Resize(Size2D newSize)
 	{
 		right = left + newSize.Width();
 		bottom = top + newSize.Height();
@@ -108,8 +156,8 @@ struct RectF
 {
 	//////////////////////////////////////////////////////////////////////
 
-	Vec2 TopLeft;
-	Vec2 BottomRight;
+	Vec2 topLeft;
+	Vec2 bottomRight;
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -120,8 +168,16 @@ struct RectF
 	//////////////////////////////////////////////////////////////////////
 
 	RectF(Vec2 const &topLeft, Vec2 const &bottomRight)
-		: TopLeft(topLeft)
-		, BottomRight(bottomRight)
+		: topLeft(topLeft)
+		, bottomRight(bottomRight)
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	explicit RectF(Rect2D const &r)
+		: topLeft((float)r.left, (float)r.top)
+		, bottomRight((float)r.top, (float)r.bottom)
 	{
 	}
 
@@ -129,74 +185,122 @@ struct RectF
 
 	void Set(Vec2 const &topLeft, Vec2 const &bottomRight)
 	{
-		TopLeft = topLeft;
-		BottomRight = bottomRight;
+		this->topLeft = topLeft;
+		this->bottomRight = bottomRight;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	float Width() const
 	{
-		return BottomRight.x - TopLeft.x;
+		return bottomRight.x - topLeft.x;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	float Height() const
 	{
-		return BottomRight.y - TopLeft.y;
+		return bottomRight.y - topLeft.y;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	Vec2 Size() const
 	{
-		return BottomRight - TopLeft;
+		return bottomRight - topLeft;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Vec2 HalfSize() const
+	{
+		return Size() / 2;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Vec2 const &TopLeft() const
+	{
+		return topLeft;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Vec2 const &BottomRight() const
+	{
+		return bottomRight;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Vec2 TopRight() const
+	{
+		return Vec2(bottomRight.x, topLeft.y);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	Vec2 BottomLeft() const
+	{
+		return Vec2(topLeft.x, bottomRight.y);
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	Vec2 MidPoint() const
 	{
-		return TopLeft + Size() * 0.5f;
+		return topLeft + Size() * 0.5f;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	bool Contains(Vec2 const &p) const
 	{
-		return p.x >= TopLeft.x && p.x < BottomRight.x && p.y >= TopLeft.y && p.y < BottomRight.y;
+		return p.x >= topLeft.x && p.x < bottomRight.x && p.y >= topLeft.y && p.y < bottomRight.y;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	void Resize(Vec2 const &size)
 	{
-		BottomRight = TopLeft + size;
+		bottomRight = topLeft + size;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	void MoveTo(Vec2 const &newTopLeft)
+	void MoveTo(Vec2 const &newtopLeft)
 	{
-		Vec2 delta = newTopLeft - TopLeft;
-		BottomRight += delta;
-		TopLeft = newTopLeft;
+		Vec2 delta = newtopLeft - topLeft;
+		bottomRight += delta;
+		topLeft = newtopLeft;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	void Translate(Vec2 const &offset)
 	{
-		TopLeft += offset;
-		BottomRight += offset;
+		topLeft += offset;
+		bottomRight += offset;
 	}
 	
 	//////////////////////////////////////////////////////////////////////
 
 	bool operator == (RectF const &b)
 	{
-		return TopLeft == b.TopLeft && BottomRight == b.BottomRight;
+		return topLeft == b.topLeft && bottomRight == b.bottomRight;
 	}
 };
+
+//////////////////////////////////////////////////////////////////////
+
+inline Rect2D::Rect2D(RectF const &rf)
+{
+	left = (LONG)rf.topLeft.x;
+	top = (LONG)rf.topLeft.y;
+	right = (LONG)rf.bottomRight.x;
+	bottom = (LONG)rf.bottomRight.y;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 

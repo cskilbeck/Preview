@@ -10,8 +10,8 @@ void ErrorMessageBox(tchar const *format, ...);
 
 //////////////////////////////////////////////////////////////////////
 
-inline Point GetPointFromParam(uintptr param)
+inline Point2D GetPointFromParam(uintptr param)
 {
-	return Point((int16)LOWORD(param), (int16)HIWORD(param));
+	return Point2D((int16)LOWORD(param), (int16)HIWORD(param));
 }
 

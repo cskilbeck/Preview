@@ -14,12 +14,14 @@ struct Window
 	virtual void OnPaint(PAINTSTRUCT &ps);
 	virtual void OnDestroy();
 	virtual void OnResize();
-	virtual void OnMouseMove(Point pos, uintptr flags);
-	virtual void OnMouseWheel(Point pos, int delta, uintptr flags);
-	virtual void OnLeftButtonDown(Point pos, uintptr flags);
-	virtual void OnLeftButtonUp(Point pos, uintptr flags);
-	virtual void OnRightButtonDown(Point pos, uintptr flags);
-	virtual void OnRightButtonUp(Point pos, uintptr flags);
+	virtual void OnMouseMove(Point2D pos, uintptr flags);
+	virtual void OnMouseWheel(Point2D pos, int delta, uintptr flags);
+	virtual void OnLeftMouseDoubleClick(Point2D pos);
+	virtual void OnRightMouseDoubleClick(Point2D pos);
+	virtual void OnLeftButtonDown(Point2D pos, uintptr flags);
+	virtual void OnLeftButtonUp(Point2D pos, uintptr flags);
+	virtual void OnRightButtonDown(Point2D pos, uintptr flags);
+	virtual void OnRightButtonUp(Point2D pos, uintptr flags);
 	virtual void OnChar(int key, uintptr flags);
 	virtual void OnKeyDown(int key, uintptr flags);
 	virtual void OnKeyUp(int key, uintptr flags);
@@ -27,18 +29,22 @@ struct Window
 	void Show();
 	void Hide();
 	void Close();
-	void Center();
+	void MoveToMiddleOfMonitor();
 	bool Update();
 	int Width() const;
 	int Height() const;
 	float FWidth() const;
 	float FHeight() const;
 	Vec2 FSize() const;
-	Rect ClientRect() const;
+	Rect2D ClientRect() const;
 	bool SetMessageWait(bool wait);
 	bool GetMessageWait() const;
-	Size GetSize();
+	void SetWindowRect(Rect2D const &r);
+	Size2D GetSize();
 	void ChangeSize(int newWidth, int newHeight);
+	void ResizeWindow(int newWidth, int newHeight);
+	Rect2D GetWindowRectFromClientRect(Rect2D const &clientRect);
+	Rect2D GetClientRectFromWindowRect(Rect2D const &windowRect);
 
 protected:
 
@@ -96,9 +102,9 @@ inline Vec2 Window::FSize() const
 
 //////////////////////////////////////////////////////////////////////
 
-inline Rect Window::ClientRect() const
+inline Rect2D Window::ClientRect() const
 {
-	Rect r;
+	Rect2D r;
 	GetClientRect(mHWND, &r);
 	return r;
 }

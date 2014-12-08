@@ -23,26 +23,38 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Preview::Vertex Preview::vert[6] =
-{
-	{ { 0, 0 }, { 0, 0 } },
-	{ { 1, 0 }, { 1, 0 } },
-	{ { 1, 1 }, { 1, 1 } },
-	{ { 1, 1 }, { 1, 1 } },
-	{ { 0, 1 }, { 0, 1 } },
-	{ { 0, 0 }, { 0, 0 } },
-};
+Preview::Vertex Preview::vert[6];
 
 void Preview::SetQuad()
 {
-	Vec2 topRight(mCurrentDrawRect.BottomRight.x, mCurrentDrawRect.TopLeft.y);
-	Vec2 bottomLeft(mCurrentDrawRect.TopLeft.x, mCurrentDrawRect.BottomRight.y);
-	vert[0].mPos = mCurrentDrawRect.TopLeft;
-	vert[1].mPos = topRight;
-	vert[2].mPos = mCurrentDrawRect.BottomRight;
-	vert[3].mPos = mCurrentDrawRect.BottomRight;
-	vert[4].mPos = bottomLeft;
-	vert[5].mPos = mCurrentDrawRect.TopLeft;
+	enum
+	{
+		tl = 0,
+		br = 1,
+		tr = 2,
+		bl = 3,
+		np = 4
+	};
+
+	Vec2 p[np];
+
+	p[tl] = mCurrentDrawRect.TopLeft();
+	p[br] = mCurrentDrawRect.BottomRight();
+	p[tr] = mCurrentDrawRect.TopRight();
+	p[bl] = mCurrentDrawRect.BottomLeft();
+
+	for(int i = 0; i < np; ++i)
+	{
+		p[i].x = floorf(p[i].x);
+		p[i].y = floorf(p[i].y);
+	}
+
+	vert[0].Set(p[tl], Vec2(0, 0));
+	vert[1].Set(p[tr], Vec2(1, 0));
+	vert[2].Set(p[br], Vec2(1, 1));
+	vert[3].Set(p[br], Vec2(1, 1));
+	vert[4].Set(p[bl], Vec2(0, 1));
+	vert[5].Set(p[tl], Vec2(0, 0));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -60,9 +72,8 @@ HRESULT Preview::LoadShaders()
 			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
-		UINT numElements = ARRAYSIZE(layout);
 		DX(mDevice->CreateVertexShader(vertData, vertData.Size(), NULL, &vertexShader));
-		DX(mDevice->CreateInputLayout(layout, numElements, vertData, vertData.Size(), &vertexLayout));
+		DX(mDevice->CreateInputLayout(layout, ARRAYSIZE(layout), vertData, vertData.Size(), &vertexLayout));
 		DX(mDevice->CreatePixelShader(pixelData, pixelData.Size(), NULL, &pixelShader));
 		return S_OK;
 	}
@@ -181,11 +192,12 @@ bool Preview::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		mTexture.reset(new Texture(TEXT("D:\\tweetbird.png")));
 		ChangeSize(mTexture->Width(), mTexture->Height());
-		Center();
+		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
-		mDrawRect.Set(Vec2(0, 0), mTexture->FSize());
+		mDrawRect.Set(Vec2::zero, mTexture->FSize());
+		CenterImageInWindowAndResetZoom();
 		mCurrentDrawRect = mDrawRect;
 		mTimer.Reset();
 		return true;
@@ -223,7 +235,7 @@ void Preview::OnChar(int key, uintptr flags)
 //////////////////////////////////////////////////////////////////////
 // make it stick at 1.0
 
-void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
+void Preview::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 {
 	Vec2 mousePos(pos);
 
@@ -244,10 +256,20 @@ void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
 			}
 		}
 		mScale = newScale;
-		Vec2 frac = (mousePos - mDrawRect.TopLeft) / mDrawRect.Size();
+		Vec2 frac = (mousePos - mDrawRect.TopLeft()) / mDrawRect.Size();
 		Vec2 sz = mTexture->FSize() * mScale;
 		mDrawRect.Resize(sz);
 		mDrawRect.MoveTo(mousePos - sz * frac);
+		if(ClientRect().Width() < mDrawRect.Width() || ClientRect().Height() < mDrawRect.Height())
+		{
+			Rect2D windowRect;
+			Rect2D newRect = GetWindowRectFromClientRect(Rect2D(mDrawRect));
+			GetWindowRect(mHWND, &windowRect);
+			newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
+			mDrawRect.MoveTo(Vec2(GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
+			mCurrentDrawRect = mDrawRect;
+			SetWindowRect(newRect);
+		}
 	}
 }
 
@@ -259,8 +281,8 @@ void Preview::OnResize()
 
 	Vec2 midPoint = mDrawRect.MidPoint() * ClientRect().FSize() / mOldClientRect.FSize();
 	Vec2 hs = mDrawRect.Size() / 2;
-	mDrawRect.Set(midPoint - hs, midPoint + hs);
-	mCurrentDrawRect = mDrawRect;
+//	mDrawRect.Set(midPoint - hs, midPoint + hs);
+//	mCurrentDrawRect = mDrawRect;
 	mOldClientRect = ClientRect();
 }
 
@@ -278,7 +300,7 @@ void Preview::CalcDrawRect()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnRightButtonDown(Point pos, uintptr flags)
+void Preview::OnRightButtonDown(Point2D pos, uintptr flags)
 {
 	Vec2 mousePos(pos);
 	if(mCurrentDrawRect.Contains(mousePos))
@@ -292,7 +314,7 @@ void Preview::OnRightButtonDown(Point pos, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnRightButtonUp(Point pos, uintptr flags)
+void Preview::OnRightButtonUp(Point2D pos, uintptr flags)
 {
 	mDrag = false;
 	SetCursor(null);
@@ -300,7 +322,33 @@ void Preview::OnRightButtonUp(Point pos, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnMouseMove(Point pos, uintptr flags)
+void Preview::CenterImageInWindow()
+{
+	Vec2 midPoint(ClientRect().MidPoint());
+	Vec2 halfSize = mDrawRect.Size() / 2;
+	mDrawRect.Set(midPoint - halfSize, midPoint + halfSize);
+	mCurrentDrawRect = mDrawRect;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::CenterImageInWindowAndResetZoom()
+{
+	mDrawRect.Resize(mTexture->FSize());
+	mScale = 1;
+	CenterImageInWindow();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnLeftMouseDoubleClick(Point2D pos)
+{
+	CenterImageInWindowAndResetZoom();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::OnMouseMove(Point2D pos, uintptr flags)
 {
 	if(mDrag)
 	{
@@ -318,16 +366,16 @@ bool Preview::OnUpdate()
 
 	mDeltaTime = mTimer.Delta();
 
-	Vec2 tld = mDrawRect.TopLeft - mCurrentDrawRect.TopLeft;
-	Vec2 brd = mDrawRect.BottomRight - mCurrentDrawRect.BottomRight;
+	Vec2 tld = mDrawRect.TopLeft() - mCurrentDrawRect.TopLeft();
+	Vec2 brd = mDrawRect.BottomRight() - mCurrentDrawRect.BottomRight();
 
 	if(tld.Length() > 0 || brd.Length() > 0)
 	{
-		mCurrentDrawRect.TopLeft += tld * 10.0f * (float)mDeltaTime;
-		mCurrentDrawRect.BottomRight += brd * 10.0f * (float)mDeltaTime;
+		mCurrentDrawRect.topLeft += tld * 10.0f * (float)mDeltaTime;
+		mCurrentDrawRect.bottomRight += brd * 10.0f * (float)mDeltaTime;
 
-		tld = mDrawRect.TopLeft - mCurrentDrawRect.TopLeft;
-		brd = mDrawRect.BottomRight - mCurrentDrawRect.BottomRight;
+		tld = mDrawRect.TopLeft() - mCurrentDrawRect.TopLeft();
+		brd = mDrawRect.BottomRight() - mCurrentDrawRect.BottomRight();
 
 		if(tld.Length() < 1 && brd.Length() < 1)
 		{
@@ -341,24 +389,16 @@ bool Preview::OnUpdate()
 
 //////////////////////////////////////////////////////////////////////
 
-static DirectX::XMVECTOR XMVec2(Vec2 const &src)
-{
-	return DirectX::XMLoadFloat2((CONST DirectX::XMFLOAT2*)&src);
-}
-
 void Preview::OnDraw()
 {
 	using namespace DirectX;
 
-	VertexShaderConstants vsConstants;
-	PixelShaderConstants psConstants;
+	float hlfw = 2.0f / Width();
+	float hlfh = -2.0f / Height();
 
-	float halfWidth = 2.0f / Width();
-	float halfHeight = -2.0f / Height();
-
-	Matrix matrix(halfWidth, 0.0f, 0.0f, 0.0f,
-				  0.0f, halfHeight, 0.0f, 0.0f,
-				  0.0f, 0.0f, 1.0f, 0.0f,
+	Matrix matrix( hlfw, 0.0f, 0.0f, 0.0f,
+				   0.0f, hlfh, 0.0f, 0.0f,
+				   0.0f, 0.0f, 1.0f, 0.0f,
 				  -1.0f, 1.0f, 0.0f, 1.0f);
 
 	UINT strides[] = { sizeof(Vertex) };
@@ -366,17 +406,20 @@ void Preview::OnDraw()
 
 	float gridSize = 16;
 
+	VertexShaderConstants vsConstants;
+	PixelShaderConstants psConstants;
+
 	SetQuad();
 
 	vsConstants.matrix = XMMatrixTranspose(matrix);
-	vsConstants.textureSize = XMFLOAT2(mTexture->FWidth(), mTexture->FHeight());
+	vsConstants.textureSize = mTexture->FSize();
 
 	psConstants.channelMask = XMVectorSet(1, 1, 1, 1);
 	psConstants.channelOffset = XMVectorSet(0, 0, 0, 0);
 	psConstants.gridColor0 = XMVectorSet(0.8f, 0.8f, 0.8f, 1);
 	psConstants.gridColor1 = XMVectorSet(0.6f, 0.6f, 0.6f, 1);
-	psConstants.gridSize = XMFLOAT2(gridSize, gridSize);
-	psConstants.gridSize2 = XMFLOAT2(gridSize * 2, gridSize * 2);
+	psConstants.gridSize = Vec2(gridSize, gridSize);
+	psConstants.gridSize2 = Vec2(gridSize * 2, gridSize * 2);
 
 	mContext->UpdateSubresource(pixelShaderConstants, 0, NULL, &psConstants, 0, 0);
 	mContext->UpdateSubresource(vertexShaderConstants, 0, NULL, &vsConstants, 0, 0);

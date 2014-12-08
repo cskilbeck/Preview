@@ -6,29 +6,6 @@
 
 struct Preview : DXWindow
 {
-	Preview(int width = 640, int height = 480);
-	~Preview();
-
-	bool OnCreate() override;
-	bool OnUpdate() override;
-	void OnDraw() override;
-	void OnResize() override;
-	void OnChar(int key, uintptr flags) override;
-	void OnMouseWheel(Point pos, int delta, uintptr flags) override;
-	void OnRightButtonDown(Point pos, uintptr flags) override;
-	void OnRightButtonUp(Point pos, uintptr flags) override;
-	void OnMouseMove(Point pos, uintptr flags) override;
-	void OnDestroy() override;
-
-	HRESULT LoadShaders();
-	HRESULT CreateSampler();
-	HRESULT CreateVertexBuffer();
-	HRESULT CreateRasterizerState();
-	HRESULT CreateBlendState();
-	HRESULT CreateDepthStencilState();
-	HRESULT CreateVertexShaderConstants();
-	HRESULT CreatePixelShaderConstants();
-
 	//////////////////////////////////////////////////////////////////////
 
 	__declspec (align(4)) struct Vertex
@@ -45,7 +22,7 @@ struct Preview : DXWindow
 
 	//////////////////////////////////////////////////////////////////////
 
-	__declspec (align(16)) struct PixelShaderConstants
+	struct PixelShaderConstants
 	{
 		DirectX::XMVECTOR channelMask;
 		DirectX::XMVECTOR channelOffset;
@@ -57,21 +34,56 @@ struct Preview : DXWindow
 
 	//////////////////////////////////////////////////////////////////////
 
-	__declspec (align(16)) struct VertexShaderConstants
+	struct VertexShaderConstants
 	{
 		Matrix matrix;
 		DirectX::XMFLOAT2 textureSize;
 	};
 
+	//////////////////////////////////////////////////////////////////////
+
+	Preview(int width = 640, int height = 480);
+	~Preview();
+
+	bool OnCreate() override;
+	bool OnUpdate() override;
+	void OnDraw() override;
+	void OnResize() override;
+	void OnChar(int key, uintptr flags) override;
+	void OnMouseWheel(Point2D pos, int delta, uintptr flags) override;
+	void OnLeftMouseDoubleClick(Point2D pos);
+	void OnRightButtonDown(Point2D pos, uintptr flags) override;
+	void OnRightButtonUp(Point2D pos, uintptr flags) override;
+	void OnMouseMove(Point2D pos, uintptr flags) override;
+	void OnDestroy() override;
+
+	HRESULT LoadShaders();
+	HRESULT CreateSampler();
+	HRESULT CreateVertexBuffer();
+	HRESULT CreateRasterizerState();
+	HRESULT CreateBlendState();
+	HRESULT CreateDepthStencilState();
+	HRESULT CreateVertexShaderConstants();
+	HRESULT CreatePixelShaderConstants();
+
+	//////////////////////////////////////////////////////////////////////
+
 	void CalcDrawRect();
 	void SetQuad();
+	void CenterImageInWindow();
+	void CenterImageInWindowAndResetZoom();
+
+	//////////////////////////////////////////////////////////////////////
+
 	static Vertex vert[6];
+
+	//////////////////////////////////////////////////////////////////////
 
 	HMENU mMenu;
 	Ptr<Texture> mTexture;
 	Color mBackgroundColor;
 	HCURSOR mHandCursor;
-	Rect mOldClientRect;
+	Rect2D mOldClientRect;
 	RectF mDrawRect;
 	RectF mCurrentDrawRect;
 	float mScale;
@@ -79,7 +91,9 @@ struct Preview : DXWindow
 	double mDeltaTime;
 	double mLastZoomTime;
 	bool mDrag;
-	Point mDragPos;
+	Point2D mDragPos;
+
+	//////////////////////////////////////////////////////////////////////
 
 	DXPtr<ID3D11InputLayout>		vertexLayout;
 	DXPtr<ID3D11PixelShader>		pixelShader;
@@ -91,5 +105,7 @@ struct Preview : DXWindow
 	DXPtr<ID3D11Buffer>				vertexShaderConstants;
 	DXPtr<ID3D11Buffer>				pixelShaderConstants;
 	DXPtr<ID3D11DepthStencilState>	mDepthStencilState;
+
+	//////////////////////////////////////////////////////////////////////
 
 };
