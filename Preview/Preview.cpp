@@ -169,6 +169,7 @@ Preview::Preview(int width, int height)
 	, mMenu(null)
 	, mDrag(false)
 	, mHandCursor(NULL)
+	, mMaintainImagePosition(true)
 {
 }
 
@@ -268,7 +269,9 @@ void Preview::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 			newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
 			mDrawRect.MoveTo(Vec2(GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
 			mCurrentDrawRect = mDrawRect;
+			mMaintainImagePosition = false;
 			SetWindowRect(newRect);
+			mMaintainImagePosition = true;
 		}
 	}
 }
@@ -281,8 +284,11 @@ void Preview::OnResize()
 
 	Vec2 midPoint = mDrawRect.MidPoint() * ClientRect().FSize() / mOldClientRect.FSize();
 	Vec2 hs = mDrawRect.Size() / 2;
-//	mDrawRect.Set(midPoint - hs, midPoint + hs);
-//	mCurrentDrawRect = mDrawRect;
+	if(mMaintainImagePosition)
+	{
+		mDrawRect.Set(midPoint - hs, midPoint + hs);
+		mCurrentDrawRect = mDrawRect;
+	}
 	mOldClientRect = ClientRect();
 }
 

@@ -92,6 +92,7 @@ struct Preview : DXWindow
 	double mLastZoomTime;
 	bool mDrag;
 	Point2D mDragPos;
+	bool mMaintainImagePosition;
 
 	//////////////////////////////////////////////////////////////////////
 
