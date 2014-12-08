@@ -38,6 +38,7 @@ dlldata.c
 *.ilk
 *.meta
 *.obj
+*.cso
 *.pch
 *.pdb
 *.pgc
