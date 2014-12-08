@@ -29,15 +29,52 @@ struct Preview : DXWindow
 	HRESULT CreateVertexShaderConstants();
 	HRESULT CreatePixelShaderConstants();
 
+	//////////////////////////////////////////////////////////////////////
+
+	__declspec (align(4)) struct Vertex
+	{
+		Vec2 mPos;
+		Vec2 mTexCoord;
+
+		void Set(Vec2 const &pos, Vec2 const &texCoord)
+		{
+			mPos = pos;
+			mTexCoord = texCoord;
+		}
+	};
+
+	//////////////////////////////////////////////////////////////////////
+
+	__declspec (align(16)) struct PixelShaderConstants
+	{
+		DirectX::XMVECTOR channelMask;
+		DirectX::XMVECTOR channelOffset;
+		DirectX::XMVECTOR gridColor0;
+		DirectX::XMVECTOR gridColor1;
+		DirectX::XMFLOAT2 gridSize;
+		DirectX::XMFLOAT2 gridSize2;
+	};
+
+	//////////////////////////////////////////////////////////////////////
+
+	__declspec (align(16)) struct VertexShaderConstants
+	{
+		Matrix matrix;
+		DirectX::XMFLOAT2 textureSize;
+	};
+
+	void CalcDrawRect();
+	void SetQuad();
+	static Vertex vert[6];
+
 	HMENU mMenu;
 	Ptr<Texture> mTexture;
 	Color mBackgroundColor;
 	HCURSOR mHandCursor;
-	Vec2 mTranslation;
-	Vec2 mOffset;
+	Rect mOldClientRect;
+	RectF mDrawRect;
+	RectF mCurrentDrawRect;
 	float mScale;
-	float mCurrentScale;
-	Vec2 mScaleOrg;
 	Timer mTimer;
 	double mDeltaTime;
 	double mLastZoomTime;

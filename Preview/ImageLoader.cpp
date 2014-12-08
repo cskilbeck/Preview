@@ -277,7 +277,8 @@ static HRESULT CreateTextureFromWIC( _In_ ID3D11Device* d3dDevice,
                                      _In_ IWICBitmapFrameDecode *frame,
                                      _Out_opt_ ID3D11Resource** texture,
                                      _Out_opt_ ID3D11ShaderResourceView** textureView,
-                                     _In_ size_t maxsize )
+                                     _In_ size_t maxsize,
+									 _In_ bool createMipMaps)
 {
     UINT width, height;
     HRESULT hr = frame->GetSize( &width, &height );
@@ -550,8 +551,9 @@ HRESULT CreateWICTextureFromMemory( _In_ ID3D11Device* d3dDevice,
                                     _In_ size_t wicDataSize,
                                     _Out_opt_ ID3D11Resource** texture,
                                     _Out_opt_ ID3D11ShaderResourceView** textureView,
-                                    _In_ size_t maxsize
-                                  )
+                                    _In_ size_t maxsize,
+									_In_ bool createMipMaps
+									)
 {
     if (!d3dDevice || !wicData || (!texture && !textureView))
     {
@@ -593,7 +595,7 @@ HRESULT CreateWICTextureFromMemory( _In_ ID3D11Device* d3dDevice,
     if ( FAILED(hr) )
         return hr;
 
-    hr = CreateTextureFromWIC( d3dDevice, d3dContext, frame.Get(), texture, textureView, maxsize );
+    hr = CreateTextureFromWIC( d3dDevice, d3dContext, frame.Get(), texture, textureView, maxsize, createMipMaps );
     if ( FAILED(hr)) 
         return hr;
 
@@ -624,7 +626,8 @@ HRESULT CreateWICTextureFromFile( _In_ ID3D11Device* d3dDevice,
                                   _In_z_ const wchar_t* fileName,
                                   _Out_opt_ ID3D11Resource** texture,
                                   _Out_opt_ ID3D11ShaderResourceView** textureView,
-                                  _In_ size_t maxsize )
+                                  _In_ size_t maxsize,
+								  _In_ bool createMipMaps)
 {
     if (!d3dDevice || !fileName || (!texture && !textureView))
     {
@@ -649,7 +652,7 @@ HRESULT CreateWICTextureFromFile( _In_ ID3D11Device* d3dDevice,
     if ( FAILED(hr) )
         return hr;
 
-    hr = CreateTextureFromWIC( d3dDevice, d3dContext, frame.Get(), texture, textureView, maxsize );
+    hr = CreateTextureFromWIC( d3dDevice, d3dContext, frame.Get(), texture, textureView, maxsize, createMipMaps );
     if ( FAILED(hr)) 
         return hr;
 

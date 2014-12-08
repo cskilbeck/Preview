@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // Load from command line, pop file choose dialog if empty?
-// Options Menu
+// Options
+//  - Scaling modes for minification and magnification
 // Load/Save options
 // Don't churn messageloop when not necessary
 // Window sizing/stretching/squeezing etc on startup
@@ -22,21 +23,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-__declspec (align(4)) struct Vertex
-{
-	Vec2 mPos;
-	Vec2 mTexCoord;
-
-	void Set(Vec2 const &pos, Vec2 const &texCoord)
-	{
-		mPos = pos;
-		mTexCoord = texCoord;
-	}
-};
-
-//////////////////////////////////////////////////////////////////////
-
-static Vertex vert[6] = 
+Preview::Vertex Preview::vert[6] =
 {
 	{ { 0, 0 }, { 0, 0 } },
 	{ { 1, 0 }, { 1, 0 } },
@@ -46,37 +33,17 @@ static Vertex vert[6] =
 	{ { 0, 0 }, { 0, 0 } },
 };
 
-static void SetQuad(Vec2 const &tl, Vec2 const &br)
+void Preview::SetQuad()
 {
-	Vec2 tr(br.x, tl.y);
-	Vec2 bl(tl.x, br.y);
-	vert[0].mPos = tl;
-	vert[1].mPos = tr;
-	vert[2].mPos = br;
-	vert[3].mPos = br;
-	vert[4].mPos = bl;
-	vert[5].mPos = tl;
+	Vec2 topRight(mCurrentDrawRect.BottomRight.x, mCurrentDrawRect.TopLeft.y);
+	Vec2 bottomLeft(mCurrentDrawRect.TopLeft.x, mCurrentDrawRect.BottomRight.y);
+	vert[0].mPos = mCurrentDrawRect.TopLeft;
+	vert[1].mPos = topRight;
+	vert[2].mPos = mCurrentDrawRect.BottomRight;
+	vert[3].mPos = mCurrentDrawRect.BottomRight;
+	vert[4].mPos = bottomLeft;
+	vert[5].mPos = mCurrentDrawRect.TopLeft;
 }
-
-//////////////////////////////////////////////////////////////////////
-
-__declspec (align(16)) struct PixelShaderConstants
-{
-	DirectX::XMVECTOR channelMask;
-	DirectX::XMVECTOR channelOffset;
-	DirectX::XMVECTOR gridColor0;
-	DirectX::XMVECTOR gridColor1;
-	DirectX::XMFLOAT2 gridSize;
-	DirectX::XMFLOAT2 gridSize2;
-};
-
-//////////////////////////////////////////////////////////////////////
-
-__declspec (align(16)) struct VertexShaderConstants
-{
-	Matrix matrix;
-	DirectX::XMFLOAT2 textureSize;
-};
 
 //////////////////////////////////////////////////////////////////////
 
@@ -122,15 +89,17 @@ HRESULT Preview::CreateDepthStencilState()
 HRESULT Preview::CreateVertexShaderConstants()
 {
 	vertexShaderConstants.Release();
-	CD3D11_BUFFER_DESC bd(sizeof(VertexShaderConstants), D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DEFAULT, 0);
+	CD3D11_BUFFER_DESC bd(sizeof(VertexShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
 	DX(mDevice->CreateBuffer(&bd, NULL, &vertexShaderConstants));
 	return S_OK;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 HRESULT Preview::CreatePixelShaderConstants()
 {
 	pixelShaderConstants.Release();
-	CD3D11_BUFFER_DESC bd(sizeof(PixelShaderConstants), D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DEFAULT, 0);
+	CD3D11_BUFFER_DESC bd(sizeof(PixelShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
 	DX(mDevice->CreateBuffer(&bd, NULL, &pixelShaderConstants));
 	return S_OK;
 }
@@ -141,7 +110,7 @@ HRESULT Preview::CreateSampler()
 {
 	sampler.Release();
 	CD3D11_SAMPLER_DESC sampDesc(D3D11_DEFAULT);
-	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
 	DX(mDevice->CreateSamplerState(&sampDesc, &sampler));
 	return S_OK;
 }
@@ -151,7 +120,7 @@ HRESULT Preview::CreateSampler()
 HRESULT Preview::CreateVertexBuffer()
 {
 	vertexBuffer.Release();
-	CD3D11_BUFFER_DESC bd(sizeof(vert), D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+	CD3D11_BUFFER_DESC bd(sizeof(vert), D3D11_BIND_VERTEX_BUFFER);
 	D3D11_SUBRESOURCE_DATA InitData = { vert, 0, 0 };
 	DX(mDevice->CreateBuffer(&bd, &InitData, &vertexBuffer));
 	return S_OK;
@@ -185,13 +154,10 @@ Preview::Preview(int width, int height)
 	: DXWindow(width, height)
 	, mBackgroundColor(255, 0, 255)
 	, mScale(1)
-	, mCurrentScale(1)
 	, mLastZoomTime(0)
-	, mOffset(0, 0)
 	, mMenu(null)
 	, mDrag(false)
 	, mHandCursor(NULL)
-	, mScaleOrg(0.5f, 0.5f)
 {
 }
 
@@ -218,7 +184,9 @@ bool Preview::OnCreate()
 		mTexture.reset(new Texture(TEXT("D:\\test.png")));
 		ChangeSize(mTexture->Width(), mTexture->Height());
 		Center();
-		mTranslation = FSize() / 2;
+		mOldClientRect = ClientRect();
+		mDrawRect.Set(Vec2(0, 0), mTexture->FSize());
+		mCurrentDrawRect = mDrawRect;
 		mTimer.Reset();
 		return true;
 	}
@@ -257,29 +225,30 @@ void Preview::OnChar(int key, uintptr flags)
 
 void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
 {
-	double time = mTimer.Elapsed();
-	double deltaZ = time - mLastZoomTime;
-	mLastZoomTime = time;
+	Vec2 mousePos(pos);
 
-	float d = 1.0f + delta / 600.0f;
-	float newScale = Constrain(mScale * d, 0.1f, 32.0f);
-	if(mScale < 1 && newScale >= 1 || mScale > 1 && newScale <= 1 || mScale == 1 && mCurrentScale == 1)
+	if(mDrawRect.Contains(mousePos))
 	{
-		if(deltaZ < 0.25f)
+		double time = mTimer.Elapsed();
+		double deltaZ = time - mLastZoomTime;
+		mLastZoomTime = time;
+
+		float d = 1.0f + delta / 600.0f;
+		float newScale = Constrain(mScale * d, 0.1f, 32.0f);
+		if(mScale < 1 && newScale >= 1 || mScale > 1 && newScale <= 1)
 		{
-			newScale = 1.0f;
-			mCurrentScale = 1.0f;
+			if(deltaZ < 0.25f)
+			{
+				newScale = 1.0f;
+				mDrawRect = mCurrentDrawRect;
+			}
 		}
+		mScale = newScale;
+		Vec2 frac = (mousePos - mDrawRect.TopLeft) / mDrawRect.Size();
+		Vec2 sz = mTexture->FSize() * mScale;
+		mDrawRect.Resize(sz);
+		mDrawRect.MoveTo(mousePos - sz * frac);
 	}
-	Vec2 mousePos = Vec2(pos);
-	Vec2 ts = mTexture->FSize();
-	Vec2 hs = ts / 2;
-	Vec2 tl = mTranslation - hs;
-	Vec2 br = mTranslation + hs;
-	Vec2 m = (Vec2(pos) - tl) / hs;
-	TRACE(TEXT("Mouse: %f,%f, Translation: %f,%f, Result: %f,%f\n"), mousePos.x, mousePos.y, mTranslation.x, mTranslation.y, m.x, m.y);
-	mScaleOrg = m;
-	mScale = newScale;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -287,16 +256,38 @@ void Preview::OnMouseWheel(Point pos, int delta, uintptr flags)
 void Preview::OnResize()
 {
 	DXWindow::OnResize();
-	mTranslation = FSize() / 2;
+
+	Vec2 midPoint = mDrawRect.MidPoint() * ClientRect().FSize() / mOldClientRect.FSize();
+	Vec2 hs = mDrawRect.Size() / 2;
+	mDrawRect.Set(midPoint - hs, midPoint + hs);
+	mCurrentDrawRect = mDrawRect;
+	mOldClientRect = ClientRect();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Preview::CalcDrawRect()
+{
+	if(mTexture != null)
+	{
+		Vec2 sz = mTexture->FSize() * mScale;
+		Vec2 tl = (FSize() - sz) * 0.5f;
+		mDrawRect.Set(tl, tl + sz);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Preview::OnRightButtonDown(Point pos, uintptr flags)
 {
-	mDrag = true;
-	mDragPos = pos;
-	SetCursor(mHandCursor);
+	Vec2 mousePos(pos);
+	if(mCurrentDrawRect.Contains(mousePos))
+	{
+		mDrawRect = mCurrentDrawRect;
+		mDrag = true;
+		mDragPos = pos;
+		SetCursor(mHandCursor);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -304,8 +295,6 @@ void Preview::OnRightButtonDown(Point pos, uintptr flags)
 void Preview::OnRightButtonUp(Point pos, uintptr flags)
 {
 	mDrag = false;
-	mTranslation += mOffset;
-	mOffset = Vec2::zero;
 	SetCursor(null);
 }
 
@@ -313,13 +302,11 @@ void Preview::OnRightButtonUp(Point pos, uintptr flags)
 
 void Preview::OnMouseMove(Point pos, uintptr flags)
 {
-	// work out where in the image the mouse is
-	// normalize it
-	// that's the scale origin
-
 	if(mDrag)
 	{
-		mOffset = Vec2(pos - mDragPos);
+		mCurrentDrawRect.Translate(Vec2(pos - mDragPos));
+		mDrawRect = mCurrentDrawRect;
+		mDragPos = pos;
 	}
 }
 
@@ -331,15 +318,23 @@ bool Preview::OnUpdate()
 
 	mDeltaTime = mTimer.Delta();
 
-	if(mCurrentScale != mScale)
+	Vec2 tld = mDrawRect.TopLeft - mCurrentDrawRect.TopLeft;
+	Vec2 brd = mDrawRect.BottomRight - mCurrentDrawRect.BottomRight;
+
+	if(tld.Length() > 0 || brd.Length() > 0)
 	{
-		float diff = mScale - mCurrentScale;
-		mCurrentScale += diff * 10.0f * (float)mDeltaTime;
-		if(fabsf(mCurrentScale - mScale) < 0.01f)
+		mCurrentDrawRect.TopLeft += tld * 10.0f * (float)mDeltaTime;
+		mCurrentDrawRect.BottomRight += brd * 10.0f * (float)mDeltaTime;
+
+		tld = mDrawRect.TopLeft - mCurrentDrawRect.TopLeft;
+		brd = mDrawRect.BottomRight - mCurrentDrawRect.BottomRight;
+
+		if(tld.Length() < 1 && brd.Length() < 1)
 		{
-			mCurrentScale = mScale;
+			mCurrentDrawRect = mDrawRect;
 		}
 	}
+
 
 	return true;
 }
@@ -366,14 +361,14 @@ void Preview::OnDraw()
 				  0.0f, 0.0f, 1.0f, 0.0f,
 				  -1.0f, 1.0f, 0.0f, 1.0f);
 
-	XMMATRIX m2d = XMMatrixTransformation2D(mScaleOrg, 0, mTexture->FSize() * mCurrentScale, Vec2::zero, 0, mTranslation + mOffset);
-
 	UINT strides[] = { sizeof(Vertex) };
 	UINT offsets[] = { 0 };
 
 	float gridSize = 16;
 
-	vsConstants.matrix = XMMatrixTranspose(m2d * matrix);
+	SetQuad();
+
+	vsConstants.matrix = XMMatrixTranspose(matrix);
 	vsConstants.textureSize = XMFLOAT2(mTexture->FWidth(), mTexture->FHeight());
 
 	psConstants.channelMask = XMVectorSet(1, 1, 1, 1);
@@ -385,6 +380,7 @@ void Preview::OnDraw()
 
 	mContext->UpdateSubresource(pixelShaderConstants, 0, NULL, &psConstants, 0, 0);
 	mContext->UpdateSubresource(vertexShaderConstants, 0, NULL, &vsConstants, 0, 0);
+	mContext->UpdateSubresource(vertexBuffer, 0, NULL, vert, 0, 0);
 
 	mContext->IASetInputLayout(vertexLayout);
 	mContext->IASetVertexBuffers(0, 1, &vertexBuffer, strides, offsets);
