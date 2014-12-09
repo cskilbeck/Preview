@@ -50,9 +50,14 @@ protected:
 
 	void DoResize();
 	bool Init(int width, int height);
-	LRESULT HandleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+	long GetStyle() const;
+	long GetExStyle() const;
+	bool HasMenu() const;
+	bool IsResizable() const;
+	Rect2D GetBorders() const;
+	LRESULT HandleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	int								mWidth;
 	int								mHeight;

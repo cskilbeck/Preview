@@ -2,6 +2,8 @@
 // Load from command line, pop file choose dialog if empty?
 // Options
 //  - Scaling modes for minification and magnification
+//  - Stretch/Fit/Centre on resize
+//  - Use fullscreen for large images (which wouldn't fit in a maximized window)
 // Load/Save options
 // Don't churn messageloop when not necessary
 // Window sizing/stretching/squeezing etc on startup
@@ -9,13 +11,15 @@
 // ?? Use GDI+ to load the textures?
 // Support GIFs
 // Full screen mode
+// Floating thumbnail
 // ?? Cycle through images in a folder
 //////////////////////////////////////////////////////////////////////
-// - Pan/Zoom (ditch that crazy matrix function)
+//
 //////////////////////////////////////////////////////////////////////
 // -- Split Window object into plain and DirectX versions
 // -- Timer
 // -- Make MENU optional in Window
+// -- Pan/Zoom (ditch that crazy matrix function)
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -193,7 +197,7 @@ bool Preview::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		mTexture.reset(new Texture(TEXT("D:\\tweetbird.png")));
+		mTexture.reset(new Texture(TEXT("D:\\test.png")));
 		ChangeSize(mTexture->Width(), mTexture->Height());
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
@@ -210,9 +214,27 @@ bool Preview::OnCreate()
 
 void Preview::OnDestroy()
 {
-	DXWindow::OnDestroy();
+	pixelShader.Release();
+	pixelShaderConstants.Release();
+
+	vertexShader.Release();
+	vertexLayout.Release();
+	vertexShaderConstants.Release();
+
+	rasterizerState.Release();
+	blendState.Release();
+	mDepthStencilState.Release();
+
+	sampler.Release();
+
+	vertexBuffer.Release();
+
+	mTexture.reset();
+
 	DestroyCursor(mHandCursor);
 	DestroyMenu(mMenu);
+
+	DXWindow::OnDestroy();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -246,7 +268,7 @@ void Preview::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 		double deltaZ = time - mLastZoomTime;
 		mLastZoomTime = time;
 
-		float d = 1.0f + delta / 600.0f;
+		float d = 1.0f + sgn(delta) * 0.1f;
 		float newScale = Constrain(mScale * d, 0.1f, 32.0f);
 		if(mScale < 1 && newScale >= 1 || mScale > 1 && newScale <= 1)
 		{
@@ -349,6 +371,10 @@ void Preview::CenterImageInWindowAndResetZoom()
 
 void Preview::OnLeftMouseDoubleClick(Point2D pos)
 {
+	ChangeSize(mTexture->Width(), mTexture->Height());
+	MoveToMiddleOfMonitor();
+	mOldClientRect = ClientRect();
+	mDrawRect.Set(Vec2::zero, mTexture->FSize());
 	CenterImageInWindowAndResetZoom();
 }
 

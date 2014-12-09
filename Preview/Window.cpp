@@ -115,21 +115,6 @@ bool Window::OnCreate()
 
 //////////////////////////////////////////////////////////////////////
 
-Rect2D Window::GetWindowRectFromClientRect(Rect2D const &clientRect)
-{
-	Rect2D rc(0, 0, 0, 0);
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != 0, 0);
-	int minWidth = GetSystemMetrics(SM_CXMINTRACK);
-	rc.left += clientRect.left;
-	rc.top += clientRect.top;
-	rc.right += clientRect.right;
-	rc.bottom += clientRect.bottom;
-	rc.right = rc.left + Max(rc.Width(), minWidth);
-	return rc;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 void Window::SetWindowRect(Rect2D const &r)
 {
 	SetWindowPos(mHWND, null, r.left, r.top, r.Width(), r.Height(), SWP_NOZORDER);
@@ -137,14 +122,63 @@ void Window::SetWindowRect(Rect2D const &r)
 
 //////////////////////////////////////////////////////////////////////
 
-Rect2D Window::GetClientRectFromWindowRect(Rect2D const &windowRect)
+long Window::GetStyle() const
+{
+	return GetWindowLong(mHWND, GWL_STYLE);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+long Window::GetExStyle() const
+{
+	return GetWindowLong(mHWND, GWL_EXSTYLE);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool Window::HasMenu() const
+{
+	return GetMenu(mHWND) != null;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool Window::IsResizable() const
+{
+	return (GetStyle() & WS_THICKFRAME) != 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Rect2D Window::GetBorders() const
 {
 	Rect2D rc(0, 0, 0, 0);
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != 0, 0);
+	AdjustWindowRectEx(&rc, GetStyle(), HasMenu(), GetExStyle());
+	return rc;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Rect2D Window::GetWindowRectFromClientRect(Rect2D const &clientRect)
+{
+	Rect2D rc = GetBorders();
+	int minSize = IsResizable() ? GetSystemMetrics(SM_CXMINTRACK) : 0;
+	rc.left += clientRect.left;
+	rc.top += clientRect.top;
+	rc.right += clientRect.right;
+	rc.bottom += clientRect.bottom;
+	rc.right = rc.left + Max(rc.Width(), minSize);
+	return rc;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Rect2D Window::GetClientRectFromWindowRect(Rect2D const &windowRect)
+{
+	Rect2D rc = GetBorders();
 	Point2D tl(windowRect.left - rc.left, windowRect.top - rc.top);
 	Point2D br(windowRect.right - rc.right, windowRect.bottom - rc.bottom);
-	Size2D sz(br - tl);
-	return Rect2D(tl, sz);
+	return Rect2D(tl, Size2D(br - tl));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -157,7 +191,7 @@ void Window::ResizeWindow(int newWidth, int newHeight)
 	rc.MoveTo(oldRect.MidPoint() - rc.HalfSize());
 	rc.left = Max(0L, rc.left);
 	rc.top = Max(0L, rc.top);
-	SetWindowPos(mHWND, null, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOZORDER);
+	SetWindowRect(rc);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -165,7 +199,7 @@ void Window::ResizeWindow(int newWidth, int newHeight)
 void Window::ChangeSize(int newWidth, int newHeight)
 {
 	Rect2D rc(0, 0, newWidth, newHeight);
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, true, 0);
+	AdjustWindowRectEx(&rc, GetStyle(), HasMenu(), GetExStyle());
 	SetWindowPos(mHWND, null, 0, 0, rc.Width(), rc.Height(), SWP_NOMOVE | SWP_NOZORDER);
 }
 
@@ -188,44 +222,41 @@ bool Window::Update()
 }
 
 //////////////////////////////////////////////////////////////////////
+// The 1st WM_GETMINMAXINFO message will not get routed
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	MINMAXINFO *mminfo;
-	Window *window;
-	LRESULT rc;
+	Window *w;
 
-	switch(message)
+	if(msg == WM_NCCREATE)
 	{
-	case WM_NCCREATE:
-		window = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
-		SetWindowLongPtr(hWnd, 0, (LONG_PTR)window);
-		window->mHWND = hWnd;
-		rc = true;
-		break;
-
-	case WM_GETMINMAXINFO:
-		mminfo = (MINMAXINFO *)lParam;
-		mminfo->ptMinTrackSize.y = 16 + GetSystemMetrics(SM_CYMINTRACK) + ((GetMenu(hWnd) != null) ? GetSystemMetrics(SM_CYMENU) : 0);
-		rc = 0;
-		break;
-
-	default:
-		rc = ((Window *)GetWindowLongPtr(hWnd, 0))->HandleMessage(hWnd, message, wParam, lParam);
+		w = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
+		SetWindowLongPtr(hWnd, 0, (LONG_PTR)w);
+		w->mHWND = hWnd;
 	}
-	//TRACE(TEXT("%s: %08x,%08x (%d,%d) returns %d\n"), GetMessageName(message).c_str(), wParam, lParam, wParam, lParam, rc);
-	return rc;
+	else
+	{
+		w = (Window *)GetWindowLongPtr(hWnd, 0);
+	}
+
+	return w ? w->HandleMessage(hWnd, msg, wParam, lParam) : DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	MINMAXINFO *mminfo;
 	PAINTSTRUCT ps;
 	Point2D mousePos;
 
-	switch(message)
+	switch(msg)
 	{
+		case WM_GETMINMAXINFO:
+			mminfo = (MINMAXINFO *)lParam;
+			mminfo->ptMinTrackSize.y = 16 + GetSystemMetrics(SM_CYMINTRACK) + (HasMenu() ? GetSystemMetrics(SM_CYMENU) : 0);
+			break;
+
 		case WM_USER:
 			if(!OnCreate())
 			{
@@ -314,7 +345,7 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 
 		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
+			return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return 0;
 }

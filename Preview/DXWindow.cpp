@@ -42,6 +42,7 @@ void DXWindow::OnPaint(PAINTSTRUCT &ps)
 
 void DXWindow::OnDraw()
 {
+	// override this...
 	Clear(Color::Black);
 }
 
@@ -123,7 +124,7 @@ bool DXWindow::OpenD3D()
 	{
 		mDriverType = driverTypes[driverTypeIndex];
 
-		hr = DXB(D3D11CreateDeviceAndSwapChain(NULL, mDriverType, NULL, createDeviceFlags, featureLevels, numFeatureLevels,
+		hr = DXB(D3D11CreateDeviceAndSwapChain(null, mDriverType, null, createDeviceFlags, featureLevels, numFeatureLevels,
 			D3D11_SDK_VERSION, &sd, &mSwapChain, &mDevice, &mFeatureLevel, &mContext));
 		if(SUCCEEDED(hr))
 		{
@@ -151,7 +152,6 @@ bool DXWindow::ResizeD3D()
 	if(mContext != null)
 	{
 		mContext->ClearState();
-		mContext->OMSetRenderTargets(0, null, null);
 		mContext->Flush();
 	}
 
@@ -201,18 +201,14 @@ bool DXWindow::GetBackBuffer()
 {
 	DXPtr<ID3D11Texture2D> pBackBuffer;
 	DXB(mSwapChain->GetBuffer(0, __uuidof(pBackBuffer), (LPVOID*)&pBackBuffer));
-	DXB(mDevice->CreateRenderTargetView(pBackBuffer, NULL, &mRenderTargetView));
+	DXB(mDevice->CreateRenderTargetView(pBackBuffer, null, &mRenderTargetView));
 
-	D3D11_VIEWPORT vp;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
-	vp.Width = (FLOAT)Width();
-	vp.Height = (FLOAT)Height();
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
+	D3D11_VIEWPORT vp = { 0 };
+	vp.Width = (float)Width();
+	vp.Height = (float)Height();
 
 	mContext->RSSetViewports(1, &vp);
-	mContext->OMSetRenderTargets(1, &mRenderTargetView, NULL);
+	mContext->OMSetRenderTargets(1, &mRenderTargetView, null);
 	return true;
 }
 
@@ -222,7 +218,7 @@ void DXWindow::ReleaseBackBuffer()
 {
 	if(mContext != null)
 	{
-		mContext->OMSetRenderTargets(0, NULL, NULL);
+		mContext->OMSetRenderTargets(0, null, null);
 	}
 	mRenderTargetView.Release();
 }

@@ -140,7 +140,7 @@ struct Rect2D: RECT
 		right += offset.x;
 		bottom += offset.y;
 	}
-
+	
 	//////////////////////////////////////////////////////////////////////
 
 	void Resize(Size2D newSize)
