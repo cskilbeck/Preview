@@ -204,8 +204,8 @@ bool DXWindow::GetBackBuffer()
 	DXB(mDevice->CreateRenderTargetView(pBackBuffer, null, &mRenderTargetView));
 
 	D3D11_VIEWPORT vp = { 0 };
-	vp.Width = (float)Width();
-	vp.Height = (float)Height();
+	vp.Width = FWidth();
+	vp.Height = FHeight();
 
 	mContext->RSSetViewports(1, &vp);
 	mContext->OMSetRenderTargets(1, &mRenderTargetView, null);

@@ -145,10 +145,8 @@
   <ItemGroup>
     <ClInclude Include="Color.h" />
     <ClInclude Include="D3D.h" />
-    <ClInclude Include="DX11\MaterialImpl.h" />
     <ClInclude Include="DXWindow.h" />
     <ClInclude Include="ImageLoader.h" />
-    <ClInclude Include="Material.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="Preview.h" />
     <ClInclude Include="Rect.h" />

@@ -42,6 +42,5 @@
 #include "Texture.h"
 #include "Window.h"
 #include "DXWindow.h"
-#include "Material.h"
 #include "Preview.h"
 
