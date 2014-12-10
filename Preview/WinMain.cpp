@@ -6,7 +6,7 @@
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 {
-	Preview preview(640, 480);
+	AVIPlayer preview(640, 480);
 
 	while(preview.Update())
 	{

@@ -227,6 +227,6 @@ void DXWindow::ReleaseBackBuffer()
 
 void DXWindow::Clear(Color color)
 {
-	float f[4];
-	mContext->ClearRenderTargetView(mRenderTargetView, color.GetFloats(f));
+	float rgba[4];
+	mContext->ClearRenderTargetView(mRenderTargetView, color.GetFloatsRGBA(rgba));
 }

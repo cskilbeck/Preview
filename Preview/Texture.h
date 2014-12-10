@@ -17,52 +17,64 @@ struct Texture
 	Texture();
 	Texture(tchar const *name);
 	Texture(int w, int h, Color color);
-	Texture(int w, int h, byte *pixels);
+	Texture(int w, int h, DXGI_FORMAT format, byte *pixels);
 	~Texture();
 
-	int Width() const
-	{
-		return mTextureDesc.Width;
-	}
-
-	int Height() const
-	{
-		return mTextureDesc.Height;
-	}
-
-	float FWidth() const
-	{
-		return (float)mTextureDesc.Width;
-	}
-
-	float FHeight() const
-	{
-		return (float)mTextureDesc.Height;
-	}
-
-	Vec2 FSize() const
-	{
-		return Vec2((float)Width(), (float)Height());
-	}
-
-	bool IsValid() const
-	{
-		return mTexture2D != null;
-	}
-
-	tstring const &GetName() const
-	{
-		return mName;
-	}
-
+	void Update(byte *pixels);
+	int Width() const;
+	int Height() const;
+	int BitsPerPixel() const;
+	float FWidth() const;
+	float FHeight() const;
+	Vec2 FSize() const;
+	bool IsValid() const;
+	tstring const &GetName() const;
 	void Activate(int channel = 0);
 
 private:
 
+	void InitFromPixelBuffer(byte *buffer, DXGI_FORMAT pixelFormat, int width, int height);
+
 	tstring							mName;
 	DXPtr<ID3D11Texture2D>			mTexture2D;
 	DXPtr<ID3D11ShaderResourceView>	mShaderResourceView;
-	D3D11_TEXTURE2D_DESC			mTextureDesc;
+	CD3D11_TEXTURE2D_DESC			mTextureDesc;
 };
 
 //////////////////////////////////////////////////////////////////////
+
+inline int Texture::Width() const
+{
+	return mTextureDesc.Width;
+}
+
+inline int Texture::Height() const
+{
+	return mTextureDesc.Height;
+}
+
+inline float Texture::FWidth() const
+{
+	return (float)mTextureDesc.Width;
+}
+
+inline float Texture::FHeight() const
+{
+	return (float)mTextureDesc.Height;
+}
+
+inline Vec2 Texture::FSize() const
+{
+	return Vec2((float)Width(), (float)Height());
+}
+
+inline bool Texture::IsValid() const
+{
+	return mTexture2D != null;
+}
+
+inline tstring const &Texture::GetName() const
+{
+	return mName;
+}
+

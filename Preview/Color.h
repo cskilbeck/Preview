@@ -55,7 +55,7 @@ struct Color
 					(uint32)b	<< kBlueOffset;
 	}
 	
-	float *GetFloats(float *f) const
+	float *GetFloatsRGBA(float *f) const
 	{
 		f[0] = Red() / 255.0f;
 		f[1] = Green() / 255.0f;

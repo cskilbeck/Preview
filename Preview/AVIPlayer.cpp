@@ -27,9 +27,9 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Preview::Vertex Preview::vert[6];
+AVIPlayer::Vertex AVIPlayer::vert[6];
 
-void Preview::SetQuad()
+void AVIPlayer::SetQuad()
 {
 	enum
 	{
@@ -63,7 +63,7 @@ void Preview::SetQuad()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::LoadShaders()
+HRESULT AVIPlayer::LoadShaders()
 {
 	vertexShader.Release();
 	pixelShader.Release();
@@ -89,7 +89,7 @@ HRESULT Preview::LoadShaders()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateDepthStencilState()
+HRESULT AVIPlayer::CreateDepthStencilState()
 {
 	mDepthStencilState.Release();
 	CD3D11_DEPTH_STENCIL_DESC depthstencilDesc(D3D11_DEFAULT);
@@ -101,7 +101,7 @@ HRESULT Preview::CreateDepthStencilState()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateVertexShaderConstants()
+HRESULT AVIPlayer::CreateVertexShaderConstants()
 {
 	vertexShaderConstants.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(VertexShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
@@ -111,7 +111,7 @@ HRESULT Preview::CreateVertexShaderConstants()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreatePixelShaderConstants()
+HRESULT AVIPlayer::CreatePixelShaderConstants()
 {
 	pixelShaderConstants.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(PixelShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
@@ -121,7 +121,7 @@ HRESULT Preview::CreatePixelShaderConstants()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateSampler()
+HRESULT AVIPlayer::CreateSampler()
 {
 	sampler.Release();
 	CD3D11_SAMPLER_DESC sampDesc(D3D11_DEFAULT);
@@ -132,7 +132,7 @@ HRESULT Preview::CreateSampler()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateVertexBuffer()
+HRESULT AVIPlayer::CreateVertexBuffer()
 {
 	vertexBuffer.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(vert), D3D11_BIND_VERTEX_BUFFER);
@@ -143,7 +143,7 @@ HRESULT Preview::CreateVertexBuffer()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateRasterizerState()
+HRESULT AVIPlayer::CreateRasterizerState()
 {
 	rasterizerState.Release();
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
@@ -155,7 +155,7 @@ HRESULT Preview::CreateRasterizerState()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Preview::CreateBlendState()
+HRESULT AVIPlayer::CreateBlendState()
 {
 	blendState.Release();
 	CD3D11_BLEND_DESC blendDesc(D3D11_DEFAULT);
@@ -165,22 +165,89 @@ HRESULT Preview::CreateBlendState()
 
 //////////////////////////////////////////////////////////////////////
 
-Preview::Preview(int width, int height)
+AVIPlayer::AVIPlayer(int width, int height)
 	: DXWindow(width, height)
-	, mBackgroundColor(255, 0, 255)
+	, mBackgroundColor(Color::DarkOliveGreen)
 	, mScale(1)
 	, mLastZoomTime(0)
 	, mMenu(null)
 	, mDrag(false)
 	, mHandCursor(NULL)
 	, mMaintainImagePosition(true)
+	, mStream(null)
+	, mStreamFrameGetter(null)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-bool Preview::OnCreate()
+bool AVIPlayer::OpenStream(tchar const *filename)
 {
+	CloseStream();
+
+	if(AVIStreamOpenFromFile(&mStream, filename, streamtypeVIDEO, 0, OF_READ, NULL) == S_OK)
+	{
+		AVISTREAMINFO streamInfo;
+		if(AVIStreamInfo(mStream, &streamInfo, sizeof(streamInfo)) == S_OK)
+		{
+			Rect2D const &r = (Rect2D const &)streamInfo.rcFrame;
+			movieSize = r.GetSize();
+			float framerate = (float)streamInfo.dwRate / streamInfo.dwScale;
+			float seconds = streamInfo.dwLength / framerate;
+			int minutes = (int)(seconds / 60.0f);
+			TRACE(TEXT("Width: %d, Height: %d, Framerate: %f, Length: %d'%02d\"\n"), r.Width(), r.Height(), framerate, minutes, (int)seconds % 60);
+
+			BITMAPINFOHEADER b = { 0 };
+			b.biBitCount = 32;
+			b.biHeight = -movieSize.Height();
+			b.biWidth = movieSize.Width();
+			b.biSize = sizeof(b);
+			b.biPlanes = 1;
+			b.biCompression = BI_RGB;
+
+			mStreamFrameGetter = AVIStreamGetFrameOpen(mStream, &b);
+			if(mStreamFrameGetter == null)
+			{
+				CloseStream();
+			}
+		}
+		else
+		{
+			CloseStream();
+		}
+	}
+	return mStream != null;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void AVIPlayer::CloseStream()
+{
+	if(mStreamFrameGetter != null)
+	{
+		AVIStreamGetFrameClose(mStreamFrameGetter);
+		mStreamFrameGetter = null;
+	}
+	if(mStream != null)
+	{
+		AVIStreamClose(mStream);
+		mStream = null;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool AVIPlayer::StreamIsOpen() const
+{
+	return mStream != null && mStreamFrameGetter != null;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool AVIPlayer::OnCreate()
+{
+	AVIFileInit();
+
 	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 	SetMenu(mHWND, mMenu);
 
@@ -197,11 +264,19 @@ bool Preview::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		if(OpenStream(TEXT("D:\\AVCaptures\\XB1_intro.avi")))
+		{
+			size_t imageSize = movieSize.Width() * movieSize.Height();
+			image.reset(new Color[imageSize]);
+			memset(image.get(), imageSize * sizeof(Color), 0);
+			mTexture.reset(new Texture(movieSize.Width(), movieSize.Height(), 0xFF00FF80));
+		}
+
+//		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		mDrawRect.Set(Vec2::zero, mTexture->FSize());
 		ChangeSize(mTexture->Width(), mTexture->Height());
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
-		mDrawRect.Set(Vec2::zero, mTexture->FSize());
 		CenterImageInWindowAndResetZoom();
 		mCurrentDrawRect = mDrawRect;
 		mTimer.Reset();
@@ -212,8 +287,10 @@ bool Preview::OnCreate()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnDestroy()
+void AVIPlayer::OnDestroy()
 {
+	image.reset();
+
 	pixelShader.Release();
 	pixelShaderConstants.Release();
 
@@ -234,18 +311,20 @@ void Preview::OnDestroy()
 	DestroyCursor(mHandCursor);
 	DestroyMenu(mMenu);
 
+	AVIFileExit();
+
 	DXWindow::OnDestroy();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-Preview::~Preview()
+AVIPlayer::~AVIPlayer()
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnChar(int key, uintptr flags)
+void AVIPlayer::OnChar(int key, uintptr flags)
 {
 	switch(key)
 	{
@@ -258,7 +337,7 @@ void Preview::OnChar(int key, uintptr flags)
 //////////////////////////////////////////////////////////////////////
 // make it stick at 1.0
 
-void Preview::OnMouseWheel(Point2D pos, int delta, uintptr flags)
+void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 {
 	Vec2 mousePos(pos);
 
@@ -300,7 +379,7 @@ void Preview::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnResize()
+void AVIPlayer::OnResize()
 {
 	DXWindow::OnResize();
 
@@ -316,7 +395,7 @@ void Preview::OnResize()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::CalcDrawRect()
+void AVIPlayer::CalcDrawRect()
 {
 	if(mTexture != null)
 	{
@@ -328,7 +407,7 @@ void Preview::CalcDrawRect()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnRightButtonDown(Point2D pos, uintptr flags)
+void AVIPlayer::OnRightButtonDown(Point2D pos, uintptr flags)
 {
 	Vec2 mousePos(pos);
 	if(mCurrentDrawRect.Contains(mousePos))
@@ -342,7 +421,7 @@ void Preview::OnRightButtonDown(Point2D pos, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnRightButtonUp(Point2D pos, uintptr flags)
+void AVIPlayer::OnRightButtonUp(Point2D pos, uintptr flags)
 {
 	mDrag = false;
 	SetCursor(null);
@@ -350,7 +429,7 @@ void Preview::OnRightButtonUp(Point2D pos, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::CenterImageInWindow()
+void AVIPlayer::CenterImageInWindow()
 {
 	Vec2 midPoint(ClientRect().MidPoint());
 	Vec2 halfSize = mDrawRect.Size() / 2;
@@ -360,27 +439,33 @@ void Preview::CenterImageInWindow()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::CenterImageInWindowAndResetZoom()
+void AVIPlayer::CenterImageInWindowAndResetZoom()
 {
-	mDrawRect.Resize(mTexture->FSize());
-	mScale = 1;
-	CenterImageInWindow();
+	if(mTexture != null)
+	{
+		mDrawRect.Resize(mTexture->FSize());
+		mScale = 1;
+		CenterImageInWindow();
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnLeftMouseDoubleClick(Point2D pos)
+void AVIPlayer::OnLeftMouseDoubleClick(Point2D pos)
 {
-	ChangeSize(mTexture->Width(), mTexture->Height());
+	if(mTexture != null)
+	{
+		ChangeSize(mTexture->Width(), mTexture->Height());
+		mDrawRect.Set(Vec2::zero, mTexture->FSize());
+	}
 	MoveToMiddleOfMonitor();
 	mOldClientRect = ClientRect();
-	mDrawRect.Set(Vec2::zero, mTexture->FSize());
 	CenterImageInWindowAndResetZoom();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnMouseMove(Point2D pos, uintptr flags)
+void AVIPlayer::OnMouseMove(Point2D pos, uintptr flags)
 {
 	if(mDrag)
 	{
@@ -392,9 +477,21 @@ void Preview::OnMouseMove(Point2D pos, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-bool Preview::OnUpdate()
+bool AVIPlayer::OnUpdate()
 {
 	DXWindow::OnUpdate();
+
+	if(StreamIsOpen())
+	{
+		int t = (int)(mTimer.Elapsed() / 1000.0f);
+		int sample = AVIStreamTimeToSample(mStream, t);
+		void *p = AVIStreamGetFrame(mStreamFrameGetter, sample);
+		if(p != null)
+		{
+			memcpy(image.get(), p, movieSize.Width() * movieSize.Height() * sizeof(Color));
+		}
+		mTexture->Update((byte *)image.get());
+	}
 
 	mDeltaTime = mTimer.Delta();
 
@@ -421,60 +518,63 @@ bool Preview::OnUpdate()
 
 //////////////////////////////////////////////////////////////////////
 
-void Preview::OnDraw()
+void AVIPlayer::OnDraw()
 {
 	using namespace DirectX;
 
-	float hlfw = 2.0f / Width();
-	float hlfh = -2.0f / Height();
+	if(mTexture != null)
+	{
+		float hlfw = 2.0f / Width();
+		float hlfh = -2.0f / Height();
 
-	Matrix matrix( hlfw, 0.0f, 0.0f, 0.0f,
-				   0.0f, hlfh, 0.0f, 0.0f,
-				   0.0f, 0.0f, 1.0f, 0.0f,
-				  -1.0f, 1.0f, 0.0f, 1.0f);
+		Matrix matrix(hlfw, 0.0f, 0.0f, 0.0f,
+					  0.0f, hlfh, 0.0f, 0.0f,
+					  0.0f, 0.0f, 1.0f, 0.0f,
+					  -1.0f, 1.0f, 0.0f, 1.0f);
 
-	UINT strides[] = { sizeof(Vertex) };
-	UINT offsets[] = { 0 };
+		UINT strides[] = { sizeof(Vertex) };
+		UINT offsets[] = { 0 };
 
-	float gridSize = 16;
+		float gridSize = 16;
 
-	VertexShaderConstants vsConstants;
-	PixelShaderConstants psConstants;
+		VertexShaderConstants vsConstants;
+		PixelShaderConstants psConstants;
 
-	SetQuad();
+		SetQuad();
 
-	vsConstants.matrix = XMMatrixTranspose(matrix);
-	vsConstants.textureSize = mTexture->FSize();
+		vsConstants.matrix = XMMatrixTranspose(matrix);
+		vsConstants.textureSize = mTexture->FSize();
 
-	psConstants.channelMask = XMVectorSet(1, 1, 1, 1);
-	psConstants.channelOffset = XMVectorSet(0, 0, 0, 0);
-	psConstants.gridColor0 = XMVectorSet(0.8f, 0.8f, 0.8f, 1);
-	psConstants.gridColor1 = XMVectorSet(0.6f, 0.6f, 0.6f, 1);
-	psConstants.gridSize = Vec2(gridSize, gridSize);
-	psConstants.gridSize2 = Vec2(gridSize * 2, gridSize * 2);
+		psConstants.channelMask = XMVectorSet(1, 1, 1, 1);
+		psConstants.channelOffset = XMVectorSet(0, 0, 0, 0);
+		psConstants.gridColor0 = XMVectorSet(0.8f, 0.8f, 0.8f, 1);
+		psConstants.gridColor1 = XMVectorSet(0.6f, 0.6f, 0.6f, 1);
+		psConstants.gridSize = Vec2(gridSize, gridSize);
+		psConstants.gridSize2 = Vec2(gridSize * 2, gridSize * 2);
 
-	mContext->UpdateSubresource(pixelShaderConstants, 0, NULL, &psConstants, 0, 0);
-	mContext->UpdateSubresource(vertexShaderConstants, 0, NULL, &vsConstants, 0, 0);
-	mContext->UpdateSubresource(vertexBuffer, 0, NULL, vert, 0, 0);
+		mContext->UpdateSubresource(pixelShaderConstants, 0, NULL, &psConstants, 0, 0);
+		mContext->UpdateSubresource(vertexShaderConstants, 0, NULL, &vsConstants, 0, 0);
+		mContext->UpdateSubresource(vertexBuffer, 0, NULL, vert, 0, 0);
 
-	mContext->IASetInputLayout(vertexLayout);
-	mContext->IASetVertexBuffers(0, 1, &vertexBuffer, strides, offsets);
-	mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		mContext->IASetInputLayout(vertexLayout);
+		mContext->IASetVertexBuffers(0, 1, &vertexBuffer, strides, offsets);
+		mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	mContext->VSSetShader(vertexShader, NULL, 0);
-	mContext->VSSetConstantBuffers(0, 1, &vertexShaderConstants);
+		mContext->VSSetShader(vertexShader, NULL, 0);
+		mContext->VSSetConstantBuffers(0, 1, &vertexShaderConstants);
 
-	mContext->PSSetShader(pixelShader, NULL, 0);
-	mContext->PSSetConstantBuffers(0, 1, &pixelShaderConstants);
-	mContext->PSSetSamplers(0, 1, &sampler);
+		mContext->PSSetShader(pixelShader, NULL, 0);
+		mContext->PSSetConstantBuffers(0, 1, &pixelShaderConstants);
+		mContext->PSSetSamplers(0, 1, &sampler);
 
-	mContext->OMSetBlendState(blendState, 0, 0xffffffff);
-	mContext->OMSetDepthStencilState(mDepthStencilState, 0);
+		mContext->OMSetBlendState(blendState, 0, 0xffffffff);
+		mContext->OMSetDepthStencilState(mDepthStencilState, 0);
 
-	mContext->RSSetState(rasterizerState);
+		mContext->RSSetState(rasterizerState);
 
-	mTexture->Activate();
+		mTexture->Activate();
 
+	}
 	Clear(mBackgroundColor);
 	mContext->Draw(ARRAYSIZE(vert), 0);
 }

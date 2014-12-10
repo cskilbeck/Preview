@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <Vfw.h>
 
 #include <stdlib.h>
 #include <malloc.h>
@@ -42,5 +43,5 @@
 #include "Texture.h"
 #include "Window.h"
 #include "DXWindow.h"
-#include "Preview.h"
+#include "AVIPlayer.h"
 
