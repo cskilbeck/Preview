@@ -2,8 +2,8 @@
 
 cbuffer Projection : register(b0)
 {
-	matrix projection;
-	float2 textureSize;
+	matrix Projection;
+	float2 TextureSize;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -28,9 +28,9 @@ struct PS_INPUT
 PS_INPUT main(VS_INPUT input)
 {
 	PS_INPUT o;
-	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), projection);
+	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), Projection);
 	o.Tex0 = input.uv;
-	o.Tex1 = input.uv * textureSize;
+	o.Tex1 = input.uv * TextureSize;
 	return o;
 }
 

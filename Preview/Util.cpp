@@ -18,6 +18,18 @@ void TRACE(tchar const *strMsg, ...)
 
 //////////////////////////////////////////////////////////////////////
 
+void cTRACE(char const *strMsg, ...)
+{
+	char strBuffer[512];
+	va_list args;
+	va_start(args, strMsg);
+	_vsnprintf_s(strBuffer, sizeof(strBuffer), strMsg, args);
+	va_end(args);
+	OutputDebugStringA(strBuffer);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 {
 	HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);

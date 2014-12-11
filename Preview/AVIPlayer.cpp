@@ -268,8 +268,8 @@ bool AVIPlayer::OnCreate()
 		{
 			size_t imageSize = movieSize.Width() * movieSize.Height();
 			image.reset(new Color[imageSize]);
-			memset(image.get(), imageSize * sizeof(Color), 0);
-			mTexture.reset(new Texture(movieSize.Width(), movieSize.Height(), 0xFF00FF80));
+			memset(image.get(), 0, imageSize * sizeof(Color));
+			mTexture.reset(new Texture(movieSize.Width(), movieSize.Height(), DXGI_FORMAT_R8G8B8A8_UINT, (byte *)image.get()));
 		}
 
 //		mTexture.reset(new Texture(TEXT("D:\\test.png")));
@@ -573,7 +573,6 @@ void AVIPlayer::OnDraw()
 		mContext->RSSetState(rasterizerState);
 
 		mTexture->Activate();
-
 	}
 	Clear(mBackgroundColor);
 	mContext->Draw(ARRAYSIZE(vert), 0);

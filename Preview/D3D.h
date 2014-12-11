@@ -155,3 +155,5 @@ template<typename T> struct DXPtr
 
 	T *p;
 };
+
+extern DXPtr<ID3D11Device> gDevice;

@@ -11,6 +11,7 @@
 //////////////////////////////////////////////////////////////////////
 
 void TRACE(tchar const *strMsg, ...);
+void cTRACE(char const *strMsg, ...);
 uint8 *LoadFile(char const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 wstring WideStringFromString(string const &str);
@@ -138,6 +139,24 @@ inline wstring ToLower(wstring const &s)
 	wstring r(s);
 	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
 	return r;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+inline int HighBit(uint32 x)
+{
+	unsigned long index;
+	byte isNonzero = _BitScanReverse(&index, x);
+	return isNonzero ? index + 1 : 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+inline int HighBit64(uint64 x)
+{
+	unsigned long index;
+	byte isNonzero = _BitScanReverse64(&index, x);
+	return isNonzero ? index + 1 : 0;
 }
 
 //////////////////////////////////////////////////////////////////////

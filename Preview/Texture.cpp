@@ -6,7 +6,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-static size_t BPPFromTextureFormat(DXGI_FORMAT format)
+static uint BPPFromTextureFormat(DXGI_FORMAT format)
 {
 	switch(format)
 	{
@@ -156,7 +156,7 @@ void Texture::ReleaseDeviceAndContext()
 
 void Texture::InitFromPixelBuffer(byte *buffer, DXGI_FORMAT pixelFormat, int width, int height)
 {
-	size_t bpp = BPPFromTextureFormat(pixelFormat);
+	uint bpp = BPPFromTextureFormat(pixelFormat);
 	D3D11_SUBRESOURCE_DATA data[1];
 	data[0].pSysMem = (void *)buffer;
 	data[0].SysMemPitch = (width * bpp + 7) / 8;
@@ -183,7 +183,7 @@ void Texture::InitFromPixelBuffer(byte *buffer, DXGI_FORMAT pixelFormat, int wid
 
 //////////////////////////////////////////////////////////////////////
 
-int Texture::BitsPerPixel() const
+uint Texture::BitsPerPixel() const
 {
 	return BPPFromTextureFormat(mTextureDesc.Format);
 }
@@ -227,7 +227,6 @@ Texture::Texture(int width, int height, Color color)
 			row[x] = color;
 		}
 	}
-	//InitFromPixelBuffer(pPixels.get(), DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
 	InitFromPixelBuffer(pPixels.get(), DXGI_FORMAT_B8G8R8A8_UNORM, width, height);
 }
 

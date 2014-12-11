@@ -23,7 +23,7 @@ struct Texture
 	void Update(byte *pixels);
 	int Width() const;
 	int Height() const;
-	int BitsPerPixel() const;
+	uint BitsPerPixel() const;
 	float FWidth() const;
 	float FHeight() const;
 	Vec2 FSize() const;

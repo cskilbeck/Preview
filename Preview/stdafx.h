@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <d3dcompiler.h>
 #include <Vfw.h>
 
 #include <stdlib.h>
@@ -24,6 +25,7 @@
 #include <string>
 #include <algorithm>
 #include <memory>
+#include <unordered_map>
 
 #include "Resource.h"
 
@@ -41,6 +43,11 @@
 #include "Color.h"
 #include "D3D.h"
 #include "Texture.h"
+#include "CBuffer.h"
+#include "Shader.h"
+#include "VertexShader.h"
+#include "PixelShader.h"
+#include "Material.h"
 #include "Window.h"
 #include "DXWindow.h"
 #include "AVIPlayer.h"
