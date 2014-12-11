@@ -10,11 +10,11 @@ void Shader::DeleteConstantBuffers()
 	{
 		delete i->second;
 	}
-	mConstantBuffers.clear();
 	for(auto i = mBuffers.begin(); i != mBuffers.end(); ++i)
 	{
 		(*i)->Release();
 	}
+	mConstantBuffers.clear();
 	mBuffers.clear();
 }
 
@@ -22,11 +22,14 @@ void Shader::DeleteConstantBuffers()
 
 HRESULT Shader::CreateConstantBuffers(void const *blob, size_t size)
 {
+	DeleteConstantBuffers();
+
 	DXPtr<ID3D11ShaderReflection> vsr;
 	DX(D3DReflect(blob, size, IID_ID3D11ShaderReflection, (void **)&vsr));
+
 	D3D11_SHADER_DESC desc;
 	vsr->GetDesc(&desc);
-	DeleteConstantBuffers();
+
 	for(uint i = 0; i < desc.ConstantBuffers; ++i)
 	{
 		CBuffer *cb = new CBuffer();
