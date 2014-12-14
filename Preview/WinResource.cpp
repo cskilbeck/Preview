@@ -4,28 +4,31 @@
 
 //////////////////////////////////////////////////////////////////////
 
-Resource::Resource(DWORD resourceid)
+Resource::Resource()
 	: data(null)
 	, size(0)
 {
-	HRSRC myResource = FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
-	if(myResource != null)
-	{
-		HGLOBAL myResourceData = LoadResource(NULL, myResource);
-		if(myResourceData != null)
-		{
-			data = LockResource(myResourceData);
-			if(data != null)
-			{
-				size = (size_t)SizeofResource(GetModuleHandle(null), myResource);
-			}
-		}
-	}
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Resource::~Resource()
+{
+	assert(data == null);
+	assert(size == 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+WinResource::WinResource(DWORD resourceid)
+	: Resource()
+{
+	LoadResource(resourceid, &data, &size);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+WinResource::~WinResource()
 {
 	if(data != null)
 	{
@@ -34,3 +37,22 @@ Resource::~Resource()
 		size = 0;
 	}
 }
+
+//////////////////////////////////////////////////////////////////////
+
+FileResource::FileResource(tchar const *filename)
+	: Resource()
+{
+	data = LoadFile(filename, &size);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+FileResource::~FileResource()
+{
+	Delete(data);
+	size = 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+

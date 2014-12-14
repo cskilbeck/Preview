@@ -6,8 +6,8 @@
 
 struct Resource
 {
-	Resource(DWORD resourceid);
-	~Resource();
+	Resource();
+	virtual ~Resource();
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -32,8 +32,24 @@ struct Resource
 
 	//////////////////////////////////////////////////////////////////////
 
-private:
+protected:
 
 	void *		data;
 	size_t		size;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+struct FileResource: Resource
+{
+	FileResource(tchar const *name);
+	~FileResource();
+};
+
+//////////////////////////////////////////////////////////////////////
+
+struct WinResource: Resource
+{
+	WinResource(DWORD resourceID);
+	~WinResource();
 };

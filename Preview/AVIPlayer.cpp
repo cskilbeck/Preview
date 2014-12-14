@@ -67,8 +67,8 @@ HRESULT AVIPlayer::LoadShaders()
 {
 	vertexShader.Release();
 	pixelShader.Release();
-	Resource vertData(IDR_VERTEXSHADER);
-	Resource pixelData(IDR_PIXELSHADER);
+	WinResource vertData(IDR_VERTEXSHADER);
+	WinResource pixelData(IDR_PIXELSHADER);
 	if(vertData.IsValid() && pixelData.IsValid())
 	{
 		D3D11_INPUT_ELEMENT_DESC layout[] =
@@ -186,8 +186,8 @@ bool AVIPlayer::OnCreate()
 
 	if(DXWindow::OnCreate())
 	{
-		Resource r1(IDR_PIXELSHADER);
-		Resource r2(IDR_VERTEXSHADER);
+		WinResource r1(IDR_PIXELSHADER);
+		WinResource r2(IDR_VERTEXSHADER);
 		mMaterial.Create();
 		mPixelShader.Create(r1, r1.Size());
 		mVertexShader.Create(r2, r2.Size());

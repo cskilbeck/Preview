@@ -130,9 +130,9 @@ HRESULT ConstantBuffer::Create(ID3D11ShaderReflectionConstantBuffer *b)
 		DX(type->GetDesc(&t));
 		Parameters[v.Name] = cbVar;
 		TRACE("    Parameter: %s%s : %s %s%d %s\n",	v.Name,
-														(t.Elements > 0) ? cFormat("[%d]", t.Elements).c_str() : "",
+														(t.Elements > 0) ? Format("[%d]", t.Elements).c_str() : "",
 														classNames[t.Class],
-														isMatrix[t.Class] ? cFormat("%dx", t.Rows).c_str() : "",
+														isMatrix[t.Class] ? Format("%dx", t.Rows).c_str() : "",
 														t.Columns,
 														typeNames[t.Type]
 														);

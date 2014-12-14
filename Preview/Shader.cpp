@@ -48,7 +48,7 @@ HRESULT Shader::CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc)
 	ConstantBuffer *cb = new ConstantBuffer();
 	uint i = desc.BindPoint;
 	DX(cb->Create(mReflector->GetConstantBufferByIndex(i)));
-	mConstBufferIDs[cb->Name] = i;
+	mConstBufferIDs[string(cb->Name)] = i;
 	TRACE("===>mConstBufferIDs[%s] = %d\n", cb->Name, i);
 	AddAt(mConstantBuffers, i, cb);
 	AddAt(mBuffers, i, cb->mConstantBuffer);
@@ -98,7 +98,7 @@ HRESULT Shader::CreateTextureBinding(D3D11_SHADER_INPUT_BIND_DESC desc)
 {
 	TRACE("  Texture: %s at %d\n", desc.Name, desc.BindPoint);
 	AddAt(mTextures, desc.BindPoint, (ID3D11ShaderResourceView *)null);
-	mTextureIDs[desc.Name] = desc.BindPoint;
+	mTextureIDs[string(desc.Name)] = desc.BindPoint;
 	return S_OK;
 }
 

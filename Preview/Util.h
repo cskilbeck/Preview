@@ -17,13 +17,13 @@ void TRACE(char const *strMsg, ...);
 #define TRACE(x, ...) if (false) {} else (x);
 #endif
 
-uint8 *LoadFile(char const *filename, size_t *size = null);
+uint8 *LoadFile(tchar const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 wstring WideStringFromString(string const &str);
 wstring WideStringFromTString(tstring const &str);
 string StringFromWideString(wstring const &str);
-tstring Format(tchar const *fmt, ...);
-string cFormat(char const *fmt, ...);
+wstring Format(wchar const *fmt, ...);
+string Format(char const *fmt, ...);
 tstring GetCurrentFolder();
 
 #ifndef PI

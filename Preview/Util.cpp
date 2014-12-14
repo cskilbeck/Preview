@@ -34,38 +34,29 @@ void TRACE(char const *strMsg, ...)
 
 HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 {
+	if(size != null) *size = 0;
+	if(data != null) *data = null;
 	HRSRC myResource = ::FindResource(NULL, MAKEINTRESOURCE(resourceid), RT_RCDATA);
-	if(myResource == null)
-	{
-		return ERROR_RESOURCE_DATA_NOT_FOUND;
-	}
+	if(myResource == null) return ERROR_RESOURCE_DATA_NOT_FOUND;
 
 	HGLOBAL myResourceData = ::LoadResource(NULL, myResource);
-	if(myResourceData == null)
-	{
-		return ERROR_RESOURCE_FAILED;
-	}
+	if(myResourceData == null) return ERROR_RESOURCE_FAILED;
 
 	void *pMyBinaryData = ::LockResource(myResourceData);
 	if(pMyBinaryData == null)
 	{
+		FreeResource(myResourceData);
 		return ERROR_RESOURCE_NOT_AVAILABLE;
 	}
 
 	size_t s = (size_t)SizeofResource(GetModuleHandle(null), myResource);
 	if(s == 0)
 	{
+		FreeResource(myResourceData);
 		return ERROR_RESOURCE_FAILED;
 	}
-
-	if(size != null)
-	{
-		*size = s;
-	}
-	if(data != null)
-	{
-		*data = pMyBinaryData;
-	}
+	if(size != null) *size = s;
+	if(data != null) *data = pMyBinaryData;
 	return S_OK;
 }
 
@@ -114,23 +105,23 @@ uint8 *LoadFile(tchar const *filename, size_t *size)
 
 //////////////////////////////////////////////////////////////////////
 
-tstring Format(tchar const *fmt, ...)
+wstring Format(wchar const *fmt, ...)
 {
-	tchar buffer[1024];
+	wchar buffer[1024];
 	va_list v;
 	va_start(v, fmt);
-	_vstprintf_s(buffer, fmt, v);
+	_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, v);
 	return tstring(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-string cFormat(char const *fmt, ...)
+string Format(char const *fmt, ...)
 {
 	char buffer[1024];
 	va_list v;
 	va_start(v, fmt);
-	_vsnprintf_s(buffer, sizeof(buffer), fmt, v);
+	_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, v);
 	return string(buffer);
 }
 
