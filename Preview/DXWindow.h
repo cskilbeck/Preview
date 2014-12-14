@@ -29,7 +29,6 @@ protected:
 
 	int								mFrame;
 
-	DXPtr<ID3D11Device>				mDevice;
 	DXPtr<ID3D11DeviceContext>		mContext;
 	DXPtr<ID3D11RenderTargetView>	mRenderTargetView;
 	DXPtr<IDXGISwapChain>			mSwapChain;

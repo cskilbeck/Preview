@@ -125,7 +125,7 @@ bool DXWindow::OpenD3D()
 		mDriverType = driverTypes[driverTypeIndex];
 
 		hr = DXB(D3D11CreateDeviceAndSwapChain(null, mDriverType, null, createDeviceFlags, featureLevels, numFeatureLevels,
-			D3D11_SDK_VERSION, &sd, &mSwapChain, &mDevice, &mFeatureLevel, &mContext));
+			D3D11_SDK_VERSION, &sd, &mSwapChain, &gDevice, &mFeatureLevel, &mContext));
 		if(SUCCEEDED(hr))
 		{
 			break;
@@ -140,7 +140,7 @@ bool DXWindow::OpenD3D()
 
 	GetBackBuffer();
 
-	Texture::SetDeviceAndContext(mDevice, mContext);
+	Texture::SetDeviceAndContext(gDevice, mContext);
 
 	return true;
 }
@@ -183,16 +183,16 @@ void DXWindow::CloseD3D()
 	mContext.Release();
 
 #if defined(DEBUG)
-	if(mDevice != null)
+	if(gDevice != null)
 	{
 		DXPtr<ID3D11Debug> D3DDebug;
-		mDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
+		gDevice->QueryInterface(__uuidof(ID3D11Debug), (void **)&D3DDebug);
 		D3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY | D3D11_RLDO_DETAIL);
 		D3DDebug.Release();
 	}
 #endif
 
-	mDevice.Release();
+	gDevice.Release();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -201,7 +201,7 @@ bool DXWindow::GetBackBuffer()
 {
 	DXPtr<ID3D11Texture2D> pBackBuffer;
 	DXB(mSwapChain->GetBuffer(0, __uuidof(pBackBuffer), (LPVOID*)&pBackBuffer));
-	DXB(mDevice->CreateRenderTargetView(pBackBuffer, null, &mRenderTargetView));
+	DXB(gDevice->CreateRenderTargetView(pBackBuffer, null, &mRenderTargetView));
 
 	D3D11_VIEWPORT vp = { 0 };
 	vp.Width = FWidth();

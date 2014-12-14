@@ -10,14 +10,20 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void TRACE(tchar const *strMsg, ...);
-void cTRACE(char const *strMsg, ...);
+#if defined(_DEBUG)
+void TRACE(wchar const *strMsg, ...);
+void TRACE(char const *strMsg, ...);
+#else
+#define TRACE(x, ...) if (false) {} else (x);
+#endif
+
 uint8 *LoadFile(char const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 wstring WideStringFromString(string const &str);
 wstring WideStringFromTString(tstring const &str);
 string StringFromWideString(wstring const &str);
 tstring Format(tchar const *fmt, ...);
+string cFormat(char const *fmt, ...);
 tstring GetCurrentFolder();
 
 #ifndef PI
@@ -152,12 +158,14 @@ inline int HighBit(uint32 x)
 
 //////////////////////////////////////////////////////////////////////
 
+#if defined(_WIN64)
 inline int HighBit64(uint64 x)
 {
 	unsigned long index;
 	byte isNonzero = _BitScanReverse64(&index, x);
 	return isNonzero ? index + 1 : 0;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 

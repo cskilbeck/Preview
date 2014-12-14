@@ -76,9 +76,9 @@ HRESULT AVIPlayer::LoadShaders()
 			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
-		DX(mDevice->CreateVertexShader(vertData, vertData.Size(), NULL, &vertexShader));
-		DX(mDevice->CreateInputLayout(layout, ARRAYSIZE(layout), vertData, vertData.Size(), &vertexLayout));
-		DX(mDevice->CreatePixelShader(pixelData, pixelData.Size(), NULL, &pixelShader));
+		DX(gDevice->CreateVertexShader(vertData, vertData.Size(), NULL, &vertexShader));
+		DX(gDevice->CreateInputLayout(layout, ARRAYSIZE(layout), vertData, vertData.Size(), &vertexLayout));
+		DX(gDevice->CreatePixelShader(pixelData, pixelData.Size(), NULL, &pixelShader));
 		return S_OK;
 	}
 	else
@@ -95,7 +95,7 @@ HRESULT AVIPlayer::CreateDepthStencilState()
 	CD3D11_DEPTH_STENCIL_DESC depthstencilDesc(D3D11_DEFAULT);
 	depthstencilDesc.DepthEnable = FALSE;
 	depthstencilDesc.StencilEnable = FALSE;
-	DX(mDevice->CreateDepthStencilState(&depthstencilDesc, &mDepthStencilState));
+	DX(gDevice->CreateDepthStencilState(&depthstencilDesc, &mDepthStencilState));
 	return S_OK;
 }
 
@@ -105,7 +105,7 @@ HRESULT AVIPlayer::CreateVertexShaderConstants()
 {
 	vertexShaderConstants.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(VertexShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
-	DX(mDevice->CreateBuffer(&bd, NULL, &vertexShaderConstants));
+	DX(gDevice->CreateBuffer(&bd, NULL, &vertexShaderConstants));
 	return S_OK;
 }
 
@@ -115,7 +115,7 @@ HRESULT AVIPlayer::CreatePixelShaderConstants()
 {
 	pixelShaderConstants.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(PixelShaderConstants), D3D11_BIND_CONSTANT_BUFFER);
-	DX(mDevice->CreateBuffer(&bd, NULL, &pixelShaderConstants));
+	DX(gDevice->CreateBuffer(&bd, NULL, &pixelShaderConstants));
 	return S_OK;
 }
 
@@ -126,7 +126,7 @@ HRESULT AVIPlayer::CreateSampler()
 	sampler.Release();
 	CD3D11_SAMPLER_DESC sampDesc(D3D11_DEFAULT);
 	sampDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-	DX(mDevice->CreateSamplerState(&sampDesc, &sampler));
+	DX(gDevice->CreateSamplerState(&sampDesc, &sampler));
 	return S_OK;
 }
 
@@ -137,7 +137,7 @@ HRESULT AVIPlayer::CreateVertexBuffer()
 	vertexBuffer.Release();
 	CD3D11_BUFFER_DESC bd(sizeof(vert), D3D11_BIND_VERTEX_BUFFER);
 	D3D11_SUBRESOURCE_DATA InitData = { vert, 0, 0 };
-	DX(mDevice->CreateBuffer(&bd, &InitData, &vertexBuffer));
+	DX(gDevice->CreateBuffer(&bd, &InitData, &vertexBuffer));
 	return S_OK;
 }
 
@@ -149,7 +149,7 @@ HRESULT AVIPlayer::CreateRasterizerState()
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.DepthClipEnable = false;
 	rasterizerDesc.CullMode = D3D11_CULL_NONE;
-	DX(mDevice->CreateRasterizerState(&rasterizerDesc, &rasterizerState));
+	DX(gDevice->CreateRasterizerState(&rasterizerDesc, &rasterizerState));
 	return S_OK;
 }
 
@@ -159,7 +159,7 @@ HRESULT AVIPlayer::CreateBlendState()
 {
 	blendState.Release();
 	CD3D11_BLEND_DESC blendDesc(D3D11_DEFAULT);
-	DX(mDevice->CreateBlendState(&blendDesc, &blendState));
+	DX(gDevice->CreateBlendState(&blendDesc, &blendState));
 	return S_OK;
 }
 
@@ -174,85 +174,24 @@ AVIPlayer::AVIPlayer(int width, int height)
 	, mDrag(false)
 	, mHandCursor(NULL)
 	, mMaintainImagePosition(true)
-	, mStream(null)
-	, mStreamFrameGetter(null)
 {
-}
-
-//////////////////////////////////////////////////////////////////////
-
-bool AVIPlayer::OpenStream(tchar const *filename)
-{
-	CloseStream();
-
-	if(AVIStreamOpenFromFile(&mStream, filename, streamtypeVIDEO, 0, OF_READ, NULL) == S_OK)
-	{
-		AVISTREAMINFO streamInfo;
-		if(AVIStreamInfo(mStream, &streamInfo, sizeof(streamInfo)) == S_OK)
-		{
-			Rect2D const &r = (Rect2D const &)streamInfo.rcFrame;
-			movieSize = r.GetSize();
-			float framerate = (float)streamInfo.dwRate / streamInfo.dwScale;
-			float seconds = streamInfo.dwLength / framerate;
-			int minutes = (int)(seconds / 60.0f);
-			TRACE(TEXT("Width: %d, Height: %d, Framerate: %f, Length: %d'%02d\"\n"), r.Width(), r.Height(), framerate, minutes, (int)seconds % 60);
-
-			BITMAPINFOHEADER b = { 0 };
-			b.biBitCount = 32;
-			b.biHeight = -movieSize.Height();
-			b.biWidth = movieSize.Width();
-			b.biSize = sizeof(b);
-			b.biPlanes = 1;
-			b.biCompression = BI_RGB;
-
-			mStreamFrameGetter = AVIStreamGetFrameOpen(mStream, &b);
-			if(mStreamFrameGetter == null)
-			{
-				CloseStream();
-			}
-		}
-		else
-		{
-			CloseStream();
-		}
-	}
-	return mStream != null;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void AVIPlayer::CloseStream()
-{
-	if(mStreamFrameGetter != null)
-	{
-		AVIStreamGetFrameClose(mStreamFrameGetter);
-		mStreamFrameGetter = null;
-	}
-	if(mStream != null)
-	{
-		AVIStreamClose(mStream);
-		mStream = null;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////
-
-bool AVIPlayer::StreamIsOpen() const
-{
-	return mStream != null && mStreamFrameGetter != null;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 bool AVIPlayer::OnCreate()
 {
-	AVIFileInit();
-
 	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 	SetMenu(mHWND, mMenu);
 
 	if(DXWindow::OnCreate())
 	{
+		Resource r1(IDR_PIXELSHADER);
+		Resource r2(IDR_VERTEXSHADER);
+		mMaterial.Create();
+		mPixelShader.Create(r1, r1.Size());
+		mVertexShader.Create(r2, r2.Size());
+
 		DXB(LoadShaders());
 		DXB(CreateSampler());
 		DXB(CreateVertexBuffer());
@@ -264,13 +203,17 @@ bool AVIPlayer::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		if(OpenStream(TEXT("D:\\AVCaptures\\XB1_intro.avi")))
-		{
-			size_t imageSize = movieSize.Width() * movieSize.Height();
-			image.reset(new Color[imageSize]);
-			memset(image.get(), 0, imageSize * sizeof(Color));
-			mTexture.reset(new Texture(movieSize.Width(), movieSize.Height(), DXGI_FORMAT_R8G8B8A8_UINT, (byte *)image.get()));
-		}
+		mTexture.reset(new Texture(64, 64, Color::BrightBlue));
+
+//		mPixelShader.SetTexture("pic", mTexture);
+//		mPixelShader.SetSampler("smplr", mTexture);
+
+		ConstantBuffer *b = mVertexShader.GetCB("VertConstants");
+		Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
+		Vec2 *v = (Vec2 *)b->AddressOf("TextureSize");
+
+		ConstantBuffer *pb = mPixelShader.GetCB("PixelShaderConstants");
+		PixelShaderConstants *p = (PixelShaderConstants *)(pb->GetBuffer());
 
 //		mTexture.reset(new Texture(TEXT("D:\\test.png")));
 		mDrawRect.Set(Vec2::zero, mTexture->FSize());
@@ -289,7 +232,9 @@ bool AVIPlayer::OnCreate()
 
 void AVIPlayer::OnDestroy()
 {
-	image.reset();
+	mMaterial.Destroy();
+	mPixelShader.Destroy();
+	mVertexShader.Destroy();
 
 	pixelShader.Release();
 	pixelShaderConstants.Release();
@@ -310,8 +255,6 @@ void AVIPlayer::OnDestroy()
 
 	DestroyCursor(mHandCursor);
 	DestroyMenu(mMenu);
-
-	AVIFileExit();
 
 	DXWindow::OnDestroy();
 }
@@ -481,18 +424,6 @@ bool AVIPlayer::OnUpdate()
 {
 	DXWindow::OnUpdate();
 
-	if(StreamIsOpen())
-	{
-		int t = (int)(mTimer.Elapsed() / 1000.0f);
-		int sample = AVIStreamTimeToSample(mStream, t);
-		void *p = AVIStreamGetFrame(mStreamFrameGetter, sample);
-		if(p != null)
-		{
-			memcpy(image.get(), p, movieSize.Width() * movieSize.Height() * sizeof(Color));
-		}
-		mTexture->Update((byte *)image.get());
-	}
-
 	mDeltaTime = mTimer.Delta();
 
 	Vec2 tld = mDrawRect.TopLeft() - mCurrentDrawRect.TopLeft();
@@ -572,7 +503,7 @@ void AVIPlayer::OnDraw()
 
 		mContext->RSSetState(rasterizerState);
 
-		mTexture->Activate();
+		mTexture->Activate(mContext);
 	}
 	Clear(mBackgroundColor);
 	mContext->Draw(ARRAYSIZE(vert), 0);

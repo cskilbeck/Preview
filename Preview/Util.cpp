@@ -6,27 +6,29 @@
 
 //////////////////////////////////////////////////////////////////////
 
-void TRACE(tchar const *strMsg, ...)
+#if defined(_DEBUG)
+void TRACE(wchar const *strMsg, ...)
 {
-	tchar strBuffer[512];
+	wchar strBuffer[512];
 	va_list args;
 	va_start(args, strMsg);
-	_vstprintf_s(strBuffer, strMsg, args);
+	_vsnwprintf_s(strBuffer, ARRAYSIZE(strBuffer), strMsg, args);
 	va_end(args);
-	OutputDebugString(strBuffer);
+	OutputDebugStringW(strBuffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void cTRACE(char const *strMsg, ...)
+void TRACE(char const *strMsg, ...)
 {
 	char strBuffer[512];
 	va_list args;
 	va_start(args, strMsg);
-	_vsnprintf_s(strBuffer, sizeof(strBuffer), strMsg, args);
+	_vsnprintf_s(strBuffer, ARRAYSIZE(strBuffer), strMsg, args);
 	va_end(args);
 	OutputDebugStringA(strBuffer);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 
@@ -119,6 +121,17 @@ tstring Format(tchar const *fmt, ...)
 	va_start(v, fmt);
 	_vstprintf_s(buffer, fmt, v);
 	return tstring(buffer);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+string cFormat(char const *fmt, ...)
+{
+	char buffer[1024];
+	va_list v;
+	va_start(v, fmt);
+	_vsnprintf_s(buffer, sizeof(buffer), fmt, v);
+	return string(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////

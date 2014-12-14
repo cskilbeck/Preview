@@ -75,12 +75,6 @@ struct AVIPlayer : DXWindow
 
 	//////////////////////////////////////////////////////////////////////
 
-	bool OpenStream(tchar const *filename);
-	void CloseStream();
-	bool StreamIsOpen() const;
-
-	//////////////////////////////////////////////////////////////////////
-
 	static Vertex vert[6];
 
 	//////////////////////////////////////////////////////////////////////
@@ -99,10 +93,9 @@ struct AVIPlayer : DXWindow
 	bool mDrag;
 	Point2D mDragPos;
 	bool mMaintainImagePosition;
-	Ptr<Color> image;
-	PAVISTREAM mStream;
-	PGETFRAME mStreamFrameGetter;
-	Size2D movieSize;
+	Material mMaterial;
+	PixelShader mPixelShader;
+	VertexShader mVertexShader;
 
 	//////////////////////////////////////////////////////////////////////
 

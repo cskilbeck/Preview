@@ -34,19 +34,15 @@ static DXGI_FORMAT formats[4][4] =
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT VertexShader::CreateInputLayoutDesc(void const *blob, size_t size, vector<D3D11_INPUT_ELEMENT_DESC> &ied)
+HRESULT VertexShader::CreateInputLayout(void const *blob, size_t size)
 {
-	DXPtr<ID3D11ShaderReflection> vsr;
-	D3D11_SHADER_DESC sd;
-	DX(D3DReflect(blob, size, IID_ID3D11ShaderReflection, (void **)&vsr));
-	vsr->GetDesc(&sd);
-	ied.clear();
-	ied.resize(sd.InputParameters);
-	for(uint i = 0; i < sd.InputParameters; ++i)
+	vector<D3D11_INPUT_ELEMENT_DESC> ied;
+	ied.resize(mShaderDesc.InputParameters);
+	for(uint i = 0; i < mShaderDesc.InputParameters; ++i)
 	{
 		D3D11_INPUT_ELEMENT_DESC &d = ied[i];
 		D3D11_SIGNATURE_PARAMETER_DESC pd;
-		vsr->GetInputParameterDesc(i, &pd);
+		mReflector->GetInputParameterDesc(i, &pd);
 		ZeroMemory(&d, sizeof(d));
 		d.SemanticName = pd.SemanticName;
 		d.SemanticIndex = pd.SemanticIndex;
@@ -54,6 +50,8 @@ HRESULT VertexShader::CreateInputLayoutDesc(void const *blob, size_t size, vecto
 		d.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 		d.Format = formats[HighBit(pd.Mask) - 1][pd.ComponentType];
 	}
+	vertexLayout.Release();
+	DX(gDevice->CreateInputLayout(&ied[0], (uint)ied.size(), blob, size, &vertexLayout));
 	return S_OK;
 }
 
@@ -61,22 +59,37 @@ HRESULT VertexShader::CreateInputLayoutDesc(void const *blob, size_t size, vecto
 
 HRESULT VertexShader::Create(void const *blob, size_t size)
 {
+	TRACE(TEXT("VertexShader:\n"));
+	DX(Shader::Create(blob, size));
 	vertexShader.Release();
-	vertexLayout.Release();
-
 	DX(gDevice->CreateVertexShader(blob, size, null, &vertexShader));
-	DX(CreateConstantBuffers(blob, size));
-	std::vector<D3D11_INPUT_ELEMENT_DESC> ied;
-	DX(CreateInputLayoutDesc(blob, size, ied));
-	DX(gDevice->CreateInputLayout(&ied[0], (uint)ied.size(), blob, size, &vertexLayout));
+	DX(CreateInputLayout(blob, size));
 	return S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void VertexShader::Activate(DXPtr<ID3D11DeviceContext> context)
+void VertexShader::LoadConstants(ID3D11DeviceContext *context)
 {
-	context->VSSetShader(vertexShader, NULL, 0);
-	//context->VSSetConstantBuffers(0, NULL
+	context->VSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
 }
 
+//////////////////////////////////////////////////////////////////////
+
+void VertexShader::Activate(ID3D11DeviceContext *context)
+{
+	context->VSSetShader(vertexShader, NULL, 0);
+	LoadConstants(context);
+}
+
+HRESULT VertexShader::Destroy()
+{
+	vertexShader.Release();
+	vertexLayout.Release();
+	return Shader::Destroy();
+}
+
+VertexShader::~VertexShader()
+{
+	Destroy();
+}

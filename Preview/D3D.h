@@ -8,8 +8,8 @@ using Matrix = DirectX::XMMATRIX;
 
 extern HRESULT __hr;
 
-//#define DXTRACE TRACE
-#define DXTRACE if (true) {} else
+#define DXTRACE TRACE
+//#define DXTRACE if (true) {} else
 
 #if defined(DEBUG)
 #define DX(x) 			\

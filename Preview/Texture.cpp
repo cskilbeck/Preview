@@ -198,6 +198,17 @@ void Texture::Update(byte *pixels)
 
 //////////////////////////////////////////////////////////////////////
 
+HRESULT Texture::CreateSampler()
+{
+	mSampler.Release();
+	CD3D11_SAMPLER_DESC sampDesc(D3D11_DEFAULT);
+	sampDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+	DX(gDevice->CreateSamplerState(&sampDesc, &mSampler));
+	return S_OK;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Texture::Texture(tchar const *name)
 	: mName(name)
 {
@@ -205,6 +216,7 @@ Texture::Texture(tchar const *name)
 	{
 		mTexture2D->GetDesc(&mTextureDesc);
 	}
+	CreateSampler();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -212,6 +224,7 @@ Texture::Texture(tchar const *name)
 Texture::Texture(int w, int h, DXGI_FORMAT format, byte *pixels)
 {
 	InitFromPixelBuffer(pixels, format, w, h);
+	CreateSampler();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -228,6 +241,7 @@ Texture::Texture(int width, int height, Color color)
 		}
 	}
 	InitFromPixelBuffer(pPixels.get(), DXGI_FORMAT_B8G8R8A8_UNORM, width, height);
+	CreateSampler();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -237,8 +251,11 @@ Texture::~Texture()
 }
 
 //////////////////////////////////////////////////////////////////////
+// Would be nice to be able to set multiple ones at a time...
+// Should do that in the Material...
 
-void Texture::Activate(int channel /* = 0 */)
+void Texture::Activate(ID3D11DeviceContext *context, int channel)
 {
-	sContext->PSSetShaderResources(channel, 1, &mShaderResourceView);
+	context->PSSetSamplers(channel, 1, &mSampler);
+	context->PSSetShaderResources(channel, 1, &mShaderResourceView);
 }

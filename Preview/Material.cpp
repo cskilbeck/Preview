@@ -30,17 +30,6 @@ HRESULT Material::CreateDepthStencilState()
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT Material::CreateSampler()
-{
-	sampler.Release();
-	CD3D11_SAMPLER_DESC sampDesc(D3D11_DEFAULT);
-	sampDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT;
-	DX(gDevice->CreateSamplerState(&sampDesc, &sampler));
-	return S_OK;
-}
-
-//////////////////////////////////////////////////////////////////////
-
 HRESULT Material::CreateRasterizerState()
 {
 	rasterizerState.Release();
@@ -61,9 +50,10 @@ HRESULT Material::CreateBlendState()
 	return S_OK;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 HRESULT Material::Create()
 {
-	DX(CreateSampler());
 	DX(CreateRasterizerState());
 	DX(CreateBlendState());
 	DX(CreateDepthStencilState());
@@ -71,17 +61,28 @@ HRESULT Material::Create()
 	return S_OK;
 }
 
+//////////////////////////////////////////////////////////////////////
+
 void Material::Activate(DXPtr<ID3D11DeviceContext> context)
 {
-	mPixelShader->Activate(context);
-	mVertexShader->Activate(context);
 	context->OMSetBlendState(blendState, 0, 0xffffffff);
 	context->OMSetDepthStencilState(mDepthStencilState, 0);
 	context->RSSetState(rasterizerState);
-
-	// set up the textures...
 }
+
+//////////////////////////////////////////////////////////////////////
+
+HRESULT Material::Destroy()
+{
+	blendState.Release();
+	mDepthStencilState.Release();
+	rasterizerState.Release();
+	return S_OK;
+}
+
+//////////////////////////////////////////////////////////////////////
 
 Material::~Material()
 {
+	Destroy();
 }

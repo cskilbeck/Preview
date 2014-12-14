@@ -9,6 +9,7 @@ struct Material
 	~Material();
 
 	HRESULT Create();
+	HRESULT Destroy();
 	void Activate(DXPtr<ID3D11DeviceContext> context);
 
 	HRESULT SetPixelShader(PixelShader *p);
@@ -19,14 +20,9 @@ struct Material
 	HRESULT CreateBlendState();
 	HRESULT CreateDepthStencilState();
 
-	Ptr<PixelShader>				mPixelShader;
-	Ptr<VertexShader>				mVertexShader;
+	vector<Texture *>				mTextures;		// pointers to all the textures that this material needs...
 
 	DXPtr<ID3D11RasterizerState>	rasterizerState;
 	DXPtr<ID3D11BlendState>			blendState;
 	DXPtr<ID3D11DepthStencilState>	mDepthStencilState;
-
-	// this is probably not in the right place...
-	// and anyway, there might be more than 1
-	DXPtr<ID3D11SamplerState>		sampler;
 };

@@ -172,12 +172,6 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Debug\PixelShader.cso">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Debug\VertexShader.cso">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="drag.cur">
       <Filter>Resource Files</Filter>
     </None>

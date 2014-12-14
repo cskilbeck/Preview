@@ -62,7 +62,7 @@ void Window::MoveToMiddleOfMonitor()
 {
 	Rect2D rc = ClientRect();
 	CenterRectInMonitor(rc, MonitorFromWindow(mHWND, MONITOR_DEFAULTTOPRIMARY));
-	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, GetMenu(mHWND) != null, 0);
+	AdjustWindowRectEx(&rc, GetStyle(), HasMenu(), GetExStyle());
 	SetWindowPos(mHWND, null, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOSIZE|SWP_NOZORDER);
 }
 

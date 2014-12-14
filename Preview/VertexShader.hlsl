@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////////////////
 
-cbuffer Projection : register(b0)
+cbuffer VertConstants
 {
-	matrix Projection;
+	matrix ProjectionMatrix;
 	float2 TextureSize;
 };
 
@@ -28,7 +28,7 @@ struct PS_INPUT
 PS_INPUT main(VS_INPUT input)
 {
 	PS_INPUT o;
-	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), Projection);
+	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), ProjectionMatrix);
 	o.Tex0 = input.uv;
 	o.Tex1 = input.uv * TextureSize;
 	return o;

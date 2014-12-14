@@ -29,15 +29,17 @@ struct Texture
 	Vec2 FSize() const;
 	bool IsValid() const;
 	tstring const &GetName() const;
-	void Activate(int channel = 0);
+	void Activate(ID3D11DeviceContext *context, int channel = 0);
 
-private:
+//private:
 
 	void InitFromPixelBuffer(byte *buffer, DXGI_FORMAT pixelFormat, int width, int height);
+	HRESULT CreateSampler();
 
 	tstring							mName;
 	DXPtr<ID3D11Texture2D>			mTexture2D;
 	DXPtr<ID3D11ShaderResourceView>	mShaderResourceView;
+	DXPtr<ID3D11SamplerState>		mSampler;
 	CD3D11_TEXTURE2D_DESC			mTextureDesc;
 };
 

@@ -6,13 +6,38 @@
 
 HRESULT PixelShader::Create(void const *blob, size_t size)
 {
-	pixelShader.Release();
+	TRACE(TEXT("PixelShader:\n"));
+	DX(Shader::Create(blob, size));
 
+	pixelShader.Release();
 	DX(gDevice->CreatePixelShader(blob, size, null, &pixelShader));
-	DX(CreateConstantBuffers(blob, size));
 	return S_OK;
 }
 
-void PixelShader::Activate(DXPtr<ID3D11DeviceContext> context)
+//////////////////////////////////////////////////////////////////////
+
+void PixelShader::LoadConstants(ID3D11DeviceContext *context)
 {
+	context->PSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void PixelShader::Activate(ID3D11DeviceContext *context)
+{
+	context->PSSetShader(pixelShader, null, 0);
+	LoadConstants(context);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+HRESULT PixelShader::Destroy()
+{
+	pixelShader.Release();
+	return Shader::Destroy();
+}
+
+PixelShader::~PixelShader()
+{
+	Destroy();
 }

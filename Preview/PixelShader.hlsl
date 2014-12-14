@@ -1,18 +1,18 @@
 //////////////////////////////////////////////////////////////////////
 
-Texture2D pic : register(t0);
-SamplerState smplr : register(s0);
+Texture2D pic;
+SamplerState smplr;
 
 //////////////////////////////////////////////////////////////////////
 
-cbuffer PixelShaderConstants : register(b0)
+cbuffer PixelShaderConstants
 {
-	float4 ChannelMask;
-	float4 ColorOffset;
-	float4 GridColor0;
-	float4 GridColor1;
-	float2 GridSize;
-	float2 GridSize2;
+	float4 ChannelMask = float4(1,1,1,1);
+	float4 ColorOffset = float4(0,0,0,0);
+	float4 GridColor0 = float4(0.8,0.8,0.8,1);
+	float4 GridColor1 = float4(0.6,0.6,0.6,1);
+	float2 GridSize = float2(16, 16);
+	float2 GridSize2 = float2(32, 32);
 }
 
 //////////////////////////////////////////////////////////////////////
