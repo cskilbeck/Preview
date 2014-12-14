@@ -34,8 +34,8 @@ WinResource::~WinResource()
 	{
 		FreeResource(data);
 		data = null;
-		size = 0;
 	}
+	size = 0;
 }
 
 //////////////////////////////////////////////////////////////////////
