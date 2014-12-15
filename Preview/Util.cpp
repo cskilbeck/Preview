@@ -111,7 +111,7 @@ wstring Format(wchar const *fmt, ...)
 	va_list v;
 	va_start(v, fmt);
 	_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, v);
-	return tstring(buffer);
+	return wstring(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////

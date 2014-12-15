@@ -1,6 +1,9 @@
 //////////////////////////////////////////////////////////////////////
 
 Texture2D pic;
+
+Buffer<float4> bob;
+
 SamplerState smplr;
 
 //////////////////////////////////////////////////////////////////////
@@ -28,7 +31,9 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_Target
 {
+	float4 bill = bob.Load(0);
 	float4 picColour = pic.Sample(smplr, input.Tex0) * ChannelMask + ColorOffset;
+	picColour += bill;
 	float y = trunc(fmod(input.Tex1.y, GridSize2.y) / GridSize.y) * GridSize.x;
 	float x = trunc(fmod(input.Tex1.x + y, GridSize2.x) / GridSize.x);
 	float4 gridColor = lerp(GridColor0, GridColor1, x);
