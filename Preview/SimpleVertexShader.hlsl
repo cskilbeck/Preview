@@ -6,12 +6,6 @@ cbuffer VertConstants
 	float2 TextureSize;
 }
 
-tbuffer MyCrap
-{
-	float4 bob[128];
-	float4 bill[128];
-}
-
 //////////////////////////////////////////////////////////////////////
 
 struct VS_INPUT
@@ -34,7 +28,7 @@ struct PS_INPUT
 PS_INPUT main(VS_INPUT input)
 {
 	PS_INPUT o;
-	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), ProjectionMatrix) + bob[0];
+	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), ProjectionMatrix);
 	o.Tex0 = input.uv;
 	o.Tex1 = input.uv * TextureSize;
 	return o;

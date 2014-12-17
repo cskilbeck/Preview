@@ -1,22 +1,28 @@
 //////////////////////////////////////////////////////////////////////
 
-Texture2D pic;
+Texture2D picture;
 
-Buffer<float4> bob;
-
-SamplerState smplr;
+SamplerState samplerState;
 
 //////////////////////////////////////////////////////////////////////
 
-cbuffer PixelShaderConstants
+const float2 bill;
+
+cbuffer ColourModifiers
 {
-	float4 ChannelMask = float4(1,1,1,1);
-	float4 ColorOffset = float4(0,0,0,0);
+	float4 ChannelMask = float4(1, 1, 1, 1);
+	float4 ColorOffset = float4(0, 0, 0, 0);
+}
+
+cbuffer GridStuff
+{
 	float4 GridColor0 = float4(0.8,0.8,0.8,1);
 	float4 GridColor1 = float4(0.6,0.6,0.6,1);
 	float2 GridSize = float2(16, 16);
 	float2 GridSize2 = float2(32, 32);
 }
+
+const float4 off;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -31,9 +37,7 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_Target
 {
-	float4 bill = bob.Load(0);
-	float4 picColour = pic.Sample(smplr, input.Tex0) * ChannelMask + ColorOffset;
-	picColour += bill;
+	float4 picColour = picture.Sample(samplerState, input.Tex0) * ChannelMask + ColorOffset + off + float4(bill.x, bill.y, 0, 0);
 	float y = trunc(fmod(input.Tex1.y, GridSize2.y) / GridSize.y) * GridSize.x;
 	float x = trunc(fmod(input.Tex1.x + y, GridSize2.x) / GridSize.x);
 	float4 gridColor = lerp(GridColor0, GridColor1, x);
