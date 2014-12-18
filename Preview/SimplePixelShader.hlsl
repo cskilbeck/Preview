@@ -2,11 +2,16 @@
 
 Texture2D picture;
 
+//////////////////////////////////////////////////////////////////////
+
 SamplerState samplerState;
 
 //////////////////////////////////////////////////////////////////////
 
 const float2 bill;
+const float4 off;
+
+//////////////////////////////////////////////////////////////////////
 
 cbuffer ColourModifiers
 {
@@ -14,15 +19,22 @@ cbuffer ColourModifiers
 	float4 ColorOffset = float4(0, 0, 0, 0);
 }
 
+//////////////////////////////////////////////////////////////////////
+
+//tbuffer MyTBuffer
+//{
+//	float4 foo;
+//}
+//
+//////////////////////////////////////////////////////////////////////
+
 cbuffer GridStuff
 {
 	float4 GridColor0 = float4(0.8,0.8,0.8,1);
-	float4 GridColor1 = float4(0.6,0.6,0.6,1);
-	float2 GridSize = float2(16, 16);
+	float2 GridSize;// = float2(16, 16);
+	float4 GridColor1 = float4(0.6, 0.6, 0.6, 1);
 	float2 GridSize2 = float2(32, 32);
 }
-
-const float4 off;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -43,3 +55,6 @@ float4 main(PS_INPUT input) : SV_Target
 	float4 gridColor = lerp(GridColor0, GridColor1, x);
 	return lerp(gridColor, picColour, picColour.a);
 }
+
+//////////////////////////////////////////////////////////////////////
+
