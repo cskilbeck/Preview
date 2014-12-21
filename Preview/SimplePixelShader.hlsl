@@ -11,22 +11,25 @@ SamplerState samplerState;
 const float2 bill;
 const float4 off;
 
-//////////////////////////////////////////////////////////////////////
+tbuffer Foo
+{
+	int Bar;
+};
+
+Buffer<float4> Knob;
+
+struct Baz_t
+{
+	int a, b;
+};
+
+StructuredBuffer<Baz_t> Baz;
 
 cbuffer ColourModifiers
 {
 	float4 ChannelMask = float4(1, 1, 1, 1);
 	float4 ColorOffset = float4(0, 0, 0, 0);
 }
-
-//////////////////////////////////////////////////////////////////////
-
-//tbuffer MyTBuffer
-//{
-//	float4 foo;
-//}
-//
-//////////////////////////////////////////////////////////////////////
 
 cbuffer GridStuff
 {
@@ -49,7 +52,11 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_Target
 {
-	float4 picColour = picture.Sample(samplerState, input.Tex0) * ChannelMask + ColorOffset + off + float4(bill.x, bill.y, 0, 0);
+	int s = Bar;
+	int t = Baz.Load(0).b;
+	int u = Knob.Load(0).x;
+	float4 st = float4(s, t, u, 1);
+	float4 picColour = picture.Sample(samplerState, input.Tex0) * ChannelMask + ColorOffset + st + float4(bill.x, bill.y, 0, 0);
 	float y = trunc(fmod(input.Tex1.y, GridSize2.y) / GridSize.y) * GridSize.x;
 	float x = trunc(fmod(input.Tex1.x + y, GridSize2.x) / GridSize.x);
 	float4 gridColor = lerp(GridColor0, GridColor1, x);
