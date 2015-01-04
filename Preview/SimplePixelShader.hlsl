@@ -13,7 +13,10 @@ const float4 off;
 
 tbuffer Foo
 {
-	int Bar;
+	float f1[128];
+	int f2[128];
+	float f3[128];
+	bool f4[128];
 };
 
 Buffer<float4> Knob;
@@ -21,6 +24,8 @@ Buffer<float4> Knob;
 struct Baz_t
 {
 	int a, b;
+	float c;
+	int d[4];
 };
 
 StructuredBuffer<Baz_t> Baz;
@@ -52,7 +57,7 @@ struct PS_INPUT
 
 float4 main(PS_INPUT input) : SV_Target
 {
-	int s = Bar;
+	int s = f1[64];
 	int t = Baz.Load(0).b;
 	int u = Knob.Load(0).x;
 	float4 st = float4(s, t, u, 1);
