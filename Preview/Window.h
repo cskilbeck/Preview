@@ -40,9 +40,8 @@ struct Window
 	bool SetMessageWait(bool wait);
 	bool GetMessageWait() const;
 	void SetWindowRect(Rect2D const &r);
-	Size2D GetSize();
-	void ChangeSize(int newWidth, int newHeight);
-	void ResizeWindow(int newWidth, int newHeight);
+	void SetWindowSize(int newWidth, int newHeight);
+	void SetClientSize(int newWidth, int newHeight);
 	Rect2D GetWindowRectFromClientRect(Rect2D const &clientRect);
 	Rect2D GetClientRectFromWindowRect(Rect2D const &windowRect);
 

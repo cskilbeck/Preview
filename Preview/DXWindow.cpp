@@ -140,8 +140,6 @@ bool DXWindow::OpenD3D()
 
 	GetBackBuffer();
 
-	Texture::SetDeviceAndContext(gDevice, mContext);
-
 	return true;
 }
 
@@ -168,8 +166,6 @@ bool DXWindow::ResizeD3D()
 
 void DXWindow::CloseD3D()
 {
-	Texture::ReleaseDeviceAndContext();
-
 	ReleaseBackBuffer();
 
 	mSwapChain.Release();

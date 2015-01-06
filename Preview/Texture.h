@@ -8,11 +8,11 @@ struct Window;
 
 struct Texture
 {
-	static DXPtr<ID3D11Device> sDevice;
-	static DXPtr<ID3D11DeviceContext> sContext;
+	//static DXPtr<ID3D11Device> sDevice;
+	//static DXPtr<ID3D11DeviceContext> sContext;
 
-	static void SetDeviceAndContext(DXPtr<ID3D11Device> device, DXPtr<ID3D11DeviceContext> context);
-	static void ReleaseDeviceAndContext();
+	//static void SetDeviceAndContext(DXPtr<ID3D11Device> device, DXPtr<ID3D11DeviceContext> context);
+	//static void ReleaseDeviceAndContext();
 
 	Texture();
 	Texture(tchar const *name);
@@ -20,7 +20,7 @@ struct Texture
 	Texture(int w, int h, DXGI_FORMAT format, byte *pixels);
 	~Texture();
 
-	void Update(byte *pixels);
+	void Update(ID3D11DeviceContext *sContext, byte *pixels);
 	int Width() const;
 	int Height() const;
 	uint BitsPerPixel() const;

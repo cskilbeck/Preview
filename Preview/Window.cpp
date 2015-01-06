@@ -176,14 +176,14 @@ Rect2D Window::GetWindowRectFromClientRect(Rect2D const &clientRect)
 Rect2D Window::GetClientRectFromWindowRect(Rect2D const &windowRect)
 {
 	Rect2D rc = GetBorders();
-	Point2D tl(windowRect.left - rc.left, windowRect.top - rc.top);
-	Point2D br(windowRect.right - rc.right, windowRect.bottom - rc.bottom);
+	Point2D tl(windowRect.TopLeft() - rc.TopLeft());
+	Point2D br(windowRect.BottomRight() - rc.BottomRight());
 	return Rect2D(tl, Size2D(br - tl));
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::ResizeWindow(int newWidth, int newHeight)
+void Window::SetClientSize(int newWidth, int newHeight)
 {
 	Rect2D oldRect;
 	Rect2D rc = GetWindowRectFromClientRect(Rect2D(0, 0, newWidth, newHeight));
@@ -196,7 +196,7 @@ void Window::ResizeWindow(int newWidth, int newHeight)
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::ChangeSize(int newWidth, int newHeight)
+void Window::SetWindowSize(int newWidth, int newHeight)
 {
 	Rect2D rc(0, 0, newWidth, newHeight);
 	AdjustWindowRectEx(&rc, GetStyle(), HasMenu(), GetExStyle());

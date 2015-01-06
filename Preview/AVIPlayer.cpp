@@ -205,9 +205,6 @@ bool AVIPlayer::OnCreate()
 
 		mTexture.reset(new Texture(64, 64, Color::BrightBlue));
 
-//		mPixelShader.SetTexture("pic", mTexture);
-//		mPixelShader.SetSampler("smplr", mTexture);
-
 		ConstantBuffer *b = mVertexShader.GetCB("VertConstants");
 		Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
 		Vec2 *v = (Vec2 *)b->AddressOf("TextureSize");
@@ -215,9 +212,10 @@ bool AVIPlayer::OnCreate()
 		ConstantBuffer *pb = mPixelShader.GetCB("PixelShaderConstants");
 		PixelShaderConstants *p = (PixelShaderConstants *)(pb->GetBuffer());
 
-//		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+
 		mDrawRect.Set(Vec2::zero, mTexture->FSize());
-		ChangeSize(mTexture->Width(), mTexture->Height());
+		SetWindowSize(mTexture->Width(), mTexture->Height());
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
 		CenterImageInWindowAndResetZoom();
@@ -398,7 +396,7 @@ void AVIPlayer::OnLeftMouseDoubleClick(Point2D pos)
 {
 	if(mTexture != null)
 	{
-		ChangeSize(mTexture->Width(), mTexture->Height());
+		SetWindowSize(mTexture->Width(), mTexture->Height());
 		mDrawRect.Set(Vec2::zero, mTexture->FSize());
 	}
 	MoveToMiddleOfMonitor();
