@@ -78,7 +78,7 @@ template<typename T> struct DXPtr
 		p->AddRef();
 	}
 
-	DXPtr(DXPtr &&ptr) : p(nullptr)
+	DXPtr(DXPtr &&ptr) : p(null)
 	{
 		std::swap(p, ptr.p);
 	}
@@ -145,10 +145,10 @@ template<typename T> struct DXPtr
 	LONG Release()
 	{
 		LONG r = 0;
-		if(p != nullptr)
+		if(p != null)
 		{
 			r = p->Release();
-			p = nullptr;
+			p = null;
 		}
 		return r;
 	}

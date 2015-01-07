@@ -129,11 +129,44 @@ string Format(char const *fmt, ...)
 
 wstring WideStringFromTString(tstring const &str)
 {
-	#ifdef UNICODE
-		return str;
-	#else
-		return WideStringFromString(str);
-	#endif
+#ifdef UNICODE
+	return str;
+#else
+	return WideStringFromString(str);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring TStringFromWideString(wstring const &str)
+{
+#ifdef UNICODE
+	return str;
+#else
+	return StringFromWideString(str);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+string StringFromTString(tstring const &str)
+{
+#ifdef UNICODE
+	return StringFromWideString(str);
+#else
+	return str;
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring TStringFromString(string const &str)
+{
+#ifdef UNICODE
+	return WideStringFromString(str);
+#else
+	return str;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -176,3 +209,62 @@ tstring GetCurrentFolder()
 	return Format(TEXT("%s"), &s[0]);
 }
 
+//////////////////////////////////////////////////////////////////////
+
+tstring GetDrive(tchar const *path)
+{
+	tchar Drive[MAX_PATH];
+	tchar Dir[MAX_PATH];
+	tchar Name[MAX_PATH];
+	tchar Ext[MAX_PATH];
+	_tsplitpath_s(path, Drive, Dir, Name, Ext);
+	return Drive;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring GetPath(tchar const *path)
+{
+	tchar Drive[MAX_PATH];
+	tchar Dir[MAX_PATH];
+	tchar Name[MAX_PATH];
+	tchar Ext[MAX_PATH];
+	_tsplitpath_s(path, Drive, Dir, Name, Ext);
+	return Dir;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring GetFilename(tchar const *path)
+{
+	tchar Drive[MAX_PATH];
+	tchar Dir[MAX_PATH];
+	tchar Name[MAX_PATH];
+	tchar Ext[MAX_PATH];
+	_tsplitpath_s(path, Drive, Dir, Name, Ext);
+	return Name;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring GetExtension(tchar const *path)
+{
+	tchar Drive[MAX_PATH];
+	tchar Dir[MAX_PATH];
+	tchar Name[MAX_PATH];
+	tchar Ext[MAX_PATH];
+	_tsplitpath_s(path, Drive, Dir, Name, Ext);
+	return Ext;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+tstring SetExtension(tchar const *path, tchar const *ext)
+{
+	tchar Drive[MAX_PATH];
+	tchar Dir[MAX_PATH];
+	tchar Name[MAX_PATH];
+	tchar Ext[MAX_PATH];
+	_tsplitpath_s(path, Drive, Dir, Name, Ext);
+	return tstring(Drive) + tstring(Dir) + tstring(Name) + tstring(ext);
+}

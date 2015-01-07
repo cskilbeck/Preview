@@ -19,12 +19,24 @@ void TRACE(char const *strMsg, ...);
 
 uint8 *LoadFile(tchar const *filename, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
-wstring WideStringFromString(string const &str);
+
 wstring WideStringFromTString(tstring const &str);
+wstring WideStringFromString(string const &str);
+
+tstring TStringFromWideString(wstring const &str);
+tstring TStringFromString(string const &str);
+
+string StringFromTString(tstring const &str);
 string StringFromWideString(wstring const &str);
+
 wstring Format(wchar const *fmt, ...);
 string Format(char const *fmt, ...);
 tstring GetCurrentFolder();
+tstring GetDrive(tchar const *path);
+tstring GetPath(tchar const *path);
+tstring GetFilename(tchar const *path);
+tstring GetExtension(tchar const *path);
+tstring SetExtension(tchar const *path, tchar const *ext);
 
 #ifndef PI
 #define PI 3.14159265f
