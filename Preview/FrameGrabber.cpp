@@ -43,49 +43,49 @@ namespace
 
 //////////////////////////////////////////////////////////////////////
 
-byte const *FrameGrabber::Frame::Buffer() const
+byte const *Video::Frame::Buffer() const
 {
 	return (byte *)bmi + bmi->biSize;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-int FrameGrabber::Frame::Width() const
+int Video::Frame::Width() const
 {
 	return bmi->biWidth;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-int FrameGrabber::Frame::Height() const
+int Video::Frame::Height() const
 {
 	return bmi->biHeight;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-uint FrameGrabber::Frame::BitsPerPixel() const
+uint Video::Frame::BytesPerPixel() const
 {
 	return (bmi->biBitCount + 7) / 8;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-uint FrameGrabber::Frame::RowPitch() const
+uint Video::Frame::RowPitch() const
 {
-	return bmi->biWidth * BitsPerPixel();
+	return bmi->biWidth * BytesPerPixel();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-FrameGrabber::FrameGrabber() : buffer(null)
+Video::Video() : buffer(null)
 {
 	Init();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-FrameGrabber::FrameGrabber(PWSTR filename) : buffer(null)
+Video::Video(PWSTR filename) : buffer(null)
 {
 	Init();
 	Open(filename);
@@ -93,7 +93,7 @@ FrameGrabber::FrameGrabber(PWSTR filename) : buffer(null)
 
 //////////////////////////////////////////////////////////////////////
 
-void FrameGrabber::Open(PWSTR filename)
+void Video::Open(PWSTR filename)
 {
 	FreeFrameBuffer();
 
@@ -127,21 +127,21 @@ void FrameGrabber::Open(PWSTR filename)
 
 //////////////////////////////////////////////////////////////////////
 
-int FrameGrabber::Width() const
+int Video::Width() const
 {
 	return videoInfoHeader.bmiHeader.biWidth;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-int FrameGrabber::Height() const
+int Video::Height() const
 {
 	return videoInfoHeader.bmiHeader.biHeight;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void FrameGrabber::Close()
+void Video::Close()
 {
 	pMediaDet.Release();
 	FreeFrameBuffer();
@@ -149,7 +149,7 @@ void FrameGrabber::Close()
 
 //////////////////////////////////////////////////////////////////////
 
-void FrameGrabber::FreeFrameBuffer()
+void Video::FreeFrameBuffer()
 {
 	if(buffer != null)
 	{
@@ -160,7 +160,7 @@ void FrameGrabber::FreeFrameBuffer()
 
 //////////////////////////////////////////////////////////////////////
 
-FrameGrabber::Frame FrameGrabber::GetFrame(int nFrame)
+Video::Frame Video::GetFrame(int nFrame)
 {
 	Frame f;
 	DXT(pMediaDet->GetBitmapBits(nFrame / fps, &bufferSize, (char *)buffer, Width(), Height()));
@@ -170,14 +170,14 @@ FrameGrabber::Frame FrameGrabber::GetFrame(int nFrame)
 
 //////////////////////////////////////////////////////////////////////
 
-FrameGrabber::~FrameGrabber()
+Video::~Video()
 {
 	FreeFrameBuffer();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-void FrameGrabber::Init()
+void Video::Init()
 {
 	streamID = -1;
 	pbih = null;

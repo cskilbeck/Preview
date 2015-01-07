@@ -221,24 +221,24 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		FrameGrabber f;
+		Video video;
 		try
 		{
-			f.Open(L"D:\\AVCaptures\\XB1_intro.avi");
-			FrameGrabber::Frame frame = f.GetFrame(1000);
-			uint32 *pixels = new uint32[f.Width() * f.Height()];
+			video.Open(L"D:\\AVCaptures\\XB1_intro.avi");
+			Video::Frame frame = video.GetFrame(1000);
+			uint32 *pixels = new uint32[video.Width() * video.Height()];
 			byte const *src = frame.Buffer();
-			for(int y = 0; y < f.Height(); ++y)
+			for(int y = 0; y < video.Height(); ++y)
 			{
-				uint32 *row = pixels + y * f.Width();
-				byte const *srcRow = src + (f.Height() - 1 - y) * frame.RowPitch();
-				for(int x = 0; x < f.Width(); ++x)
+				uint32 *row = pixels + y * video.Width();
+				byte const *srcRow = src + (video.Height() - 1 - y) * frame.RowPitch();
+				for(int x = 0; x < video.Width(); ++x)
 				{
 					row[x] = Color(0xff, srcRow[0], srcRow[1], srcRow[2]);
-					srcRow += frame.BitsPerPixel();
+					srcRow += frame.BytesPerPixel();
 				}
 			}
-			mTexture.reset(new Texture(f.Width(), f.Height(), DXGI_FORMAT_B8G8R8A8_UNORM, (byte *)pixels));
+			mTexture.reset(new Texture(video.Width(), video.Height(), DXGI_FORMAT_B8G8R8A8_UNORM, (byte *)pixels));
 		}
 		catch(HRException)
 		{

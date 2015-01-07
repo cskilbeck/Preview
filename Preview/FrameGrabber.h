@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-class FrameGrabber
+class Video
 {
 public:
 
@@ -12,16 +12,16 @@ public:
 	{
 		byte const *Buffer() const;
 		uint RowPitch() const;
-		uint BitsPerPixel() const;
+		uint BytesPerPixel() const;
 		int Width() const;
 		int Height() const;
 
 		BITMAPINFOHEADER *bmi;
 	};
 
-	FrameGrabber();
-	FrameGrabber(PWSTR filename);
-	~FrameGrabber();
+	Video();
+	Video(PWSTR filename);
+	~Video();
 
 	void Open(PWSTR filename);
 	void Close();
