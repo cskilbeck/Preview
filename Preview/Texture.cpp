@@ -191,7 +191,7 @@ HRESULT Texture::CreateSampler()
 Texture::Texture(tchar const *name)
 	: mName(name)
 {
-	if(!FAILED(CreateWICTextureFromFile(gDevice, WideStringFromTString(mName).c_str(), (ID3D11Resource **)&mTexture2D, &mShaderResourceView)))
+	if(!FAILED(CreateWICTextureFromFile(WideStringFromTString(mName).c_str(), (ID3D11Resource **)&mTexture2D, &mShaderResourceView)))
 	{
 		mTexture2D->GetDesc(&mTextureDesc);
 	}

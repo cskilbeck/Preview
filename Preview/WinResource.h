@@ -53,3 +53,60 @@ struct WinResource: Resource
 	WinResource(DWORD resourceID);
 	~WinResource();
 };
+
+//////////////////////////////////////////////////////////////////////
+
+class CoTaskBuffer
+{
+public:
+
+	CoTaskBuffer() : ptr(null)
+	{
+	}
+
+	CoTaskBuffer(size_t size) : ptr(CoTaskMemAlloc(size))
+	{
+	}
+
+	bool IsValid() const
+	{
+		return ptr != null;
+	}
+
+	bool Resize(size_t size)
+	{
+		Free();
+		ptr = CoTaskMemAlloc(size);
+		return ptr != null;
+	}
+
+	void Free()
+	{
+		if(ptr != null)
+		{
+			CoTaskMemFree(ptr);
+			ptr = null;
+		}
+	}
+
+	~CoTaskBuffer()
+	{
+		Free();
+	}
+
+	operator void const *() const
+	{
+		return ptr;
+	}
+
+	operator void *()
+	{
+		return ptr;
+	}
+
+private:
+	void *ptr;
+};
+
+//////////////////////////////////////////////////////////////////////
+

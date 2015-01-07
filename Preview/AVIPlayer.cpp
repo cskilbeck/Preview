@@ -212,7 +212,37 @@ bool AVIPlayer::OnCreate()
 		ConstantBuffer *pb = mPixelShader.GetCB("PixelShaderConstants");
 		PixelShaderConstants *p = (PixelShaderConstants *)(pb->GetBuffer());
 
-		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		//mTexture.reset(new Texture(TEXT("D:\\untitled.gif")));
+//		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+
+		tstring c = GetCurrentFolder();
+		OutputDebugString(Format(TEXT("Current Folder: %s\n"), c.c_str()).c_str());
+
+		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
+		OutputDebugString(s.c_str());
+
+		FrameGrabber f;
+		try
+		{
+			f.Open(L"D:\\AVCaptures\\XB1_intro.avi");
+			FrameGrabber::Frame frame = f.GetFrame(1000);
+			uint32 *pixels = new uint32[f.Width() * f.Height()];
+			byte const *src = frame.Buffer();
+			for(int y = 0; y < f.Height(); ++y)
+			{
+				uint32 *row = pixels + y * f.Width();
+				byte const *srcRow = src + (f.Height() - 1 - y) * frame.RowPitch();
+				for(int x = 0; x < f.Width(); ++x)
+				{
+					row[x] = Color(0xff, srcRow[0], srcRow[1], srcRow[2]);
+					srcRow += frame.BitsPerPixel();
+				}
+			}
+			mTexture.reset(new Texture(f.Width(), f.Height(), DXGI_FORMAT_B8G8R8A8_UNORM, (byte *)pixels));
+		}
+		catch(HRException)
+		{
+		}
 
 		mDrawRect.Set(Vec2::zero, mTexture->FSize());
 		SetWindowSize(mTexture->Width(), mTexture->Height());

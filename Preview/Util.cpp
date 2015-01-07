@@ -127,6 +127,33 @@ string Format(char const *fmt, ...)
 
 //////////////////////////////////////////////////////////////////////
 
+tstring GetLastErrorText()
+{
+	tchar *buf;
+	uint32 retSize = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+									FORMAT_MESSAGE_FROM_SYSTEM,
+									NULL,
+									GetLastError(),
+									LANG_NEUTRAL,
+									(LPTSTR)&buf,
+									0,
+									NULL);
+
+	tstring rc;
+	if(retSize == 0 || buf == null)
+	{
+		rc = tstring(TEXT("Unknown error"));
+	}
+	else
+	{
+		rc = tstring(buf);
+		LocalFree((HLOCAL)buf);
+	}
+	return rc;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 wstring WideStringFromTString(tstring const &str)
 {
 #ifdef UNICODE
@@ -200,71 +227,67 @@ string StringFromWideString(wstring const &str)
 
 tstring GetCurrentFolder()
 {
-	vector<tchar> s;
-	DWORD l = GetCurrentDirectory(0, NULL);
-	assert(l != 0);
-	s.resize((size_t)l + 1);
-	GetCurrentDirectory(l, &s[0]);
-	s[l] = 0;
-	return Format(TEXT("%s"), &s[0]);
+	uint32 l = GetCurrentDirectory(0, null);
+	if(l != 0)
+	{
+		std::unique_ptr<tchar> s(new tchar[l]);
+		GetCurrentDirectory(l, s.get());
+		return tstring(s.get());
+	}
+	TRACE(TEXT("Error getting current folder: %s"), GetLastErrorText());
+	return tstring();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+static struct PathComponents
+{
+	tchar drive[MAX_PATH];
+	tchar dir[MAX_PATH];
+	tchar name[MAX_PATH];
+	tchar ext[MAX_PATH];
+} pc;
+
+//////////////////////////////////////////////////////////////////////
+
+PathComponents SplitPath(tchar const *path, PathComponents &pc)
+{
+	_tsplitpath_s(path, pc.drive, pc.dir, pc.name, pc.ext);
+	return pc;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 tstring GetDrive(tchar const *path)
 {
-	tchar Drive[MAX_PATH];
-	tchar Dir[MAX_PATH];
-	tchar Name[MAX_PATH];
-	tchar Ext[MAX_PATH];
-	_tsplitpath_s(path, Drive, Dir, Name, Ext);
-	return Drive;
+	return SplitPath(path, pc).drive;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 tstring GetPath(tchar const *path)
 {
-	tchar Drive[MAX_PATH];
-	tchar Dir[MAX_PATH];
-	tchar Name[MAX_PATH];
-	tchar Ext[MAX_PATH];
-	_tsplitpath_s(path, Drive, Dir, Name, Ext);
-	return Dir;
+	return SplitPath(path, pc).dir;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 tstring GetFilename(tchar const *path)
 {
-	tchar Drive[MAX_PATH];
-	tchar Dir[MAX_PATH];
-	tchar Name[MAX_PATH];
-	tchar Ext[MAX_PATH];
-	_tsplitpath_s(path, Drive, Dir, Name, Ext);
-	return Name;
+	return SplitPath(path, pc).name;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 tstring GetExtension(tchar const *path)
 {
-	tchar Drive[MAX_PATH];
-	tchar Dir[MAX_PATH];
-	tchar Name[MAX_PATH];
-	tchar Ext[MAX_PATH];
-	_tsplitpath_s(path, Drive, Dir, Name, Ext);
-	return Ext;
+	return SplitPath(path, pc).ext;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 tstring SetExtension(tchar const *path, tchar const *ext)
 {
-	tchar Drive[MAX_PATH];
-	tchar Dir[MAX_PATH];
-	tchar Name[MAX_PATH];
-	tchar Ext[MAX_PATH];
-	_tsplitpath_s(path, Drive, Dir, Name, Ext);
-	return tstring(Drive) + tstring(Dir) + tstring(Name) + tstring(ext);
+	SplitPath(path, pc);
+	return tstring(pc.drive) + pc.dir + pc.name + ext;
 }

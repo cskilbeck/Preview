@@ -97,6 +97,8 @@ struct AVIPlayer : DXWindow
 	PixelShader mPixelShader;
 	VertexShader mVertexShader;
 
+	Ptr<Texture> mVideoFrame;
+
 	//////////////////////////////////////////////////////////////////////
 
 	DXPtr<ID3D11InputLayout>		vertexLayout;

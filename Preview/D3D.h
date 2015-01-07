@@ -6,7 +6,16 @@
 
 using Matrix = DirectX::XMMATRIX;
 
-extern HRESULT __hr;
+//////////////////////////////////////////////////////////////////////
+
+class HRException: public std::exception
+{
+public:
+	HRException(HRESULT res) : hr(res) {}
+	HRESULT hr;
+};
+
+//////////////////////////////////////////////////////////////////////
 
 #define DXTRACE TRACE
 //#define DXTRACE if (true) {} else
@@ -51,11 +60,41 @@ extern HRESULT __hr;
 		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
 	}					\
 
+#define DXZ(x) 			\
+	__hr = (x);			\
+	if(FAILED(__hr))	\
+	{					\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), __hr);	\
+		assert(false);	\
+		return 0;		\
+	}					\
+	else				\
+	{					\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
+	}					\
+
+#define DXT(x) 			\
+	__hr = (x);			\
+	if(FAILED(__hr))	\
+	{					\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), __hr);	\
+		assert(false);	\
+		throw HRException(__hr);\
+	}					\
+	else				\
+	{					\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
+	}					\
+
 #else
 #define DX(x) __hr = (x); if(FAILED(__hr)) return __hr;
 #define DXV(x) __hr = (x); if(FAILED(__hr)) return;
 #define DXB(x) __hr = (x); if(FAILED(__hr)) return false;
+#define DXZ(x) __hr = (x); if(FAILED(__hr)) return 0;
+#define DXT(x) __hr = (x); if(FAILED(__hr)) throw HRExeption(__hr);
 #endif
+
+//////////////////////////////////////////////////////////////////////
 
 inline void SetDebugName(ID3D11DeviceChild* child, tchar const *name)
 {
@@ -156,4 +195,10 @@ template<typename T> struct DXPtr
 	T *p;
 };
 
+//////////////////////////////////////////////////////////////////////
+
+extern __declspec(selectany) HRESULT __hr;
 extern DXPtr<ID3D11Device> gDevice;
+
+//////////////////////////////////////////////////////////////////////
+

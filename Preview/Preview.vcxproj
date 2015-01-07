@@ -147,11 +147,13 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="DXWindow.h" />
+    <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="AVIPlayer.h" />
+    <ClInclude Include="Qedit.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Shader.h" />
@@ -173,6 +175,7 @@
     <ClCompile Include="CBuffer.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="DXWindow.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="AVIPlayer.cpp" />
     <ClCompile Include="Material.cpp" />
