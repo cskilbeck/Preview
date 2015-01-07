@@ -13,6 +13,9 @@
 // Full screen mode
 // Floating thumbnail
 // ?? Cycle through images in a folder
+// Video:
+//    Convert 24bpp -> 32bpp more awesomely
+//    Producer/Consumer multithreaded frame cache thingy
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////
@@ -481,6 +484,7 @@ void AVIPlayer::OnDraw()
 {
 	using namespace DirectX;
 
+	Clear(mBackgroundColor);
 	if(mTexture != null)
 	{
 		float hlfw = 2.0f / Width();
@@ -532,7 +536,6 @@ void AVIPlayer::OnDraw()
 		mContext->RSSetState(rasterizerState);
 
 		mTexture->Activate(mContext);
+		mContext->Draw(ARRAYSIZE(vert), 0);
 	}
-	Clear(mBackgroundColor);
-	mContext->Draw(ARRAYSIZE(vert), 0);
 }
