@@ -4,7 +4,25 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct AVIPlayer : DXWindow
+struct VideoPlayerTask: public Task
+{
+	VideoPlayerTask(int f)
+		: frame(f)
+	{
+	}
+
+	bool Execute(void *context) override
+	{
+		return ((Video *)context)->GetFrame(frame, videoFrame);
+	}
+
+	Video::Frame videoFrame;
+	int frame;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+struct AVIPlayer: DXWindow
 {
 	//////////////////////////////////////////////////////////////////////
 
@@ -69,9 +87,11 @@ struct AVIPlayer : DXWindow
 	//////////////////////////////////////////////////////////////////////
 
 	void CalcDrawRect();
-	void SetQuad();
+	void SetQuad(bool upsideDown);
 	void CenterImageInWindow();
 	void CenterImageInWindowAndResetZoom();
+
+	void VideoPlayer();
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -98,6 +118,10 @@ struct AVIPlayer : DXWindow
 	VertexShader mVertexShader;
 
 	Ptr<Texture> mVideoFrame;
+
+	Video video;
+	TaskManager videoPlayer;
+	int currentFrame;
 
 	//////////////////////////////////////////////////////////////////////
 

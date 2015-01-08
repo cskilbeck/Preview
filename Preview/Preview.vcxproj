@@ -145,15 +145,20 @@
   <ItemGroup>
     <ClInclude Include="CBuffer.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="CritSec.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="DXWindow.h" />
-    <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="linked_list.h" />
+    <ClInclude Include="TaskManager.h" />
+    <ClInclude Include="Thread.h" />
+    <ClInclude Include="Video.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="PixelShader.h" />
     <ClInclude Include="Point.h" />
     <ClInclude Include="AVIPlayer.h" />
     <ClInclude Include="Qedit.h" />
+    <ClInclude Include="Queue.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Shader.h" />
@@ -175,7 +180,8 @@
     <ClCompile Include="CBuffer.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="DXWindow.cpp" />
-    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="TaskManager.cpp" />
+    <ClCompile Include="Video.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="AVIPlayer.cpp" />
     <ClCompile Include="Material.cpp" />

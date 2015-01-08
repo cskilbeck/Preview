@@ -32,7 +32,7 @@
 
 AVIPlayer::Vertex AVIPlayer::vert[6];
 
-void AVIPlayer::SetQuad()
+void AVIPlayer::SetQuad(bool upsideDown)
 {
 	enum
 	{
@@ -56,12 +56,15 @@ void AVIPlayer::SetQuad()
 		p[i].y = floorf(p[i].y);
 	}
 
-	vert[0].Set(p[tl], Vec2(0, 0));
-	vert[1].Set(p[tr], Vec2(1, 0));
-	vert[2].Set(p[br], Vec2(1, 1));
-	vert[3].Set(p[br], Vec2(1, 1));
-	vert[4].Set(p[bl], Vec2(0, 1));
-	vert[5].Set(p[tl], Vec2(0, 0));
+	float v1 = upsideDown ? 1.0f : 0.0f;
+	float v2 = 1.0f - v1;
+
+	vert[0].Set(p[tl], Vec2(0, v1));		// upside down UVs
+	vert[1].Set(p[tr], Vec2(1, v1));
+	vert[2].Set(p[br], Vec2(1, v2));
+	vert[3].Set(p[br], Vec2(1, v2));
+	vert[4].Set(p[bl], Vec2(0, v2));
+	vert[5].Set(p[tl], Vec2(0, v1));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -177,7 +180,34 @@ AVIPlayer::AVIPlayer(int width, int height)
 	, mDrag(false)
 	, mHandCursor(NULL)
 	, mMaintainImagePosition(true)
+	, videoPlayer(16)
 {
+}
+
+//////////////////////////////////////////////////////////////////////
+
+static void Convert24to32BPP(uint32 const *srcBuffer, uint32 *dstBuffer, int width, int height, int pitch)
+{
+	int rowPitch = pitch / sizeof(uint32);
+	uint32 *dstRow = dstBuffer;
+	uint32 const *srcRow = srcBuffer;
+	for(int y = 0; y < height; ++y)
+	{
+		uint32 *dst = dstRow;
+		uint32 const *src = (uint32 *)srcRow;
+		for(int x = 0; x < width; x += 4, src += 3)
+		{
+			uint32 a = src[0];
+			uint32 b = src[1];
+			uint32 c = src[2];
+			dst[x + 0] = a;
+			dst[x + 1] = (a >> 24) | (b << 8);
+			dst[x + 2] = (b >> 16) | (c << 16);
+			dst[x + 3] = (c >> 8);
+		}
+		srcRow += rowPitch;
+		dstRow += width;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -216,7 +246,7 @@ bool AVIPlayer::OnCreate()
 		PixelShaderConstants *p = (PixelShaderConstants *)(pb->GetBuffer());
 
 		//mTexture.reset(new Texture(TEXT("D:\\untitled.gif")));
-//		mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		//mTexture.reset(new Texture(TEXT("D:\\test.png")));
 
 		tstring c = GetCurrentFolder();
 		OutputDebugString(Format(TEXT("Current Folder: %s\n"), c.c_str()).c_str());
@@ -224,24 +254,15 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		Video video;
 		try
 		{
-			video.Open(L"D:\\AVCaptures\\XB1_intro.avi");
-			Video::Frame frame = video.GetFrame(1000);
-			uint32 *pixels = new uint32[video.Width() * video.Height()];
-			byte const *src = frame.Buffer();
-			for(int y = 0; y < video.Height(); ++y)
-			{
-				uint32 *row = pixels + y * video.Width();
-				byte const *srcRow = src + (video.Height() - 1 - y) * frame.RowPitch();
-				for(int x = 0; x < video.Width(); ++x)
-				{
-					row[x] = Color(0xff, srcRow[0], srcRow[1], srcRow[2]);
-					srcRow += frame.BytesPerPixel();
-				}
-			}
-			mTexture.reset(new Texture(video.Width(), video.Height(), DXGI_FORMAT_B8G8R8A8_UNORM, (byte *)pixels));
+			video.Open(L"D:\\AVCaptures\\PS4_intro.avi");
+			videoPlayer.SetContext(&video);
+			videoPlayer.Start();
+
+			currentFrame = 1000;
+			VideoPlayerTask *t = new VideoPlayerTask(currentFrame);
+			videoPlayer.AddRequest(t);
 		}
 		catch(HRException)
 		{
@@ -449,6 +470,20 @@ void AVIPlayer::OnMouseMove(Point2D pos, uintptr flags)
 	}
 }
 
+struct Finder
+{
+	Finder(VideoPlayerTask *t)
+		: task(t)
+	{
+	}
+
+	bool operator()(int frameID)
+	{
+		return task->frame == frameID;
+	}
+	VideoPlayerTask *task;
+};
+
 //////////////////////////////////////////////////////////////////////
 
 bool AVIPlayer::OnUpdate()
@@ -474,6 +509,22 @@ bool AVIPlayer::OnUpdate()
 		}
 	}
 
+	VideoPlayerTask *t = (VideoPlayerTask *)videoPlayer.mResults.Find([this] (const Task *t)
+	{
+		return ((VideoPlayerTask *)t)->frame == currentFrame;
+	});
+
+	if(t != null)
+	{
+		videoPlayer.RemoveResult(t);
+		Ptr<uint32> pixels(new uint32[video.Width() * video.Height()]);
+		mTexture.reset(new Texture(video.Width(), video.Height(), Color::Black));
+		Convert24to32BPP((uint32 *)t->videoFrame.Buffer(), pixels.get(), t->videoFrame.Width(), t->videoFrame.Height(), t->videoFrame.RowPitch());
+		mTexture->Update(mContext, (byte *)pixels.get());
+		++currentFrame;
+		t->frame = currentFrame;
+		videoPlayer.AddRequest(t);
+	}
 
 	return true;
 }
@@ -503,13 +554,13 @@ void AVIPlayer::OnDraw()
 		VertexShaderConstants vsConstants;
 		PixelShaderConstants psConstants;
 
-		SetQuad();
+		SetQuad(true);
 
 		vsConstants.matrix = XMMatrixTranspose(matrix);
 		vsConstants.textureSize = mTexture->FSize();
 
-		psConstants.channelMask = XMVectorSet(1, 1, 1, 1);
-		psConstants.channelOffset = XMVectorSet(0, 0, 0, 0);
+		psConstants.channelMask = XMVectorSet(1, 1, 1, 0);
+		psConstants.channelOffset = XMVectorSet(0, 0, 0, 1);
 		psConstants.gridColor0 = XMVectorSet(0.8f, 0.8f, 0.8f, 1);
 		psConstants.gridColor1 = XMVectorSet(0.6f, 0.6f, 0.6f, 1);
 		psConstants.gridSize = Vec2(gridSize, gridSize);

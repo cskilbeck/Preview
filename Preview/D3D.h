@@ -91,7 +91,7 @@ public:
 #define DXV(x) __hr = (x); if(FAILED(__hr)) return;
 #define DXB(x) __hr = (x); if(FAILED(__hr)) return false;
 #define DXZ(x) __hr = (x); if(FAILED(__hr)) return 0;
-#define DXT(x) __hr = (x); if(FAILED(__hr)) throw HRExeption(__hr);
+#define DXT(x) __hr = (x); if(FAILED(__hr)) throw HRException(__hr);
 #endif
 
 //////////////////////////////////////////////////////////////////////

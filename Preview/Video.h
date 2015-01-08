@@ -16,11 +16,16 @@ public:
 		int Width() const;
 		int Height() const;
 
+		bool operator == (int f) const
+		{
+			return frame == f;
+		}
+
 		BITMAPINFOHEADER *bmi;
+		int frame;
 	};
 
 	Video();
-	Video(PWSTR filename);
 	~Video();
 
 	void Open(PWSTR filename);
@@ -29,18 +34,18 @@ public:
 
 	int Width() const;
 	int Height() const;
+	int Frames() const;
 
-	Frame GetFrame(int nFrame);
+	bool GetFrame(int nFrame, Frame &frame);
 
 private:
 
 	void Init();
 
 	DXPtr<IMediaDet>	pMediaDet;
-	long				streamID;
-	BITMAPINFOHEADER *	pbih;
 	double				fps;
 	double				length;
+	int					frames;
 	long				bufferSize;
 	byte *				buffer;
 	VIDEOINFOHEADER		videoInfoHeader;

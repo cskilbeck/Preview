@@ -32,6 +32,15 @@
 
 #include "Types.h"
 #include "Util.h"
+#include "linked_list.h"
+#include "CritSec.h"
+#include "Thread.h"
+
+using chs::linked_list;
+using chs::list_node;
+
+#include "Queue.h"
+#include "TaskManager.h"
 #include "WinResource.h"
 #include "WinMessages.h"
 #include "Timer.h"
@@ -52,5 +61,5 @@
 #include "Window.h"
 #include "DXWindow.h"
 #include "qedit.h"
-#include "FrameGrabber.h"
+#include "Video.h"
 #include "AVIPlayer.h"

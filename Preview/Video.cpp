@@ -64,41 +64,62 @@ int Video::Frame::Height() const
 
 //////////////////////////////////////////////////////////////////////
 
-uint Video::Frame::BytesPerPixel() const
+int Video::Frames() const
 {
-	return (bmi->biBitCount + 7) / 8;
+	return frames;
 }
 
 //////////////////////////////////////////////////////////////////////
+// This always returns 3 (RGB24)
+
+uint Video::Frame::BytesPerPixel() const
+{
+	assert(bmi->biBitCount == 24);
+	return 3;
+}
+
+//////////////////////////////////////////////////////////////////////
+// This rounds up
 
 uint Video::Frame::RowPitch() const
 {
-	return bmi->biWidth * BytesPerPixel();
+	assert(bmi->biBitCount == 24);
+	return (bmi->biWidth * 3 + 3) & -4;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 Video::Video() : buffer(null)
 {
-	Init();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-Video::Video(PWSTR filename) : buffer(null)
+void Video::Init()
 {
-	Init();
-	Open(filename);
+	if(pMediaDet == null)
+	{
+		DXT(CoCreateInstance(CLSID_MediaDet, NULL, CLSCTX_INPROC, IID_IMediaDet, (void **)&pMediaDet));
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+
+Video::~Video()
+{
+	FreeFrameBuffer();
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void Video::Open(PWSTR filename)
 {
+	Init();
 	FreeFrameBuffer();
 
 	DXT(pMediaDet->put_Filename(filename));
 
+	long streamID;
 	long numStreams;
 	DXT(pMediaDet->get_OutputStreams(&numStreams));
 
@@ -121,7 +142,8 @@ void Video::Open(PWSTR filename)
 	{
 		DXT(pMediaDet->get_FrameRate(&fps));
 		DXT(pMediaDet->get_StreamLength(&length));
-		TRACE("Video file is %dx%d,has %d frames at %.2ffps, is %.2f seconds long\n", Width(), Height(), (uint)(length * fps), fps, length);
+		frames = (int)(length * fps);
+		TRACE("Video file is %dx%d,has %d frames at %.2ffps, is %.2f seconds long\n", Width(), Height(), frames, fps, length);
 	}
 }
 
@@ -160,26 +182,24 @@ void Video::FreeFrameBuffer()
 
 //////////////////////////////////////////////////////////////////////
 
-Video::Frame Video::GetFrame(int nFrame)
+bool Video::GetFrame(int nFrame, Video::Frame &frame)
 {
-	Frame f;
-	DXT(pMediaDet->GetBitmapBits(nFrame / fps, &bufferSize, (char *)buffer, Width(), Height()));
-	f.bmi = (BITMAPINFOHEADER *)buffer;
-	return f;
+	frame.bmi = null;
+	frame.frame = -1;
+	if(nFrame >= frames)
+	{
+		return false;
+	}
+	try
+	{
+		DXT(pMediaDet->GetBitmapBits(nFrame / fps, &bufferSize, (char *)buffer, Width(), Height()));
+	}
+	catch(HRException e)
+	{
+		return false;
+	}
+	frame.bmi = (BITMAPINFOHEADER *)buffer;
+	frame.frame = nFrame;
+	return true;
 }
 
-//////////////////////////////////////////////////////////////////////
-
-Video::~Video()
-{
-	FreeFrameBuffer();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void Video::Init()
-{
-	streamID = -1;
-	pbih = null;
-	DXT(CoCreateInstance(CLSID_MediaDet, NULL, CLSCTX_INPROC, IID_IMediaDet, (void **)&pMediaDet));
-}
