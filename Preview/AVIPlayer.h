@@ -6,14 +6,18 @@
 
 struct VideoPlayerTask: public Task
 {
-	VideoPlayerTask(int f)
-		: frame(f)
+	VideoPlayerTask(int f) : frame(f)
 	{
 	}
 
 	bool Execute(void *context) override
 	{
 		return ((Video *)context)->GetFrame(frame, videoFrame);
+	}
+
+	bool operator == (int const i) const
+	{
+		return frame == i;
 	}
 
 	Video::Frame videoFrame;
@@ -120,7 +124,7 @@ struct AVIPlayer: DXWindow
 	Ptr<Texture> mVideoFrame;
 
 	Video video;
-	TaskManager videoPlayer;
+	TaskManager<VideoPlayerTask> videoPlayer;
 	int currentFrame;
 
 	//////////////////////////////////////////////////////////////////////

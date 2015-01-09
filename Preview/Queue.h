@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-template<typename T> class Queue
+template<typename T, list_node<T> T::*NODE = null> class Queue
 {
 public:
 
@@ -62,25 +62,30 @@ public:
 		{ 
 			return null;
 		}
-		T *f = items.front();
-		items.pop_front();
-		return f;
+		return items.pop_front();
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	T *Find(std::function<bool(T *)> comp)
+	template <typename findable_t, typename task_t> task_t *Find(findable_t const &f)
 	{
 		Lock _(critSec);
-		auto p = std::find_if(items.begin(), items.end(), comp);
-		return (p == items.end()) ? null : *p;
+		for(auto p = items.head(); p != items.done(); p = items.next(p))
+		{
+			task_t *t = (task_t *)p;
+			if(*t == f)
+			{
+				return t;
+			}
+		}
+		return nullptr;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 protected:
 
-	CriticalSection		critSec;
-	std::list<T *>		items;
+	CriticalSection			critSec;
+	linked_list<T, NODE>	items;
 
 };

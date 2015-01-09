@@ -338,8 +338,8 @@ namespace chs
         {
             ptr p = prev(obj);
             ptr n = next(obj);
-            get_node(p).next = n;
-            get_node(n).prev = p;
+			set_next(p, n);
+			set_prev(n, p);
             return obj;
         }
 
@@ -712,9 +712,9 @@ public:
             return t;
         }
 
-        //////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////
 
-        template<class O> ptr find_first_of(O const &t)
+		template<class O> ptr find_first_of(O const &t)
         {
             for(auto p = head(); p != done(); p = next(p))
             {

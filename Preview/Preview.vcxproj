@@ -180,7 +180,6 @@
     <ClCompile Include="CBuffer.cpp" />
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="DXWindow.cpp" />
-    <ClCompile Include="TaskManager.cpp" />
     <ClCompile Include="Video.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="AVIPlayer.cpp" />

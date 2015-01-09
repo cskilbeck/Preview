@@ -236,7 +236,7 @@ bool AVIPlayer::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		mTexture.reset(new Texture(64, 64, Color::BrightBlue));
+		mTexture.reset(new Texture(960, 540, Color::BrightBlue));
 
 		ConstantBuffer *b = mVertexShader.GetCB("VertConstants");
 		Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
@@ -256,11 +256,14 @@ bool AVIPlayer::OnCreate()
 
 		try
 		{
-			video.Open(L"D:\\AVCaptures\\PS4_intro.avi");
+			video.Open(L"D:\\AVCaptures\\XB1_intro.avi");
+
+			mTexture.reset(new Texture(video.Width(), video.Height(), Color::Black));
+
 			videoPlayer.SetContext(&video);
 			videoPlayer.Start();
 
-			currentFrame = 1000;
+			currentFrame = 10000;
 			VideoPlayerTask *t = new VideoPlayerTask(currentFrame);
 			videoPlayer.AddRequest(t);
 		}
@@ -509,21 +512,21 @@ bool AVIPlayer::OnUpdate()
 		}
 	}
 
-	VideoPlayerTask *t = (VideoPlayerTask *)videoPlayer.mResults.Find([this] (const Task *t)
-	{
-		return ((VideoPlayerTask *)t)->frame == currentFrame;
-	});
+	VideoPlayerTask *t = videoPlayer.FindResult(currentFrame);
 
 	if(t != null)
 	{
 		videoPlayer.RemoveResult(t);
 		Ptr<uint32> pixels(new uint32[video.Width() * video.Height()]);
-		mTexture.reset(new Texture(video.Width(), video.Height(), Color::Black));
 		Convert24to32BPP((uint32 *)t->videoFrame.Buffer(), pixels.get(), t->videoFrame.Width(), t->videoFrame.Height(), t->videoFrame.RowPitch());
 		mTexture->Update(mContext, (byte *)pixels.get());
-		++currentFrame;
+		currentFrame += 2;
 		t->frame = currentFrame;
 		videoPlayer.AddRequest(t);
+	}
+	else
+	{
+		TRACE("Dropped at frame %d\n", currentFrame);
 	}
 
 	return true;
