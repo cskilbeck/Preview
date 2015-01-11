@@ -2,12 +2,24 @@
 
 #pragma once
 
+#include "targetver.h"
+//#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <tchar.h>
+#include <strsafe.h>
+#include <winnt.h>
+#include <d3d11.h>
+#include <DirectXMath.h>
+#include <d3dcompiler.h>
+#include <dshow.h>
+#include <objbase.h>
+#include <streams.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
-#include <tchar.h>
 #include <malloc.h>
 #include <memory.h>
 #include <assert.h>
@@ -19,19 +31,12 @@
 #include <unordered_map>
 #include <exception>
 
-#include "targetver.h"
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <d3d11.h>
-#include <DirectXMath.h>
-#include <d3dcompiler.h>
-#include <dshow.h>
-#include <objbase.h>
 
 #include "Resource.h"
 
 #include "Types.h"
 #include "Util.h"
+#include "Random.h"
 #include "linked_list.h"
 #include "CritSec.h"
 #include "Thread.h"
@@ -60,6 +65,7 @@ using chs::list_node;
 #include "Material.h"
 #include "Window.h"
 #include "DXWindow.h"
-#include "qedit.h"
-#include "Video.h"
+
+#include "MoviePlayer.h"
+
 #include "AVIPlayer.h"

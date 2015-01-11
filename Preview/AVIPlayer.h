@@ -4,28 +4,6 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct VideoPlayerTask: public Task
-{
-	VideoPlayerTask(int f) : frame(f)
-	{
-	}
-
-	bool Execute(void *context) override
-	{
-		return ((Video *)context)->GetFrame(frame, videoFrame);
-	}
-
-	bool operator == (int const i) const
-	{
-		return frame == i;
-	}
-
-	Video::Frame videoFrame;
-	int frame;
-};
-
-//////////////////////////////////////////////////////////////////////
-
 struct AVIPlayer: DXWindow
 {
 	//////////////////////////////////////////////////////////////////////
@@ -95,8 +73,6 @@ struct AVIPlayer: DXWindow
 	void CenterImageInWindow();
 	void CenterImageInWindowAndResetZoom();
 
-	void VideoPlayer();
-
 	//////////////////////////////////////////////////////////////////////
 
 	static Vertex vert[6];
@@ -122,10 +98,11 @@ struct AVIPlayer: DXWindow
 	VertexShader mVertexShader;
 
 	Ptr<Texture> mVideoFrame;
+	Ptr<uint32> mPixels;
 
-	Video video;
-	TaskManager<VideoPlayerTask> videoPlayer;
-	int currentFrame;
+	volatile uint currentFrame;
+	uint lastFrame;
+	MoviePlayer movie;
 
 	//////////////////////////////////////////////////////////////////////
 

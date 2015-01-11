@@ -86,3 +86,11 @@ inline Size2D operator - (Size2D a, Point2D b)
 {
 	return Size2D(a.cx - b.x, a.cy - b.y);
 }
+
+//////////////////////////////////////////////////////////////////////
+
+inline Size2D operator - (Size2D const &s, Vec2 const &v)
+{
+	return Size2D((long)(s.cx - v.x), (long)(s.cy - v.y));
+}
+

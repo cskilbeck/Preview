@@ -7,7 +7,7 @@
 struct Task
 {
 	list_node<Task> node;
-	virtual bool Execute(void *context) = 0;
+	virtual bool Execute() = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -18,7 +18,6 @@ public:
 
 	TaskManager(int maxResults)
 		: resultLimit(maxResults)
-		, context(null)
 	{
 		mRequestAddedEvent = CreateEvent(null, false, false, null);
 		mResultRemovedEvent = CreateEvent(null, false, false, null);
@@ -33,11 +32,6 @@ public:
 
 		CloseHandle(mResultRemovedEvent);
 		mResultRemovedEvent = INVALID_HANDLE_VALUE;
-	}
-
-	void SetContext(void *ctx)
-	{
-		context = ctx;
 	}
 
 	void Start()
@@ -109,9 +103,9 @@ private:
 			if(t != null)
 			{
 				TRACE("Executing a task\n");
-				t->Execute(context);
+				t->Execute();
 				TRACE("Task complete\n");
-				while(mResults.Length() >= resultLimit)
+				while(mResults.Length() >= (size_t)resultLimit)
 				{
 					TRACE("Result set full, waiting for the client to take one away\n");
 					WaitForSingleObject(mResultRemovedEvent, INFINITE);
@@ -128,5 +122,4 @@ private:
 	HANDLE						mResultRemovedEvent;
 	Thread						thread;
 	int							resultLimit;
-	void *						context;
 };

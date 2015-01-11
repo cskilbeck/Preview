@@ -180,7 +180,6 @@ AVIPlayer::AVIPlayer(int width, int height)
 	, mDrag(false)
 	, mHandCursor(NULL)
 	, mMaintainImagePosition(true)
-	, videoPlayer(16)
 {
 }
 
@@ -214,6 +213,11 @@ static void Convert24to32BPP(uint32 const *srcBuffer, uint32 *dstBuffer, int wid
 
 bool AVIPlayer::OnCreate()
 {
+	//MoviePlayer p;
+	//p.Init();
+	//p.PlayMovie(L"D:\\AVCaptures\\XB1_intro.avi");
+
+
 	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 	SetMenu(mHWND, mMenu);
 
@@ -236,7 +240,7 @@ bool AVIPlayer::OnCreate()
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		mTexture.reset(new Texture(960, 540, Color::BrightBlue));
+		//mTexture.reset(new Texture(960, 540, Color::BrightBlue));
 
 		ConstantBuffer *b = mVertexShader.GetCB("VertConstants");
 		Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
@@ -254,30 +258,32 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		try
+		lastFrame = 0;
+		currentFrame = 0;
+		movie.Init();
+		movie.Open(L"D:\\AVCaptures\\XB1_intro.avi", [this] (BITMAPINFOHEADER *bmih, byte *pixels)
 		{
-			video.Open(L"D:\\AVCaptures\\XB1_intro.avi");
-
-			mTexture.reset(new Texture(video.Width(), video.Height(), Color::Black));
-
-			videoPlayer.SetContext(&video);
-			videoPlayer.Start();
-
-			currentFrame = 10000;
-			VideoPlayerTask *t = new VideoPlayerTask(currentFrame);
-			videoPlayer.AddRequest(t);
-		}
-		catch(HRException)
-		{
-		}
-
-		mDrawRect.Set(Vec2::zero, mTexture->FSize());
-		SetWindowSize(mTexture->Width(), mTexture->Height());
+			long w = bmih->biWidth;
+			long h = bmih->biHeight;
+			if(mTexture == null || mTexture->Width() != w || mTexture->Height() != h)
+			{
+				mTexture.reset(new Texture(w, h, Color::Black));
+				mPixels.reset(new uint32[w * h]);
+			}
+			if(mTexture != null && mTexture->Width() == w && mTexture->Height() == h)
+			{
+				Convert24to32BPP((uint32 *)pixels, mPixels.get(), w, h, DIBWIDTHBYTES(*bmih));
+				InterlockedIncrement(&currentFrame);
+			}
+		});
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
 		CenterImageInWindowAndResetZoom();
+		mDrawRect = ClientRect();
 		mCurrentDrawRect = mDrawRect;
+		TRACE("DrawRect: %s\n", mDrawRect.ToString().c_str());;
 		mTimer.Reset();
+		movie.Play();
 		return true;
 	}
 	return false;
@@ -329,6 +335,9 @@ void AVIPlayer::OnChar(int key, uintptr flags)
 		case 27:
 			Close();
 			break;
+		case 32:
+			movie.Seek(1000);
+			break;
 	}
 }
 
@@ -366,7 +375,8 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 			Rect2D newRect = GetWindowRectFromClientRect(Rect2D(mDrawRect));
 			GetWindowRect(mHWND, &windowRect);
 			newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
-			mDrawRect.MoveTo(Vec2(GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
+			Vec2 newPos = Vec2((GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
+			mDrawRect.MoveTo(newPos);
 			mCurrentDrawRect = mDrawRect;
 			mMaintainImagePosition = false;
 			SetWindowRect(newRect);
@@ -381,8 +391,11 @@ void AVIPlayer::OnResize()
 {
 	DXWindow::OnResize();
 
-	Vec2 midPoint = mDrawRect.MidPoint() * ClientRect().FSize() / mOldClientRect.FSize();
+	Vec2 clientSize = ClientRect().FSize();
+	Vec2 oldClientSize = mOldClientRect.FSize();
+	Vec2 midPoint = mDrawRect.MidPoint() * clientSize / oldClientSize;
 	Vec2 hs = mDrawRect.Size() / 2;
+	TRACE("ClientSize: %s, oldClientSize: %s, midPoint: %s, hs: %s\n", clientSize.ToString().c_str(), oldClientSize.ToString().c_str(), midPoint.ToString().c_str(), hs.ToString().c_str());
 	if(mMaintainImagePosition)
 	{
 		mDrawRect.Set(midPoint - hs, midPoint + hs);
@@ -473,20 +486,6 @@ void AVIPlayer::OnMouseMove(Point2D pos, uintptr flags)
 	}
 }
 
-struct Finder
-{
-	Finder(VideoPlayerTask *t)
-		: task(t)
-	{
-	}
-
-	bool operator()(int frameID)
-	{
-		return task->frame == frameID;
-	}
-	VideoPlayerTask *task;
-};
-
 //////////////////////////////////////////////////////////////////////
 
 bool AVIPlayer::OnUpdate()
@@ -512,21 +511,16 @@ bool AVIPlayer::OnUpdate()
 		}
 	}
 
-	VideoPlayerTask *t = videoPlayer.FindResult(currentFrame);
-
-	if(t != null)
+	if(mTexture != null && mPixels != null && currentFrame > lastFrame)
 	{
-		videoPlayer.RemoveResult(t);
-		Ptr<uint32> pixels(new uint32[video.Width() * video.Height()]);
-		Convert24to32BPP((uint32 *)t->videoFrame.Buffer(), pixels.get(), t->videoFrame.Width(), t->videoFrame.Height(), t->videoFrame.RowPitch());
-		mTexture->Update(mContext, (byte *)pixels.get());
-		currentFrame += 2;
-		t->frame = currentFrame;
-		videoPlayer.AddRequest(t);
-	}
-	else
-	{
-		TRACE("Dropped at frame %d\n", currentFrame);
+		mTexture->Update(mContext, (byte *)mPixels.get());
+		lastFrame = currentFrame;
+		if(lastFrame == 0)
+		{
+			mDrawRect.Set(Vec2::zero, mTexture->FSize());
+			mCurrentDrawRect = mDrawRect;
+			//SetWindowSize(mTexture->Width(), mTexture->Height());
+		}
 	}
 
 	return true;

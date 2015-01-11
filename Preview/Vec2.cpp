@@ -17,3 +17,15 @@ Vec2::Vec2(Point2D const &p) : x((float)p.x), y((float)p.y)
 Vec2::Vec2(Size2D const &s) : x((float)s.Width()), y((float)s.Height())
 {
 }
+
+Vec2 Vec2::operator - (Size2D const &s)
+{
+	return Vec2(x - s.cx, y - s.cy);
+}
+
+Vec2 &Vec2::operator = (Point2D const &p)
+{
+	x = (float)p.x;
+	y = (float)p.y;
+	return *this;
+}

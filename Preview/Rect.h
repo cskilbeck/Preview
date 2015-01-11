@@ -289,6 +289,18 @@ struct RectF
 	{
 		return topLeft == b.topLeft && bottomRight == b.bottomRight;
 	}
+
+	string ToString() const
+	{
+		return Format("(%f,%f)-(%f,%f)", TopLeft().x, TopLeft().y, BottomRight().x, BottomRight().y);
+	}
+
+	RectF &operator = (Rect2D const &r)
+	{
+		topLeft = r.TopLeft();
+		bottomRight = r.BottomRight();
+		return *this;
+	}
 };
 
 //////////////////////////////////////////////////////////////////////
