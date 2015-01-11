@@ -281,7 +281,7 @@ bool AVIPlayer::OnCreate()
 		CenterImageInWindowAndResetZoom();
 		mDrawRect = ClientRect();
 		mCurrentDrawRect = mDrawRect;
-		TRACE("DrawRect: %s\n", mDrawRect.ToString().c_str());;
+		//TRACE("DrawRect: %s\n", mDrawRect.ToString().c_str());;
 		mTimer.Reset();
 		movie.Play();
 		return true;
@@ -390,14 +390,13 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 void AVIPlayer::OnResize()
 {
 	DXWindow::OnResize();
-
-	Vec2 clientSize = ClientRect().FSize();
-	Vec2 oldClientSize = mOldClientRect.FSize();
-	Vec2 midPoint = mDrawRect.MidPoint() * clientSize / oldClientSize;
-	Vec2 hs = mDrawRect.Size() / 2;
-	TRACE("ClientSize: %s, oldClientSize: %s, midPoint: %s, hs: %s\n", clientSize.ToString().c_str(), oldClientSize.ToString().c_str(), midPoint.ToString().c_str(), hs.ToString().c_str());
+	//TRACE("ClientSize: %s, oldClientSize: %s, midPoint: %s, hs: %s\n", clientSize.ToString().c_str(), oldClientSize.ToString().c_str(), midPoint.ToString().c_str(), hs.ToString().c_str());
 	if(mMaintainImagePosition)
 	{
+		Vec2 clientSize = ClientRect().FSize();
+		Vec2 oldClientSize = mOldClientRect.FSize();
+		Vec2 midPoint = mDrawRect.MidPoint() * clientSize / oldClientSize;
+		Vec2 hs = mDrawRect.Size() / 2;
 		mDrawRect.Set(midPoint - hs, midPoint + hs);
 		mCurrentDrawRect = mDrawRect;
 	}
