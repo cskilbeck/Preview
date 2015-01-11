@@ -14,10 +14,11 @@ HRESULT AddToRot(IUnknown *pUnkGraph, DWORD *pdwRegister);
 
 struct Sampler: public CBaseVideoRenderer
 {
-	using callback_t = std::function<void(BITMAPINFOHEADER *, byte *)>;
+	using callback_t = std::function<void(BITMAPINFOHEADER *, int frame, byte *)>;
 
 	BITMAPINFOHEADER	bmih;
 	callback_t			callback;
+	double				frameReferenceTime;
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -35,6 +36,7 @@ struct Sampler: public CBaseVideoRenderer
 		VIDEOINFO *vi = (VIDEOINFO *)media->Format();
 		if(vi != null && *media->Subtype() == MEDIASUBTYPE_RGB24)
 		{
+			frameReferenceTime = (double)vi->AvgTimePerFrame;
 			bmih = vi->bmiHeader;
 			return S_OK;
 		}
@@ -46,10 +48,14 @@ struct Sampler: public CBaseVideoRenderer
 	HRESULT DoRenderSample(IMediaSample *sample)
 	{
 		byte *data;
+		int64 frameStart;
+		int64 frameEnd;
+		DX(sample->GetTime(&frameStart, &frameEnd));
 		DX(sample->GetPointer(&data));
 		if(callback != null)
 		{
-			callback(&bmih, data);
+			int frame = (int)(frameStart / frameReferenceTime);
+			callback(&bmih, frame, data);
 		}
 		return S_OK;
 	}
@@ -70,7 +76,7 @@ public:
 
 	//////////////////////////////////////////////////////////////////////
 
-	MoviePlayer() : sampler(null)
+	MoviePlayer() : sampler(null), isPaused(false)
 	{
 		CoInitialize(null);
 	}
@@ -86,33 +92,29 @@ public:
 
 	HRESULT Init()
 	{
-		DWORD rotRegister;
+		// create the graph manager
 		DX(CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **)&graph));
-		AddToRot(graph, &rotRegister);
 
+		// add it to the registered object table
+		#ifdef _DEBUG
+			DWORD rotRegister;
+			AddToRot(graph, &rotRegister);
+		#endif
+
+		// media controller
 		DX(graph->QueryInterface(IID_IMediaControl, (void **)&mediaControl));
+
+		// seek controller
 		DX(graph->QueryInterface(IID_IMediaSeeking, (void **)&seeker));
 
+		// create the sampler
 		HRESULT hr = S_OK;
 		sampler = new Sampler(0, &hr);
 		if(SUCCEEDED(hr))
 		{
+			// and add it to the graph
 			DX(graph->AddFilter((IBaseFilter *)sampler, L"Sampler"));
 		}
-		return hr;
-	}
-
-	//////////////////////////////////////////////////////////////////////
-
-	HRESULT PlayMovie(wchar const *filename)
-	{
-		long evCode = 0;
-		DXPtr<IMediaEvent> pEvent;
-		Init();
-		DX(graph->QueryInterface(IID_IMediaEvent, (void **)&pEvent));
-		DX(graph->RenderFile(filename, null));
-		DX(mediaControl->Run());
-		pEvent->WaitForCompletion(INFINITE, &evCode);
 		return S_OK;
 	}
 
@@ -121,19 +123,33 @@ public:
 	HRESULT Open(wchar *filename, Sampler::callback_t callback)
 	{
 		sampler->callback = callback;
+
+		// set the file source
 		DX(graph->AddSourceFilter(filename, L"File Source", &videoSource));
+
+		// find the output from the file source
 		DX(videoSource->FindPin(L"Output", &videoOutputPin));
+
+		// find the input to the sampler
 		DX(sampler->FindPin(L"In", &rendererPin));
-		DX(graph->Disconnect(videoOutputPin));
+
+		// connect the file source output to the frame sampler input
 		DX(graph->Connect(videoOutputPin, rendererPin));
+
+		// get seek capabilities
 		DX(seeker->GetCapabilities(&seekingCapabilites));
+
+		// track by frames
 		DX(seeker->SetTimeFormat(&TIME_FORMAT_FRAME));
-		HRESULT hr = graph->Render(videoOutputPin);
-		if(FAILED(hr) || hr != VFW_E_ALREADY_CONNECTED)	// Huh? Still works...
-		{
-			// Problem...
-		}
+
 		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	bool IsPaused() const
+	{
+		return isPaused;
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -141,6 +157,7 @@ public:
 	HRESULT Pause()
 	{
 		DX(mediaControl->Pause());
+		isPaused = true;
 		return S_OK;
 	}
 
@@ -149,6 +166,7 @@ public:
 	HRESULT Play()
 	{
 		DX(mediaControl->Run());
+		isPaused = false;
 		return S_OK;
 	}
 
@@ -174,4 +192,5 @@ public:
 	DXPtr<IPin>				videoOutputPin;
 	Sampler *				sampler;
 	DWORD					seekingCapabilites;
+	bool					isPaused;
 };
