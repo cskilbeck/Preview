@@ -94,3 +94,7 @@ inline Size2D operator - (Size2D const &s, Vec2 const &v)
 	return Size2D((long)(s.cx - v.x), (long)(s.cy - v.y));
 }
 
+inline bool operator == (Size2D const &a, Size2D const &b)
+{
+	return a.cx == b.cx && a.cy == b.cy;
+}

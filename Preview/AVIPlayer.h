@@ -96,13 +96,8 @@ struct AVIPlayer: DXWindow
 	Material mMaterial;
 	PixelShader mPixelShader;
 	VertexShader mVertexShader;
-
-	Ptr<Texture> mVideoFrame;
-	Ptr<uint32> mPixels;
-
-	volatile uint currentFrame;
-	uint lastFrame;
-	MoviePlayer movie;
+	Movie::Player movie;
+	Movie::Player movie2;
 
 	//////////////////////////////////////////////////////////////////////
 

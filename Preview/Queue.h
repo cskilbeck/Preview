@@ -49,8 +49,7 @@ public:
 	T *Remove(T *p)
 	{
 		Lock _(critSec);
-		items.remove(p);
-		return p;
+		return items.remove(p);
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -58,10 +57,6 @@ public:
 	T *Pop()
 	{
 		Lock _(critSec);
-		if(items.empty())
-		{ 
-			return null;
-		}
 		return items.pop_front();
 	}
 

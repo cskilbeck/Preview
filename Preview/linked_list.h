@@ -426,10 +426,10 @@ namespace chs
         size_t size() const
         {
             size_t count = 0;
-            for(auto const &i : *this)
-            {
-                ++count;
-            }
+			for(const_ptr i = c_head(); i != c_done(); i = c_next(i))
+			{
+				++count;
+			}
             return count;
         }
 

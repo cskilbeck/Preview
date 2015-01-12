@@ -185,39 +185,8 @@ AVIPlayer::AVIPlayer(int width, int height)
 
 //////////////////////////////////////////////////////////////////////
 
-static void Convert24to32BPP(uint32 const *srcBuffer, uint32 *dstBuffer, int width, int height, int pitch)
-{
-	int rowPitch = pitch / sizeof(uint32);
-	uint32 *dstRow = dstBuffer;
-	uint32 const *srcRow = srcBuffer;
-	for(int y = 0; y < height; ++y)
-	{
-		uint32 *dst = dstRow;
-		uint32 const *src = (uint32 *)srcRow;
-		for(int x = 0; x < width; x += 4, src += 3)
-		{
-			uint32 a = src[0];
-			uint32 b = src[1];
-			uint32 c = src[2];
-			dst[x + 0] = a;
-			dst[x + 1] = (a >> 24) | (b << 8);
-			dst[x + 2] = (b >> 16) | (c << 16);
-			dst[x + 3] = (c >> 8);
-		}
-		srcRow += rowPitch;
-		dstRow += width;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////
-
 bool AVIPlayer::OnCreate()
 {
-	//MoviePlayer p;
-	//p.Init();
-	//p.PlayMovie(L"D:\\AVCaptures\\XB1_intro.avi");
-
-
 	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 	SetMenu(mHWND, mMenu);
 
@@ -258,24 +227,10 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		lastFrame = 0;
-		currentFrame = 0;
 		movie.Init();
-		movie.Open(L"D:\\AVCaptures\\XB1_intro.avi", [this] (BITMAPINFOHEADER *bmih, byte *pixels)
-		{
-			long w = bmih->biWidth;
-			long h = bmih->biHeight;
-			if(mTexture == null || mTexture->Width() != w || mTexture->Height() != h)
-			{
-				mTexture.reset(new Texture(w, h, Color::Black));
-				mPixels.reset(new uint32[w * h]);
-			}
-			if(mTexture != null && mTexture->Width() == w && mTexture->Height() == h)
-			{
-				Convert24to32BPP((uint32 *)pixels, mPixels.get(), w, h, DIBWIDTHBYTES(*bmih));
-				InterlockedIncrement(&currentFrame);
-			}
-		});
+		movie.Open(L"D:\\AVCaptures\\PS4_intro.avi");
+		movie.Play();
+
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
 		CenterImageInWindowAndResetZoom();
@@ -283,7 +238,6 @@ bool AVIPlayer::OnCreate()
 		mCurrentDrawRect = mDrawRect;
 		//TRACE("DrawRect: %s\n", mDrawRect.ToString().c_str());;
 		mTimer.Reset();
-		movie.Play();
 		return true;
 	}
 	return false;
@@ -335,8 +289,18 @@ void AVIPlayer::OnChar(int key, uintptr flags)
 		case 27:
 			Close();
 			break;
+		case 'p':
+			if(movie.IsPaused())
+			{
+				movie.Play();
+			}
+			else
+			{
+				movie.Pause();
+			}
+			break;
 		case 32:
-			movie.Seek(1000);
+			movie.Seek(1900);
 			break;
 	}
 }
@@ -369,19 +333,19 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 		Vec2 sz = mTexture->FSize() * mScale;
 		mDrawRect.Resize(sz);
 		mDrawRect.MoveTo(mousePos - sz * frac);
-		if(ClientRect().Width() < mDrawRect.Width() || ClientRect().Height() < mDrawRect.Height())
-		{
-			Rect2D windowRect;
-			Rect2D newRect = GetWindowRectFromClientRect(Rect2D(mDrawRect));
-			GetWindowRect(mHWND, &windowRect);
-			newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
-			Vec2 newPos = Vec2((GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
-			mDrawRect.MoveTo(newPos);
-			mCurrentDrawRect = mDrawRect;
-			mMaintainImagePosition = false;
-			SetWindowRect(newRect);
-			mMaintainImagePosition = true;
-		}
+		//if(ClientRect().Width() < mDrawRect.Width() || ClientRect().Height() < mDrawRect.Height())
+		//{
+		//	Rect2D windowRect;
+		//	Rect2D newRect = GetWindowRectFromClientRect(Rect2D(mDrawRect));
+		//	GetWindowRect(mHWND, &windowRect);
+		//	newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
+		//	Vec2 newPos = Vec2((GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
+		//	mDrawRect.MoveTo(newPos);
+		//	mCurrentDrawRect = mDrawRect;
+		//	mMaintainImagePosition = false;
+		//	SetWindowRect(newRect);
+		//	mMaintainImagePosition = true;
+		//}
 	}
 }
 
@@ -510,16 +474,18 @@ bool AVIPlayer::OnUpdate()
 		}
 	}
 
-	if(mTexture != null && mPixels != null && currentFrame > lastFrame)
+	// got a frame to draw?
+	Movie::Player::Frame *frame = movie.GetFrame();
+	if(frame != null)
 	{
-		mTexture->Update(mContext, (byte *)mPixels.get());
-		lastFrame = currentFrame;
-		if(lastFrame == 0)
+		long w = frame->dimensions.cx;
+		long h = frame->dimensions.cy;
+		if(mTexture == null || mTexture->Width() != w || mTexture->Height() != h)
 		{
-			mDrawRect.Set(Vec2::zero, mTexture->FSize());
-			mCurrentDrawRect = mDrawRect;
-			//SetWindowSize(mTexture->Width(), mTexture->Height());
+			mTexture.reset(new Texture(w, h, Color::Black));
 		}
+		mTexture->Update(mContext, (byte *)frame->mem);
+		movie.ReleaseFrame(frame);
 	}
 
 	return true;
@@ -585,4 +551,8 @@ void AVIPlayer::OnDraw()
 		mTexture->Activate(mContext);
 		mContext->Draw(ARRAYSIZE(vert), 0);
 	}
+
+	tstring m = Format(TEXT("Frames queued: %d"), movie.FramesWaiting());
+	SetWindowText(mHWND, m.c_str());
+
 }
