@@ -240,19 +240,26 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		DXB(movie.Init());
-		DXB(movie.Open(L"D:\\AVCaptures\\PS4_intro.avi"));
-		DXB(movie.Play());
+		struct foo
+		{
+			int a;
+			int b;
+		};
 
-		DXB(movie2.Init());
-		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
-		DXB(movie2.Play());
+		foo f = { 1, 2 };
+
+		DXB(movie.Open(L"D:\\AVCaptures\\XB1_intro.avi", 16));
+
+		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi", 16));
 
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
 		CenterImageInWindowAndResetZoom();
 		mDrawRect.Set(Vec2::zero, Vec2(1920/2.0f, 1080/2.0f));
 		mTimer.Reset();
+
+		DXB(movie.Play());
+		DXB(movie2.Play());
 		return true;
 	}
 	return false;
@@ -509,6 +516,15 @@ bool AVIPlayer::OnUpdate()
 
 //////////////////////////////////////////////////////////////////////
 
+static void Text(HDC dc, int x, int y, tchar const *fmt, ...)
+{
+	tchar buffer[1024];
+	va_list v;
+	va_start(v, fmt);
+	int l = _vstprintf_s(buffer, fmt, v);
+	TextOut(dc, x, y, buffer, l);
+}
+
 void AVIPlayer::OnDraw()
 {
 	using namespace DirectX;
@@ -579,8 +595,11 @@ void AVIPlayer::OnDraw()
 		}
 	}
 
-	tstring m = Format(TEXT("Frames queued: Left: %d, Right: %d"), movie.FramesWaiting(), movie2.FramesWaiting());
 	HDC dc = GetDC(mHWND);
-	TextOut(dc, 4, 1080 / 2 + 4, m.c_str(), (int)m.size());
+	int f1 = movie.GetLastFrameNumber();
+	int f2 = movie2.GetLastFrameNumber();
+	int diff = f2 - f1;
+	Text(dc, 4, 1080 / 2 + 4, TEXT("Frames queued: Left: %3d, Right: %3d"), movie.FramesWaiting(), movie2.FramesWaiting());
+	Text(dc, 4, 1080 / 2 + 4 + 20, TEXT("Frame1: %4d, Frame2: %4d (Drift: %2d)"), f1, f2, diff);
 	ReleaseDC(mHWND, dc);
 }

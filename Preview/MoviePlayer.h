@@ -60,9 +60,9 @@ namespace Movie
 
 			BITMAPINFOHEADER	bmih;
 			double				frameReferenceTime;
-			FrameQueue			frameCache;
 			HANDLE				frameReleased;
 			int					maxFrameQueueSize;
+			FrameQueue			frameCache;
 			FrameQueue			readyFrames;
 
 			//////////////////////////////////////////////////////////////////////
@@ -119,6 +119,21 @@ namespace Movie
 				ZeroMemory(&bmih, sizeof(bmih));
 				frameReleased = CreateEvent(NULL, false, false, TEXT("Frame Released Event"));
 			};
+
+			//////////////////////////////////////////////////////////////////////
+
+			~Sampler()
+			{
+				while(!readyFrames.IsEmpty())
+				{
+					delete readyFrames.Pop();
+				}
+
+				while(!frameCache.IsEmpty())
+				{
+					delete frameCache.Pop();
+				}
+			}
 
 			//////////////////////////////////////////////////////////////////////
 			// How many frames are queued up
@@ -182,11 +197,12 @@ namespace Movie
 
 			HRESULT WaitForRenderTime()
 			{
+				DX(CBaseRenderer::WaitForRenderTime());
 				while(readyFrames.Length() >= (size_t)maxFrameQueueSize)
 				{
 					WaitForSingleObject(frameReleased, INFINITE);
 				}
-				return CBaseRenderer::WaitForRenderTime();
+				return S_OK;
 			}
 
 			//////////////////////////////////////////////////////////////////////
@@ -240,71 +256,58 @@ namespace Movie
 			: sampler(null)
 			, isPaused(false)
 			, isOpen(false)
+			, currentFrame(-1)
 		{
-			CoInitialize(null);
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		~Player()
 		{
-			CoUninitialize();
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
-		HRESULT Init(int maxFramesToBuffer = 3)
+		HRESULT Open(wchar const *filename, int maxFrameBuffer = 3)
 		{
-			// create the graph manager
+			CoInitialize(null);
 			DX(CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **)&graph));
-
-			// add it to the registered object table
-#ifdef _DEBUG
+			#ifdef _DEBUG
 			DWORD rotRegister;
 			AddToRot(graph, &rotRegister);
-#endif
-
-			// media controller
+			#endif
 			DX(graph->QueryInterface(IID_IMediaControl, (void **)&mediaControl));
-
-			// seek controller
 			DX(graph->QueryInterface(IID_IMediaSeeking, (void **)&seeker));
-
-			// create the sampler
 			HRESULT hr = S_OK;
-			sampler = new Sampler(maxFramesToBuffer, 0, &hr);
+			sampler = new Sampler(maxFrameBuffer, 0, &hr);
 			if(SUCCEEDED(hr))
 			{
-				// and add it to the graph
 				DX(graph->AddFilter((IBaseFilter *)sampler, L"Sampler"));
 			}
+			DX(graph->AddSourceFilter(filename, L"File Source", &videoSource));
+			DX(videoSource->FindPin(L"Output", &videoOutputPin));
+			DX(sampler->FindPin(L"In", &rendererPin));
+			DX(graph->Connect(videoOutputPin, rendererPin));
+			DX(seeker->GetCapabilities(&seekingCapabilites));
+			DX(seeker->SetTimeFormat(&TIME_FORMAT_FRAME));
+			isOpen = true;
 			return S_OK;
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
-		HRESULT Open(wchar *filename)
+		HRESULT Close()
 		{
-			// set the file source
-			DX(graph->AddSourceFilter(filename, L"File Source", &videoSource));
-
-			// find the output from the file source
-			DX(videoSource->FindPin(L"Output", &videoOutputPin));
-
-			// find the input to the sampler
-			DX(sampler->FindPin(L"In", &rendererPin));
-
-			// connect the file source output to the frame sampler input
-			DX(graph->Connect(videoOutputPin, rendererPin));
-
-			// get seek capabilities
-			DX(seeker->GetCapabilities(&seekingCapabilites));
-
-			// track by frames
-			DX(seeker->SetTimeFormat(&TIME_FORMAT_FRAME));
-
-			isOpen = true;
-
+			isOpen = false;
+			DX(graph->Abort());
+			graph.Release();
+			mediaControl.Release();
+			seeker.Release();
+			rendererPin.Release();
+			videoSource.Release();
+			videoOutputPin.Release();
+			Delete(sampler);
+			CoUninitialize();
 			return S_OK;
 		}
 
@@ -317,9 +320,21 @@ namespace Movie
 
 		//////////////////////////////////////////////////////////////////////
 
+		int GetLastFrameNumber() const
+		{
+			return currentFrame;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
 		Frame *GetFrame()
 		{
-			return sampler->GetFrame();
+			Frame *f = sampler->GetFrame();
+			if(f != null)
+			{
+				currentFrame = f->frame;
+			}
+			return f;
 		}
 
 		//////////////////////////////////////////////////////////////////////
@@ -334,15 +349,6 @@ namespace Movie
 		bool IsOpen() const
 		{
 			return isOpen;
-		}
-
-		//////////////////////////////////////////////////////////////////////
-
-		HRESULT Close()
-		{
-			isOpen = false;
-			DX(graph->Abort());
-			return S_OK;
 		}
 
 		//////////////////////////////////////////////////////////////////////
@@ -383,7 +389,9 @@ namespace Movie
 		}
 
 		//////////////////////////////////////////////////////////////////////
+
 private:
+
 		DXPtr<IGraphBuilder>	graph;
 		DXPtr<IMediaControl>	mediaControl;
 		DXPtr<IMediaSeeking>	seeker;
@@ -394,6 +402,7 @@ private:
 		DWORD					seekingCapabilites;
 		bool					isPaused;
 		bool					isOpen;
+		int						currentFrame;
 	};
 
 } // namespace Movie
