@@ -27,6 +27,8 @@ protected:
 	void Clear(Color color);
 	void Present();
 
+	HWND							mDXWindow;
+
 	int								mFrame;
 
 	DXPtr<ID3D11DeviceContext>		mContext;

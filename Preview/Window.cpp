@@ -4,6 +4,8 @@
 
 //////////////////////////////////////////////////////////////////////
 
+int Window::sWindowClassIndex = 0;
+
 static void CenterRectInMonitor(Rect2D &rc, HMONITOR hMonitor)
 {
 	if(hMonitor != INVALID_HANDLE_VALUE)
@@ -42,13 +44,16 @@ static void CentreRectInDefaultMonitor(Rect2D &rc)
 
 //////////////////////////////////////////////////////////////////////
 
-Window::Window(int width, int height, tchar const *caption)
+Window::Window(int width, int height, tchar const *caption, uint32 windowStyle, tchar const *className, HWND parent)
 	: mHWND(null)
 	, mHINST(null)
 	, mLeftMouseDown(false)
 	, mRightMouseDown(false)
 	, mMessageWait(true)
 	, mCaption(caption)
+	, mClassName(className == null ? tstring() : className)
+	, mWindowStyle(windowStyle)
+	, mParentHWND(parent)
 {
 	if(!Init(width, height))
 	{
@@ -68,9 +73,24 @@ void Window::MoveToMiddleOfMonitor()
 
 //////////////////////////////////////////////////////////////////////
 
+void AttachTo(HWND w)
+{
+	// Subclass the window
+}
+
+//////////////////////////////////////////////////////////////////////
+// Allow Class Name and Window Styles to be specified in the ctor
+
+// EG: WS_CHILD etc
+
 bool Window::Init(int width, int height)
 {
 	mHINST = GetModuleHandle(null);
+
+	if(mClassName.empty())
+	{
+		mClassName = Format("WindowClass%d", sWindowClassIndex++);
+	}
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -80,21 +100,22 @@ bool Window::Init(int width, int height)
 	wcex.cbWndExtra = sizeof(Window *);
 	wcex.hInstance = 0;
 	wcex.hIcon = null;
-	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = NULL;
-	wcex.lpszMenuName = NULL;
-	wcex.lpszClassName = TEXT("WindowClass");
+	wcex.hCursor = LoadCursor(null, IDC_ARROW);
+	wcex.hbrBackground = null;
+	wcex.lpszMenuName = null;
+	wcex.lpszClassName = mClassName.c_str();
 	wcex.hIconSm = null;
 	RegisterClassEx(&wcex);
 
 	mWidth = width;
 	mHeight = height;
 
-	Rect2D rect(0, 0, width, height);
+	if(mParentHWND != null && (mWindowStyle & WS_CHILD) == 0)
+	{
+		TRACE("Warning: Parent window specified, but WS_CHILD not set...\n");
+	}
 
-	mHWND = CreateWindowEx(0, TEXT("WindowClass"), mCaption.c_str(), WS_OVERLAPPEDWINDOW,
-						   rect.left, rect.top, rect.Width(), rect.Height(),
-						   NULL, null, mHINST, this);
+	mHWND = CreateWindowEx(0, mClassName.c_str(), mCaption.c_str(), mWindowStyle, 0, 0, width, height, mParentHWND, null, mHINST, this);
 	if(mHWND == null)
 	{
 		DWORD err = GetLastError();
@@ -213,7 +234,7 @@ bool Window::Update()
 	{
 		return false;
 	}
-	while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	while(PeekMessage(&msg, null, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);

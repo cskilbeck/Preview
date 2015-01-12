@@ -6,7 +6,7 @@
 
 struct Window
 {
-	Window(int width = 640, int height = 480, tchar const *caption = TEXT("Window"));
+	Window(int width = 640, int height = 480, tchar const *caption = TEXT("Window"), uint32 windowStyle = WS_OVERLAPPEDWINDOW, tchar const *className = null, HWND parent = null);
 	~Window();
 
 	virtual bool OnCreate();
@@ -61,11 +61,16 @@ protected:
 	int								mWidth;
 	int								mHeight;
 	HWND							mHWND;
+	HWND							mParentHWND;
 	HINSTANCE						mHINST;
 	bool							mLeftMouseDown;
 	bool							mRightMouseDown;
 	bool							mMessageWait;
 	tstring							mCaption;
+	tstring							mClassName;
+	uint32							mWindowStyle;
+
+	static int						sWindowClassIndex;
 
 };
 

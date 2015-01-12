@@ -1,4 +1,17 @@
 //////////////////////////////////////////////////////////////////////
+//
+// VideoPlayer window with controls for pause, ff, rewind, scrub etc
+// Fix the scaling crap to only resize when the window is resized
+// Maintain aspect ratio of the movies
+// 
+//
+//
+//
+//
+//
+//
+//
+//////////////////////////////////////////////////////////////////////
 // Load from command line, pop file choose dialog if empty?
 // Options
 //  - Scaling modes for minification and magnification
@@ -13,9 +26,6 @@
 // Full screen mode
 // Floating thumbnail
 // ?? Cycle through images in a folder
-// Video:
-//    Convert 24bpp -> 32bpp more awesomely
-//    Producer/Consumer multithreaded frame cache thingy
 //////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////
@@ -155,6 +165,7 @@ HRESULT AVIPlayer::CreateRasterizerState()
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.DepthClipEnable = false;
 	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.ScissorEnable = false;
 	DX(gDevice->CreateRasterizerState(&rasterizerDesc, &rasterizerState));
 	return S_OK;
 }
@@ -179,7 +190,7 @@ AVIPlayer::AVIPlayer(int width, int height)
 	, mMenu(null)
 	, mDrag(false)
 	, mHandCursor(NULL)
-	, mMaintainImagePosition(true)
+	, mMaintainImagePosition(false)
 {
 }
 
@@ -189,6 +200,8 @@ bool AVIPlayer::OnCreate()
 {
 	mMenu = LoadMenu(mHINST, MAKEINTRESOURCE(IDC_PREVIEW));
 	SetMenu(mHWND, mMenu);
+
+	mDXWindow = CreateWindow(TEXT("STATIC"), TEXT("DXCHILDWINDOW"), SS_BLACKFRAME | WS_VISIBLE | WS_CHILD, 0, 0, 1920, 540, mHWND, null, null, null);
 
 	if(DXWindow::OnCreate())
 	{
@@ -227,16 +240,18 @@ bool AVIPlayer::OnCreate()
 		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
 		OutputDebugString(s.c_str());
 
-		movie.Init();
-		movie.Open(L"D:\\AVCaptures\\PS4_intro.avi");
-		movie.Play();
+		DXB(movie.Init());
+		DXB(movie.Open(L"D:\\AVCaptures\\PS4_intro.avi"));
+		DXB(movie.Play());
+
+		DXB(movie2.Init());
+		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
+		DXB(movie2.Play());
 
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
 		CenterImageInWindowAndResetZoom();
-		mDrawRect = ClientRect();
-		mCurrentDrawRect = mDrawRect;
-		//TRACE("DrawRect: %s\n", mDrawRect.ToString().c_str());;
+		mDrawRect.Set(Vec2::zero, Vec2(1920/2.0f, 1080/2.0f));
 		mTimer.Reset();
 		return true;
 	}
@@ -267,6 +282,7 @@ void AVIPlayer::OnDestroy()
 	vertexBuffer.Release();
 
 	mTexture.reset();
+	mTexture2.reset();
 
 	DestroyCursor(mHandCursor);
 	DestroyMenu(mMenu);
@@ -333,19 +349,6 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 		Vec2 sz = mTexture->FSize() * mScale;
 		mDrawRect.Resize(sz);
 		mDrawRect.MoveTo(mousePos - sz * frac);
-		//if(ClientRect().Width() < mDrawRect.Width() || ClientRect().Height() < mDrawRect.Height())
-		//{
-		//	Rect2D windowRect;
-		//	Rect2D newRect = GetWindowRectFromClientRect(Rect2D(mDrawRect));
-		//	GetWindowRect(mHWND, &windowRect);
-		//	newRect.MoveTo(windowRect.MidPoint() - newRect.HalfSize());
-		//	Vec2 newPos = Vec2((GetClientRectFromWindowRect(newRect).HalfSize()) - mDrawRect.HalfSize());
-		//	mDrawRect.MoveTo(newPos);
-		//	mCurrentDrawRect = mDrawRect;
-		//	mMaintainImagePosition = false;
-		//	SetWindowRect(newRect);
-		//	mMaintainImagePosition = true;
-		//}
 	}
 }
 
@@ -488,6 +491,19 @@ bool AVIPlayer::OnUpdate()
 		movie.ReleaseFrame(frame);
 	}
 
+	frame = movie2.GetFrame();
+	if(frame != null)
+	{
+		long w = frame->dimensions.cx;
+		long h = frame->dimensions.cy;
+		if(mTexture2 == null || mTexture2->Width() != w || mTexture2->Height() != h)
+		{
+			mTexture2.reset(new Texture(w, h, Color::Black));
+		}
+		mTexture2->Update(mContext, (byte *)frame->mem);
+		movie2.ReleaseFrame(frame);
+	}
+
 	return true;
 }
 
@@ -546,13 +562,25 @@ void AVIPlayer::OnDraw()
 		mContext->OMSetBlendState(blendState, 0, 0xffffffff);
 		mContext->OMSetDepthStencilState(mDepthStencilState, 0);
 
+		CD3D11_VIEWPORT vp(0.0f, 0.0f, 1920 / 2.0f, 1080 / 2.0f);
+		mContext->RSSetViewports(1, &vp);
+
 		mContext->RSSetState(rasterizerState);
 
 		mTexture->Activate(mContext);
 		mContext->Draw(ARRAYSIZE(vert), 0);
+
+		if(mTexture2 != null)
+		{
+			vp.TopLeftX = 1920 / 2.0f;
+			mContext->RSSetViewports(1, &vp);
+			mTexture2->Activate(mContext);
+			mContext->Draw(ARRAYSIZE(vert), 0);
+		}
 	}
 
-	tstring m = Format(TEXT("Frames queued: %d"), movie.FramesWaiting());
-	SetWindowText(mHWND, m.c_str());
-
+	tstring m = Format(TEXT("Frames queued: Left: %d, Right: %d"), movie.FramesWaiting(), movie2.FramesWaiting());
+	HDC dc = GetDC(mHWND);
+	TextOut(dc, 4, 1080 / 2 + 4, m.c_str(), (int)m.size());
+	ReleaseDC(mHWND, dc);
 }

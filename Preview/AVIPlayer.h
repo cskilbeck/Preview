@@ -80,7 +80,6 @@ struct AVIPlayer: DXWindow
 	//////////////////////////////////////////////////////////////////////
 
 	HMENU mMenu;
-	Ptr<Texture> mTexture;
 	Color mBackgroundColor;
 	HCURSOR mHandCursor;
 	Rect2D mOldClientRect;
@@ -96,8 +95,12 @@ struct AVIPlayer: DXWindow
 	Material mMaterial;
 	PixelShader mPixelShader;
 	VertexShader mVertexShader;
+
 	Movie::Player movie;
+	Ptr<Texture> mTexture;
+
 	Movie::Player movie2;
+	Ptr<Texture> mTexture2;
 
 	//////////////////////////////////////////////////////////////////////
 

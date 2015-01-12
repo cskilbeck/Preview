@@ -7,6 +7,7 @@
 DXWindow::DXWindow(int width, int height, tchar const *caption)
 	: Window(width, height, caption)
 	, mFrame(0)
+	, mDXWindow(null)
 {
 	mMessageWait = false;
 }
@@ -113,7 +114,7 @@ bool DXWindow::OpenD3D()
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.OutputWindow = mHWND;
+	sd.OutputWindow = mDXWindow != null ? mDXWindow : mHWND;
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
 	sd.Windowed = TRUE;
