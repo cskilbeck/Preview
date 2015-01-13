@@ -231,26 +231,10 @@ bool AVIPlayer::OnCreate()
 		ConstantBuffer *pb = mPixelShader.GetCB("PixelShaderConstants");
 		PixelShaderConstants *p = (PixelShaderConstants *)(pb->GetBuffer());
 
-		//mTexture.reset(new Texture(TEXT("D:\\untitled.gif")));
-		//mTexture.reset(new Texture(TEXT("D:\\test.png")));
+		frameToPlay = -8;
 
-		tstring c = GetCurrentFolder();
-		OutputDebugString(Format(TEXT("Current Folder: %s\n"), c.c_str()).c_str());
-
-		tstring s = Format(TEXT("Path: %s\n"), GetFilename(TEXT("D:\\test.png")).c_str());
-		OutputDebugString(s.c_str());
-
-		struct foo
-		{
-			int a;
-			int b;
-		};
-
-		foo f = { 1, 2 };
-
-		DXB(movie.Open(L"D:\\AVCaptures\\XB1_intro.avi", 16));
-
-		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi", 16));
+		DXB(movie1.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
+		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
 
 		MoveToMiddleOfMonitor();
 		mOldClientRect = ClientRect();
@@ -258,8 +242,6 @@ bool AVIPlayer::OnCreate()
 		mDrawRect.Set(Vec2::zero, Vec2(1920/2.0f, 1080/2.0f));
 		mTimer.Reset();
 
-		DXB(movie.Play());
-		DXB(movie2.Play());
 		return true;
 	}
 	return false;
@@ -288,9 +270,6 @@ void AVIPlayer::OnDestroy()
 
 	vertexBuffer.Release();
 
-	mTexture.reset();
-	mTexture2.reset();
-
 	DestroyCursor(mHandCursor);
 	DestroyMenu(mMenu);
 
@@ -301,6 +280,8 @@ void AVIPlayer::OnDestroy()
 
 AVIPlayer::~AVIPlayer()
 {
+	movie1.movie.Close();
+	movie2.movie.Close();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -313,17 +294,18 @@ void AVIPlayer::OnChar(int key, uintptr flags)
 			Close();
 			break;
 		case 'p':
-			if(movie.IsPaused())
+			if(movie1.movie.IsPaused())
 			{
-				movie.Play();
+				movie1.movie.Play();
 			}
 			else
 			{
-				movie.Pause();
+				movie1.movie.Pause();
 			}
 			break;
 		case 32:
-			movie.Seek(1900);
+			frameToPlay = 1900;
+			movie1.movie.Seek(frameToPlay);
 			break;
 	}
 }
@@ -335,7 +317,7 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 {
 	Vec2 mousePos(pos);
 
-	if(mDrawRect.Contains(mousePos))
+	if(mDrawRect.Contains(mousePos) && mTexture1 != null)
 	{
 		double time = mTimer.Elapsed();
 		double deltaZ = time - mLastZoomTime;
@@ -353,7 +335,7 @@ void AVIPlayer::OnMouseWheel(Point2D pos, int delta, uintptr flags)
 		}
 		mScale = newScale;
 		Vec2 frac = (mousePos - mDrawRect.TopLeft()) / mDrawRect.Size();
-		Vec2 sz = mTexture->FSize() * mScale;
+		Vec2 sz = mTexture1->FSize() * mScale;
 		mDrawRect.Resize(sz);
 		mDrawRect.MoveTo(mousePos - sz * frac);
 	}
@@ -381,9 +363,9 @@ void AVIPlayer::OnResize()
 
 void AVIPlayer::CalcDrawRect()
 {
-	if(mTexture != null)
+	if(mTexture1 != null)
 	{
-		Vec2 sz = mTexture->FSize() * mScale;
+		Vec2 sz = mTexture1->FSize() * mScale;
 		Vec2 tl = (FSize() - sz) * 0.5f;
 		mDrawRect.Set(tl, tl + sz);
 	}
@@ -425,9 +407,9 @@ void AVIPlayer::CenterImageInWindow()
 
 void AVIPlayer::CenterImageInWindowAndResetZoom()
 {
-	if(mTexture != null)
+	if(mTexture1 != null)
 	{
-		mDrawRect.Resize(mTexture->FSize());
+		mDrawRect.Resize(mTexture1->FSize());
 		mScale = 1;
 		CenterImageInWindow();
 	}
@@ -437,10 +419,10 @@ void AVIPlayer::CenterImageInWindowAndResetZoom()
 
 void AVIPlayer::OnLeftMouseDoubleClick(Point2D pos)
 {
-	if(mTexture != null)
+	if(mTexture1 != null)
 	{
-		SetWindowSize(mTexture->Width(), mTexture->Height());
-		mDrawRect.Set(Vec2::zero, mTexture->FSize());
+		SetWindowSize(mTexture1->Width(), mTexture1->Height());
+		mDrawRect.Set(Vec2::zero, mTexture1->FSize());
 	}
 	MoveToMiddleOfMonitor();
 	mOldClientRect = ClientRect();
@@ -484,35 +466,36 @@ bool AVIPlayer::OnUpdate()
 		}
 	}
 
-	// got a frame to draw?
-	Movie::Player::Frame *frame = movie.GetFrame();
-	if(frame != null)
+	if(frameToPlay < 0)
 	{
-		long w = frame->dimensions.cx;
-		long h = frame->dimensions.cy;
-		if(mTexture == null || mTexture->Width() != w || mTexture->Height() != h)
+		if(movie1.movie.IsPaused())
 		{
-			mTexture.reset(new Texture(w, h, Color::Black));
+			DXB(movie1.movie.Play());
 		}
-		mTexture->Update(mContext, (byte *)frame->mem);
-		movie.ReleaseFrame(frame);
+		if(movie2.movie.IsPaused())
+		{
+			DXB(movie2.movie.Play());
+		}
+		++frameToPlay;
 	}
-
-	frame = movie2.GetFrame();
-	if(frame != null)
+	else
 	{
-		long w = frame->dimensions.cx;
-		long h = frame->dimensions.cy;
-		if(mTexture2 == null || mTexture2->Width() != w || mTexture2->Height() != h)
-		{
-			mTexture2.reset(new Texture(w, h, Color::Black));
-		}
-		mTexture2->Update(mContext, (byte *)frame->mem);
-		movie2.ReleaseFrame(frame);
-	}
+		movie1.Update(mContext, frameToPlay);
+		movie2.Update(mContext, frameToPlay);
 
+		if(movie1.CurrentFrame() == frameToPlay && movie2.CurrentFrame() == frameToPlay)
+		{
+			++frameToPlay;
+			frameDropped = false;
+		}
+		else
+		{
+			frameDropped = true;
+		}
+	}
 	return true;
 }
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -530,7 +513,7 @@ void AVIPlayer::OnDraw()
 	using namespace DirectX;
 
 	Clear(mBackgroundColor);
-	if(mTexture != null)
+	if(movie1.texture != null)
 	{
 		float hlfw = 2.0f / Width();
 		float hlfh = -2.0f / Height();
@@ -551,7 +534,7 @@ void AVIPlayer::OnDraw()
 		SetQuad(true);
 
 		vsConstants.matrix = XMMatrixTranspose(matrix);
-		vsConstants.textureSize = mTexture->FSize();
+		vsConstants.textureSize = movie1.texture->FSize();
 
 		psConstants.channelMask = XMVectorSet(1, 1, 1, 0);
 		psConstants.channelOffset = XMVectorSet(0, 0, 0, 1);
@@ -574,7 +557,7 @@ void AVIPlayer::OnDraw()
 		mContext->PSSetShader(pixelShader, NULL, 0);
 		mContext->PSSetConstantBuffers(0, 1, &pixelShaderConstants);
 		mContext->PSSetSamplers(0, 1, &sampler);
-
+		
 		mContext->OMSetBlendState(blendState, 0, 0xffffffff);
 		mContext->OMSetDepthStencilState(mDepthStencilState, 0);
 
@@ -583,23 +566,25 @@ void AVIPlayer::OnDraw()
 
 		mContext->RSSetState(rasterizerState);
 
-		mTexture->Activate(mContext);
+		movie1.texture->Activate(mContext);
 		mContext->Draw(ARRAYSIZE(vert), 0);
 
-		if(mTexture2 != null)
+		vp.TopLeftX = 1920 / 2.0f;
+		mContext->RSSetViewports(1, &vp);
+
+		if(movie2.texture != null)
 		{
-			vp.TopLeftX = 1920 / 2.0f;
-			mContext->RSSetViewports(1, &vp);
-			mTexture2->Activate(mContext);
+			movie1.texture->Activate(mContext);
 			mContext->Draw(ARRAYSIZE(vert), 0);
 		}
 	}
 
 	HDC dc = GetDC(mHWND);
-	int f1 = movie.GetLastFrameNumber();
-	int f2 = movie2.GetLastFrameNumber();
+	int f1 = movie1.CurrentFrame();
+	int f2 = movie2.CurrentFrame();
 	int diff = f2 - f1;
-	Text(dc, 4, 1080 / 2 + 4, TEXT("Frames queued: Left: %3d, Right: %3d"), movie.FramesWaiting(), movie2.FramesWaiting());
-	Text(dc, 4, 1080 / 2 + 4 + 20, TEXT("Frame1: %4d, Frame2: %4d (Drift: %2d)"), f1, f2, diff);
+	Text(dc, 4, 1080 / 2 + 4, TEXT("Frames queued: Left: %02d, Right: %02d"), movie1.movie.FramesWaiting(), movie2.movie.FramesWaiting());
+	Text(dc, 4, 1080 / 2 + 4 + 20, TEXT("Frame1: %5d, Frame2: %5d (Drift: %2d)"), f1, f2, diff);
+	Text(dc, 4, 1080 / 2 + 4 + 40, TEXT("Frame: %5d (%s)"), frameToPlay, frameDropped ? "*" : ".");
 	ReleaseDC(mHWND, dc);
 }

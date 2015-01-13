@@ -110,10 +110,7 @@ bool Window::Init(int width, int height)
 	mWidth = width;
 	mHeight = height;
 
-	if(mParentHWND != null && (mWindowStyle & WS_CHILD) == 0)
-	{
-		TRACE("Warning: Parent window specified, but WS_CHILD not set...\n");
-	}
+	assert((mParentHWND != null) == ((mWindowStyle & WS_CHILD) != 0));
 
 	mHWND = CreateWindowEx(0, mClassName.c_str(), mCaption.c_str(), mWindowStyle, 0, 0, width, height, mParentHWND, null, mHINST, this);
 	if(mHWND == null)
@@ -122,7 +119,6 @@ bool Window::Init(int width, int height)
 		ErrorMessageBox(TEXT("Failed to create window (%08x) - %s"), err, Win32ErrorMessage(err).c_str());
 		return false;
 	}
-	PostMessage(mHWND, WM_USER, 0, 0);				// this won't get processed until message handler picks it up
 	return true;
 }
 
@@ -254,6 +250,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		w = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
 		SetWindowLongPtr(hWnd, 0, (LONG_PTR)w);
 		w->mHWND = hWnd;
+		PostMessage(hWnd, WM_USER, 0, 0);				// this won't get processed until message handler picks it up
 	}
 	else
 	{

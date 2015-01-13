@@ -4,6 +4,64 @@
 
 //////////////////////////////////////////////////////////////////////
 
+struct Player
+{
+	//////////////////////////////////////////////////////////////////////
+
+	Movie::Player movie;
+	Ptr<Texture> texture;
+	int currentFrame;
+
+	//////////////////////////////////////////////////////////////////////
+
+	Player()
+		: currentFrame(-1)
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	~Player()
+	{
+		texture.reset();
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	HRESULT Open(wchar const *filename)
+	{
+		DX(movie.Open(filename, 16));
+		texture.reset(new Texture(movie.Width(), movie.Height(), Color::Black));
+		movie.Play();
+		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void Update(ID3D11DeviceContext *context, int frameToPlay)
+	{
+		if(currentFrame != frameToPlay)
+		{
+			Movie::Player::Frame *frame = movie.GetFrame(frameToPlay);
+			if(frame != null)
+			{
+				texture->Update(context, (byte *)frame->mem);
+				currentFrame = frame->frame;
+				movie.ReleaseFrame(frame);
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	int CurrentFrame() const
+	{
+		return currentFrame;
+	}
+};
+
+//////////////////////////////////////////////////////////////////////
+
 struct AVIPlayer: DXWindow
 {
 	//////////////////////////////////////////////////////////////////////
@@ -96,11 +154,13 @@ struct AVIPlayer: DXWindow
 	PixelShader mPixelShader;
 	VertexShader mVertexShader;
 
-	Movie::Player movie;
-	Ptr<Texture> mTexture;
+	Player movie1;
+	Player movie2;
 
-	Movie::Player movie2;
-	Ptr<Texture> mTexture2;
+	Ptr<Texture> mTexture1;
+
+	int frameToPlay;
+	bool frameDropped;
 
 	//////////////////////////////////////////////////////////////////////
 

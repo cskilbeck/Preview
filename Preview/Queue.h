@@ -22,6 +22,13 @@ public:
 
 	//////////////////////////////////////////////////////////////////////
 
+	Lock GetLock()
+	{
+		return Lock(critSec);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
 	bool IsEmpty()
 	{
 		Lock _(critSec);
@@ -62,15 +69,14 @@ public:
 
 	//////////////////////////////////////////////////////////////////////
 
-	template <typename findable_t, typename task_t> task_t *Find(findable_t const &f)
+	template <typename U> T *Find(U const &f)
 	{
 		Lock _(critSec);
 		for(auto p = items.head(); p != items.done(); p = items.next(p))
 		{
-			task_t *t = (task_t *)p;
-			if(*t == f)
+			if(*p == f)
 			{
-				return t;
+				return p;
 			}
 		}
 		return nullptr;

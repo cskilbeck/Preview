@@ -87,7 +87,7 @@ template <typename T> void Delete(T * &arr)
 
 //////////////////////////////////////////////////////////////////////
 
-template <typename T> void Release(T * &ptr)
+template <typename T> void Release(T &ptr)
 {
 	if(ptr != null)
 	{

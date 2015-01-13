@@ -230,7 +230,7 @@ tstring GetCurrentFolder()
 	uint32 l = GetCurrentDirectory(0, null);
 	if(l != 0)
 	{
-		std::unique_ptr<tchar> s(new tchar[l]);
+		Ptr<tchar> s(new tchar[l]);
 		GetCurrentDirectory(l, s.get());
 		return tstring(s.get());
 	}
@@ -242,10 +242,10 @@ tstring GetCurrentFolder()
 
 static struct PathComponents
 {
-	tchar drive[MAX_PATH];
-	tchar dir[MAX_PATH];
-	tchar name[MAX_PATH];
-	tchar ext[MAX_PATH];
+	tchar drive[_MAX_DRIVE];
+	tchar dir[_MAX_DIR];
+	tchar name[_MAX_FNAME];
+	tchar ext[_MAX_EXT];
 } pc;
 
 //////////////////////////////////////////////////////////////////////

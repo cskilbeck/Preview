@@ -13,7 +13,7 @@ namespace Movie
 	public:
 
 		//////////////////////////////////////////////////////////////////////
-		// struct Frame
+		// a frame of the movie
 
 		struct Frame
 		{
@@ -21,11 +21,16 @@ namespace Movie
 			int frame;				// frame number
 			byte *mem;				// 32bpp xRGB data (alpha channel will be garbage, not all 00 or FF)
 
+			list_node<Frame> node;
+
+			bool operator == (int frameNumber) const
+			{
+				return frame == frameNumber;
+			}
+
 		private:
 
 			// for putting in Queue<>
-			list_node<Frame> node;
-
 			// only friends can construct
 			Frame(Size2D const &size, int frameNumber)
 			{
@@ -45,6 +50,9 @@ namespace Movie
 			friend class Sampler;
 		};
 
+		using FrameQueue = Queue < Frame, &Frame::node >;
+		using FrameList = linked_list < Frame, &Frame::node >;
+
 		//////////////////////////////////////////////////////////////////////
 
 	private:
@@ -53,17 +61,17 @@ namespace Movie
 
 		//////////////////////////////////////////////////////////////////////
 		// class Sampler - private to Player
+		// ???? - Merge this with Player!?
 
 		class Sampler: public CBaseVideoRenderer
 		{
-			using FrameQueue = Queue<Frame, &Frame::node>;
-
 			BITMAPINFOHEADER	bmih;
 			double				frameReferenceTime;
 			HANDLE				frameReleased;
 			int					maxFrameQueueSize;
 			FrameQueue			frameCache;
 			FrameQueue			readyFrames;
+			volatile bool		aborted;
 
 			//////////////////////////////////////////////////////////////////////
 
@@ -114,6 +122,7 @@ namespace Movie
 			Sampler(int maxFramesToBuffer, IUnknown* unk, HRESULT *hr)
 				: CBaseVideoRenderer(__uuidof(CLSID_Sampler), NAME("Frame Sampler"), unk, hr)
 				, maxFrameQueueSize(maxFramesToBuffer)
+				, aborted(false)
 			{
 				bmih = { 0 };
 				ZeroMemory(&bmih, sizeof(bmih));
@@ -124,15 +133,49 @@ namespace Movie
 
 			~Sampler()
 			{
+				FlushCache();
+				FlushFrames();
+			}
+
+			//////////////////////////////////////////////////////////////////////
+
+			void FlushFrames()
+			{
 				while(!readyFrames.IsEmpty())
 				{
 					delete readyFrames.Pop();
 				}
+			}
 
+			//////////////////////////////////////////////////////////////////////
+
+			void Abort()
+			{
+				aborted = true;
+			}
+
+			//////////////////////////////////////////////////////////////////////
+
+			void FlushCache()
+			{
 				while(!frameCache.IsEmpty())
 				{
 					delete frameCache.Pop();
 				}
+			}
+
+			//////////////////////////////////////////////////////////////////////
+
+			int Width() const
+			{
+				return bmih.biWidth;
+			}
+
+			//////////////////////////////////////////////////////////////////////
+
+			int Height() const
+			{
+				return bmih.biHeight;
 			}
 
 			//////////////////////////////////////////////////////////////////////
@@ -149,6 +192,21 @@ namespace Movie
 			Frame *GetFrame()
 			{
 				return readyFrames.Pop();
+				SetEvent(frameReleased);
+			}
+
+			//////////////////////////////////////////////////////////////////////
+			// Client wants a specific frame
+
+			Frame *GetFrame(int frameNumber)
+			{
+				Frame *f = readyFrames.Find(frameNumber);
+				if(f != null)
+				{
+					readyFrames.Remove(f);
+					SetEvent(frameReleased);
+				}
+				return f;
 			}
 
 			//////////////////////////////////////////////////////////////////////
@@ -157,6 +215,16 @@ namespace Movie
 			void ReleaseFrame(Frame *f)
 			{
 				frameCache.Push(f);
+			}
+
+			//////////////////////////////////////////////////////////////////////
+
+			void Flush()
+			{
+				while(!readyFrames.IsEmpty())
+				{
+					readyFrames.Pop();
+				}
 				SetEvent(frameReleased);
 			}
 
@@ -198,9 +266,9 @@ namespace Movie
 			HRESULT WaitForRenderTime()
 			{
 				DX(CBaseRenderer::WaitForRenderTime());
-				while(readyFrames.Length() >= (size_t)maxFrameQueueSize)
+				while(readyFrames.Length() >= (size_t)maxFrameQueueSize && !aborted)
 				{
-					WaitForSingleObject(frameReleased, INFINITE);
+					WaitForSingleObject(frameReleased, 100);
 				}
 				return S_OK;
 			}
@@ -213,7 +281,8 @@ namespace Movie
 
 			HRESULT ShouldDrawSampleNow(IMediaSample *sample, REFERENCE_TIME *start, REFERENCE_TIME *stop)
 			{
-				return S_FALSE;
+				return S_OK;		// Sync happens by throttling in WaitForRenderTime() & clientside
+				//return S_FALSE;
 			}
 		};
 
@@ -253,10 +322,6 @@ namespace Movie
 		//////////////////////////////////////////////////////////////////////
 
 		Player()
-			: sampler(null)
-			, isPaused(false)
-			, isOpen(false)
-			, currentFrame(-1)
 		{
 		}
 
@@ -264,6 +329,7 @@ namespace Movie
 
 		~Player()
 		{
+			Close();
 		}
 
 		//////////////////////////////////////////////////////////////////////
@@ -290,24 +356,44 @@ namespace Movie
 			DX(graph->Connect(videoOutputPin, rendererPin));
 			DX(seeker->GetCapabilities(&seekingCapabilites));
 			DX(seeker->SetTimeFormat(&TIME_FORMAT_FRAME));
-			isOpen = true;
 			return S_OK;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		void FlushBuffers()
+		{
+			sampler->FlushCache();
+			sampler->FlushFrames();
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		HRESULT Close()
 		{
-			isOpen = false;
-			DX(graph->Abort());
-			graph.Release();
-			mediaControl.Release();
-			seeker.Release();
-			rendererPin.Release();
-			videoSource.Release();
-			videoOutputPin.Release();
-			Delete(sampler);
-			CoUninitialize();
+			if(IsOpen())
+			{
+				sampler->Abort();
+				DX(mediaControl->Stop());
+				DX(sampler->ClearPendingSample());
+				while(!IsStopped())
+				{
+					TRACE("Waiting for movie to Stop()\n");
+					Sleep(16);
+				}
+				DX(rendererPin->Disconnect());
+				DX(videoOutputPin->Disconnect());
+				DX(graph->RemoveFilter(sampler));
+				DX(graph->RemoveFilter(videoSource));
+				sampler.Release();
+				rendererPin.Release();
+				videoOutputPin.Release();
+				mediaControl.Release();
+				videoSource.Release();
+				seeker.Release();
+				graph.Release();
+				CoUninitialize();
+			}
 			return S_OK;
 		}
 
@@ -320,60 +406,111 @@ namespace Movie
 
 		//////////////////////////////////////////////////////////////////////
 
-		int GetLastFrameNumber() const
+		Frame *GetFrame()
 		{
-			return currentFrame;
+			return sampler->GetFrame();
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
-		Frame *GetFrame()
+		Frame *GetFrame(int frameNumber)
 		{
-			Frame *f = sampler->GetFrame();
-			if(f != null)
-			{
-				currentFrame = f->frame;
-			}
-			return f;
+			return sampler->GetFrame(frameNumber);
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		void Flush()
+		{
+			sampler->Flush();
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		void ReleaseFrame(Frame *f)
 		{
-			sampler->ReleaseFrame(f);
+			if(f != null)
+			{
+				sampler->ReleaseFrame(f);
+			}
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		bool IsOpen() const
 		{
-			return isOpen;
+			return graph != null && GetState() != -1;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		long GetState() const
+		{
+			OAFilterState fs = -1;
+			if(SUCCEEDED(mediaControl->GetState(0, &fs)))
+			{
+				return fs;
+			}
+			return -1;
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		bool IsPaused() const
 		{
-			return isPaused;
+			return GetState() == State_Paused;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		bool IsStopped() const
+		{
+			return GetState() == State_Stopped;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		bool IsRunning() const
+		{
+			return GetState() == State_Running;
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		int Width() const
+		{
+			return sampler->Width();
+		}
+
+		//////////////////////////////////////////////////////////////////////
+
+		int Height() const
+		{
+			return sampler->Height();
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		HRESULT Pause()
 		{
-			DX(mediaControl->Pause());
-			isPaused = true;
-			return S_OK;
+			if(mediaControl != null)
+			{
+				DX(mediaControl->Pause());
+				return S_OK;
+			}
+			return E_NOT_VALID_STATE;
 		}
 
 		//////////////////////////////////////////////////////////////////////
 
 		HRESULT Play()
 		{
-			DX(mediaControl->Run());
-			isPaused = false;
-			return S_OK;
+			if(mediaControl != null)
+			{
+				DX(mediaControl->Run());
+				return S_OK;
+			}
+			return E_NOT_VALID_STATE;
 		}
 
 		//////////////////////////////////////////////////////////////////////
@@ -382,8 +519,14 @@ namespace Movie
 		{
 			if(seekingCapabilites & AM_SEEKING_AbsolutePositioning)
 			{
-				DX(seeker->SetPositions(&frame, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning));
-				return S_OK;
+				if(seeker != null)
+				{
+					sampler->FlushCache();
+					sampler->FlushFrames();
+					DX(seeker->SetPositions(&frame, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning));
+					return S_OK;
+				}
+				return E_NOT_VALID_STATE;
 			}
 			return E_FAIL;
 		}
@@ -398,11 +541,8 @@ private:
 		DXPtr<IPin>				rendererPin;
 		DXPtr<IBaseFilter>		videoSource;
 		DXPtr<IPin>				videoOutputPin;
-		Sampler *				sampler;
+		DXPtr<Sampler>			sampler;
 		DWORD					seekingCapabilites;
-		bool					isPaused;
-		bool					isOpen;
-		int						currentFrame;
 	};
 
 } // namespace Movie
