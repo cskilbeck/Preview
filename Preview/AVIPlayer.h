@@ -4,7 +4,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-struct Player
+struct MyPlayer
 {
 	//////////////////////////////////////////////////////////////////////
 
@@ -14,14 +14,14 @@ struct Player
 
 	//////////////////////////////////////////////////////////////////////
 
-	Player()
+	MyPlayer()
 		: currentFrame(-1)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	~Player()
+	~MyPlayer()
 	{
 		texture.reset();
 	}
@@ -42,7 +42,7 @@ struct Player
 	{
 		if(currentFrame != frameToPlay)
 		{
-			Movie::Player::Frame *frame = movie.GetFrame(frameToPlay);
+			Movie::Frame *frame = movie.GetFrame(frameToPlay);
 			if(frame != null)
 			{
 				texture->Update(context, (byte *)frame->mem);
@@ -154,8 +154,8 @@ struct AVIPlayer: DXWindow
 	PixelShader mPixelShader;
 	VertexShader mVertexShader;
 
-	Player movie1;
-	Player movie2;
+	MyPlayer movie1;
+	MyPlayer movie2;
 
 	Ptr<Texture> mTexture1;
 

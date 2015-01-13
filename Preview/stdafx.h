@@ -65,7 +65,5 @@ using chs::list_node;
 #include "Material.h"
 #include "Window.h"
 #include "DXWindow.h"
-
 #include "MoviePlayer.h"
-
 #include "AVIPlayer.h"
