@@ -21,6 +21,19 @@ public:
 #define DXTRACE if (true) {} else
 
 #if defined(DEBUG)
+#define dx(hr, x)		\
+	hr = (x);			\
+	if(FAILED(hr))		\
+	{					\
+		TRACE(TEXT(#x) TEXT(" failed: %08x\n"), hr);	\
+		assert(false);	\
+		return hr;	\
+	}					\
+	else				\
+	{					\
+		DXTRACE(TEXT(#x) TEXT( " ok\n"));		\
+	}					\
+
 #define DX(x) 			\
 	__hr = (x);			\
 	if(FAILED(__hr))	\

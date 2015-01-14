@@ -17,16 +17,6 @@ namespace Movie
 
 	class Sampler : public CBaseVideoRenderer
 	{
-		BITMAPINFOHEADER	bmih;
-		double				frameReferenceTime;
-		HANDLE				frameReleased;
-		int					maxFrameQueueSize;
-		FrameQueue			frameCache;
-		FrameQueue			readyFrames;
-		volatile bool		aborted;
-
-		Frame *ProcessFrame(int frame, byte const *data);
-
 	public:
 
 		Sampler(int maxFramesToBuffer, IUnknown* unk, HRESULT *hr);
@@ -45,6 +35,19 @@ namespace Movie
 		HRESULT DoRenderSample(IMediaSample *sample);
 		HRESULT WaitForRenderTime();
 		HRESULT ShouldDrawSampleNow(IMediaSample *sample, REFERENCE_TIME *start, REFERENCE_TIME *stop);
+
+	private:
+
+		Frame *ProcessFrame(int frame, byte const *data);
+
+		BITMAPINFOHEADER	bmih;
+		double				frameReferenceTime;
+		HANDLE				frameReleased;
+		int					maxFrameQueueSize;
+		FrameQueue			frameCache;
+		FrameQueue			readyFrames;
+		volatile bool		aborted;
+
 	};
 
 	//////////////////////////////////////////////////////////////////////
@@ -52,60 +55,53 @@ namespace Movie
 #ifdef _DEBUG
 	HRESULT AddToRot(IUnknown *pUnkGraph, DWORD *pdwRegister)
 	{
-		IMoniker * pMoniker = NULL;
-		IRunningObjectTable *pROT = NULL;
-
-		if(FAILED(GetRunningObjectTable(0, &pROT)))
-		{
-			return E_FAIL;
-		}
-
 		const size_t STRING_LENGTH = 256;
-
+		DXPtr<IMoniker> pMoniker;
+		DXPtr<IRunningObjectTable> pROT;
 		WCHAR wsz[STRING_LENGTH];
+		DX(GetRunningObjectTable(0, &pROT));
 		StringCchPrintfW(wsz, STRING_LENGTH, L"FilterGraph %08x pid %08x", (DWORD_PTR)pUnkGraph, GetCurrentProcessId());
-
-		HRESULT hr = CreateItemMoniker(L"!", wsz, &pMoniker);
-		if(SUCCEEDED(hr))
-		{
-			hr = pROT->Register(ROTFLAGS_REGISTRATIONKEEPSALIVE, pUnkGraph,
-								pMoniker, pdwRegister);
-			pMoniker->Release();
-		}
-		pROT->Release();
-
-		return hr;
+		DX(CreateItemMoniker(L"!", wsz, &pMoniker));
+		DX(pROT->Register(ROTFLAGS_REGISTRATIONKEEPSALIVE, pUnkGraph, pMoniker, pdwRegister));
+		return S_OK;
 	}
 #endif
+
+	//////////////////////////////////////////////////////////////////////
 
 	bool Frame::operator == (int frameNumber) const
 	{
 		return frame == frameNumber;
 	}
 
-	Frame::Frame(Size2D const &size, int frameNumber)
+	//////////////////////////////////////////////////////////////////////
+
+	Frame::Frame(int frameNumber, size_t bufferSize)
 	{
-		dimensions = size;
 		frame = frameNumber;
-		size_t bufferLength = size.cx * sizeof(uint32) * size.cy;
-		mem = new byte[bufferLength];
+		mem = new byte[bufferSize];
 	}
+
+	//////////////////////////////////////////////////////////////////////
 
 	Frame::~Frame()
 	{
 		delete[] mem;
 	}
 
+	//////////////////////////////////////////////////////////////////////
+
 	Frame *Sampler::ProcessFrame(int frame, byte const *data)
 	{
-		Size2D size(bmih.biWidth, bmih.biHeight);
+		int w = bmih.biWidth;
+		int h = bmih.biHeight;
 
 		// get a frame from the cache
 		Frame *f = frameCache.Pop();
 		if(f == null)
 		{
 			// or make a new one
-			f = new Frame(size, frame);
+			f = new Frame(frame, w * sizeof(uint32) * h);
 		}
 		else
 		{
@@ -116,11 +112,11 @@ namespace Movie
 		int rowPitch = DIBWIDTHBYTES(bmih) / sizeof(uint32);
 		uint32 *dstRow = (uint32 *)f->mem;
 		uint32 const *srcRow = (uint32 *)data;
-		for(int y = 0; y < bmih.biHeight; ++y)
+		for(int y = 0; y < h; ++y)
 		{
 			uint32 *dst = dstRow;
 			uint32 const *src = (uint32 *)srcRow;
-			for(int x = 0; x < bmih.biWidth; x += 4, src += 3)
+			for(int x = 0; x < w; x += 4, src += 3)
 			{
 				uint32 a = src[0];
 				uint32 b = src[1];
@@ -131,10 +127,12 @@ namespace Movie
 				dst[x + 3] = (c >> 8);
 			}
 			srcRow += rowPitch;
-			dstRow += bmih.biWidth;
+			dstRow += w;
 		}
 		return f;
 	}
+
+	//////////////////////////////////////////////////////////////////////
 
 	Sampler::Sampler(int maxFramesToBuffer, IUnknown* unk, HRESULT *hr)
 		: CBaseVideoRenderer(__uuidof(CLSID_Sampler), NAME("Frame Sampler"), unk, hr)
@@ -142,7 +140,6 @@ namespace Movie
 		, aborted(false)
 	{
 		bmih = { 0 };
-		ZeroMemory(&bmih, sizeof(bmih));
 		frameReleased = CreateEvent(NULL, false, false, TEXT("Frame Released Event"));
 	};
 
@@ -156,19 +153,19 @@ namespace Movie
 
 	//////////////////////////////////////////////////////////////////////
 
+	void Sampler::Abort()
+	{
+		aborted = true;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
 	void Sampler::FlushFrames()
 	{
 		while(!readyFrames.IsEmpty())
 		{
 			delete readyFrames.Pop();
 		}
-	}
-
-	//////////////////////////////////////////////////////////////////////
-
-	void Sampler::Abort()
-	{
-		aborted = true;
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -285,7 +282,7 @@ namespace Movie
 		DX(CBaseRenderer::WaitForRenderTime());
 		while(readyFrames.Length() >= (size_t)maxFrameQueueSize && !aborted)
 		{
-			WaitForSingleObject(frameReleased, 100);
+			WaitForSingleObject(frameReleased, 16);
 		}
 		return S_OK;
 	}
@@ -318,6 +315,11 @@ namespace Movie
 
 	HRESULT Player::Open(wchar const *filename, int maxFrameBuffer)
 	{
+		Close();
+		if(filename == null || maxFrameBuffer < 1)
+		{
+			return E_INVALIDARG;
+		}
 		CoInitialize(null);
 		DX(CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void **)&graph));
 #ifdef _DEBUG
@@ -419,13 +421,6 @@ namespace Movie
 
 	//////////////////////////////////////////////////////////////////////
 
-	bool Player::IsOpen() const
-	{
-		return graph != null && GetState() != -1;
-	}
-
-	//////////////////////////////////////////////////////////////////////
-
 	long Player::GetState() const
 	{
 		OAFilterState fs = -1;
@@ -434,6 +429,13 @@ namespace Movie
 			return fs;
 		}
 		return -1;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	bool Player::IsOpen() const
+	{
+		return graph != null && GetState() != -1;
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -475,42 +477,43 @@ namespace Movie
 
 	HRESULT Player::Pause()
 	{
-		if(mediaControl != null)
+		if(mediaControl == null)
 		{
-			DX(mediaControl->Pause());
-			return S_OK;
+			return E_NOT_VALID_STATE;
 		}
-		return E_NOT_VALID_STATE;
+		DX(mediaControl->Pause());
+		return S_OK;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	HRESULT Player::Play()
 	{
-		if(mediaControl != null)
+		if(mediaControl == null)
 		{
-			DX(mediaControl->Run());
-			return S_OK;
+			return E_NOT_VALID_STATE;
 		}
-		return E_NOT_VALID_STATE;
+		DX(mediaControl->Run());
+		return S_OK;
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
-	HRESULT Player::Seek(int64 frame)
+	HRESULT Player::Seek(uint frame)
 	{
-		if(seekingCapabilites & AM_SEEKING_AbsolutePositioning)
+		if((seekingCapabilites & AM_SEEKING_AbsolutePositioning) == 0)
 		{
-			if(seeker != null)
-			{
-				sampler->FlushCache();
-				sampler->FlushFrames();
-				DX(seeker->SetPositions(&frame, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning));
-				return S_OK;
-			}
+			return E_FAIL;
+		}
+		if(seeker == null)
+		{
 			return E_NOT_VALID_STATE;
 		}
-		return E_FAIL;
+		int64 f = (int64)frame;
+		sampler->FlushCache();
+		sampler->FlushFrames();
+		DX(seeker->SetPositions(&f, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning));
+		return S_OK;
 	}
 
 } // namespace Movie

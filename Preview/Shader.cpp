@@ -47,7 +47,7 @@ HRESULT Shader::CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc)
 	TRACE("  ConstantBuffer: %s at %d\n", desc.Name, desc.BindPoint);
 	ConstantBuffer *cb = new ConstantBuffer();
 	uint i = desc.BindPoint;
-	DX(cb->Create(mReflector->GetConstantBufferByIndex(i)));
+	DX(cb->Create(mReflector->GetConstantBufferByIndex(i)));	// BUG: this is wrong... BindPoint is not Index if you have other types of exposed structures in the shader (and they're not guaranteed to be same in any case)
 	mConstBufferIDs[string(cb->Name)] = i;
 	TRACE("===>mConstBufferIDs[%s] = %d\n", cb->Name, i);
 	AddAt(mConstantBuffers, i, cb);

@@ -7,31 +7,37 @@
 namespace Movie
 {
 	class Sampler;
-	struct Player;
+	class Player;
 
 	//////////////////////////////////////////////////////////////////////
 
-	struct Frame
+	class Frame
 	{
-		Size2D dimensions;		// size in pixels
+	public:
+
 		int frame;				// frame number
 		byte *mem;				// 32bpp xRGB data (alpha channel will be garbage, not all 00 or FF)
+
 		list_node<Frame> node;
-		bool operator == (int frameNumber) const;
+
+		bool operator == (int frameNumber) const;	// for finding frames in a Queue<>
 
 	private:
 
-		Frame(Size2D const &size, int frameNumber);
+		Frame(int frameNumber, size_t bufferSize);
 		~Frame();
 
-		friend struct Player;
 		friend class Sampler;
+		friend class Player;
+
 	};
 
 	//////////////////////////////////////////////////////////////////////
 
-	struct Player
+	class Player
 	{
+	public:
+
 		Player();
 		~Player();
 		HRESULT Open(wchar const *filename, int maxFrameBuffer = 3);
@@ -51,7 +57,7 @@ namespace Movie
 		int Height() const;
 		HRESULT Pause();
 		HRESULT Play();
-		HRESULT Seek(int64 frame);
+		HRESULT Seek(uint frame);
 
 	private:
 

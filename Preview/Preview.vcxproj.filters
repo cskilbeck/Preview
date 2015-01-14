@@ -176,6 +176,9 @@
     <ClCompile Include="MoviePlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HRErrors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preview.rc">
@@ -191,10 +194,16 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="SimplePixelShader.hlsl">
+    <FxCompile Include="UntexturedPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="SimpleVertexShader.hlsl">
+    <FxCompile Include="AlphaPixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="AlphaVertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="UntexturedVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
@@ -202,5 +211,11 @@
     <None Include="drag.cur">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="CompiledShaders\SimplePixelShader.cso" />
+    <None Include="CompiledShaders\SimpleVertexShader.cso" />
+    <None Include="CompiledShaders\AlphaPixelShader.cso" />
+    <None Include="CompiledShaders\AlphaVertexShader.cso" />
+    <None Include="CompiledShaders\UntexturedPixelShader.cso" />
+    <None Include="CompiledShaders\UntexturedVertexShader.cso" />
   </ItemGroup>
 </Project>

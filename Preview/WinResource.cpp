@@ -23,7 +23,7 @@ Resource::~Resource()
 WinResource::WinResource(DWORD resourceid)
 	: Resource()
 {
-	LoadResource(resourceid, &data, &size);
+	error = LoadResource(resourceid, &data, &size);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -36,6 +36,7 @@ WinResource::~WinResource()
 		data = null;
 	}
 	size = 0;
+	error = S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ WinResource::~WinResource()
 FileResource::FileResource(tchar const *filename)
 	: Resource()
 {
-	data = LoadFile(filename, &size);
+	error = LoadFile(filename, &data, &size);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -52,6 +53,7 @@ FileResource::~FileResource()
 {
 	Delete(data);
 	size = 0;
+	error = S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////

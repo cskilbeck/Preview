@@ -1031,3 +1031,13 @@ tstring GetMessageName(uint message)
 {
 	return (message < ARRAYSIZE(messageStrings)) ? tstring(messageStrings[message]) : Format(TEXT("?%08x"), message);
 }
+
+long ErrorMsgBox(tchar const *msg, long error)
+{
+	if(error == 0)
+	{
+		error = GetLastError();
+	}
+	MessageBox(null, Format(TEXT("%s\r\n\r\n%08x:\r\n%s"), msg, error, GetMessageName(error).c_str()).c_str(), TEXT("Error"), MB_ICONEXCLAMATION);
+	return error;
+}

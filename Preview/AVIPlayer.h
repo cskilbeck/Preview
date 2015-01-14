@@ -11,6 +11,8 @@ struct MyPlayer
 	Movie::Player movie;
 	Ptr<Texture> texture;
 	int currentFrame;
+	int width;
+	int height;
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -30,8 +32,10 @@ struct MyPlayer
 
 	HRESULT Open(wchar const *filename)
 	{
-		DX(movie.Open(filename, 16));
+		DX(movie.Open(filename, 4));
 		texture.reset(new Texture(movie.Width(), movie.Height(), Color::Black));
+		width = movie.Width();
+		height = movie.Height();
 		movie.Play();
 		return S_OK;
 	}
@@ -64,6 +68,14 @@ struct MyPlayer
 
 struct AVIPlayer: DXWindow
 {
+	//////////////////////////////////////////////////////////////////////
+
+	__declspec (align(4)) struct ColorVertex
+	{
+		Vec2 mPos;
+		Color mColor;
+	};
+
 	//////////////////////////////////////////////////////////////////////
 
 	__declspec (align(4)) struct Vertex
@@ -108,11 +120,6 @@ struct AVIPlayer: DXWindow
 	void OnDraw() override;
 	void OnResize() override;
 	void OnChar(int key, uintptr flags) override;
-	void OnMouseWheel(Point2D pos, int delta, uintptr flags) override;
-	void OnLeftMouseDoubleClick(Point2D pos);
-	void OnRightButtonDown(Point2D pos, uintptr flags) override;
-	void OnRightButtonUp(Point2D pos, uintptr flags) override;
-	void OnMouseMove(Point2D pos, uintptr flags) override;
 	void OnDestroy() override;
 
 	HRESULT LoadShaders();
@@ -126,53 +133,44 @@ struct AVIPlayer: DXWindow
 
 	//////////////////////////////////////////////////////////////////////
 
+	Vec2 MovieBorder() const;
+	Vec2 DXSize() const;
 	void CalcDrawRect();
 	void SetQuad(bool upsideDown);
-	void CenterImageInWindow();
-	void CenterImageInWindowAndResetZoom();
-
-	//////////////////////////////////////////////////////////////////////
-
-	static Vertex vert[6];
 
 	//////////////////////////////////////////////////////////////////////
 
 	HMENU mMenu;
 	Color mBackgroundColor;
 	HCURSOR mHandCursor;
-	Rect2D mOldClientRect;
 	RectF mDrawRect;
-	RectF mCurrentDrawRect;
 	float mScale;
 	Timer mTimer;
 	double mDeltaTime;
-	double mLastZoomTime;
-	bool mDrag;
-	Point2D mDragPos;
-	bool mMaintainImagePosition;
-	Material mMaterial;
-	PixelShader mPixelShader;
-	VertexShader mVertexShader;
+	Vertex vert[6];
 
 	MyPlayer movie1;
 	MyPlayer movie2;
 
-	Ptr<Texture> mTexture1;
-
 	int frameToPlay;
 	bool frameDropped;
 
-	//////////////////////////////////////////////////////////////////////
+	PixelShader						colorPixelShader;
+	VertexShader					colorVertexShader;
+	VertexBuffer<ColorVertex>		colorVertexBuffer;
 
 	DXPtr<ID3D11InputLayout>		vertexLayout;
 	DXPtr<ID3D11PixelShader>		pixelShader;
 	DXPtr<ID3D11VertexShader>		vertexShader;
 	DXPtr<ID3D11Buffer>				vertexBuffer;
+	DXPtr<ID3D11Buffer>				vertexShaderConstants;
+	DXPtr<ID3D11Buffer>				pixelShaderConstants;
+
+	DXPtr<ID3D11InputLayout>		colorVertexLayout;
+
 	DXPtr<ID3D11RasterizerState>	rasterizerState;
 	DXPtr<ID3D11BlendState>			blendState;
 	DXPtr<ID3D11SamplerState>		sampler;
-	DXPtr<ID3D11Buffer>				vertexShaderConstants;
-	DXPtr<ID3D11Buffer>				pixelShaderConstants;
 	DXPtr<ID3D11DepthStencilState>	mDepthStencilState;
 
 	//////////////////////////////////////////////////////////////////////

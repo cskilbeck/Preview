@@ -17,7 +17,7 @@ void TRACE(char const *strMsg, ...);
 #define TRACE(x, ...) if (false) {} else (x);
 #endif
 
-uint8 *LoadFile(tchar const *filename, size_t *size = null);
+HRESULT LoadFile(tchar const *filename, void **data, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 
 wstring WideStringFromTString(tstring const &str);
@@ -157,6 +157,15 @@ inline wstring ToLower(wstring const &s)
 	wstring r(s);
 	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
 	return r;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+inline int CountBits(uint32 i)
+{
+	i = i - ((i >> 1) & 0x55555555);
+	i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
 
 //////////////////////////////////////////////////////////////////////

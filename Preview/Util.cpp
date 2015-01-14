@@ -61,46 +61,172 @@ HRESULT LoadResource(uint32 resourceid, void **data, size_t *size)
 }
 
 //////////////////////////////////////////////////////////////////////
+// Crappy RAII HANDLE wrapper
 
-uint8 *LoadFile(tchar const *filename, size_t *size)
+struct Handle
 {
-	uint8 *buf = null;
-	FILE *f = null;
-
-	if(_tfopen_s(&f, filename, TEXT("rb")) == 0)
+	Handle(HANDLE handle = INVALID_HANDLE_VALUE)
+		: h(handle)
 	{
-		fseek(f, 0, SEEK_END);
-		uint32 len = ftell(f);
-		fseek(f, 0, SEEK_SET);
+	}
 
-		buf = new uint8[len + 2];
+	~Handle()
+	{
+		Close();
+	}
 
-		if(buf != null)
+	bool Close()
+	{
+		bool rc = Valid() ? (CloseHandle(h) != 0) : true;
+		h = INVALID_HANDLE_VALUE;
+		return rc;
+	}
+
+	bool Valid() const
+	{
+		return h != INVALID_HANDLE_VALUE;
+	}
+
+	bool operator == (HANDLE handle) const
+	{
+		return h == handle;
+	}
+
+	bool operator != (HANDLE handle) const
+	{
+		return h != handle;
+	}
+
+	operator HANDLE * ()
+	{
+		return &h;
+	}
+
+	operator HANDLE & ()
+	{
+		return h;
+	}
+
+	HANDLE h;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+struct File
+{
+	HRESULT Open(tchar const *filename)
+	{
+		name = filename;
+		h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+		if(h == INVALID_HANDLE_VALUE)
 		{
-			size_t s = fread_s(buf, len, 1, len, f);
-
-			if(s != len)
-			{
-				delete [] buf;
-				buf = null;
-			}
-			else
-			{
-				*((tchar *)(((tchar *)buf) + len)) = (tchar)'\0';
-				if(size != null)
-				{
-					*size = len;
-				}
-			}
+			error = ErrorMsgBox(Format(TEXT("Error opening %s"), filename).c_str());
 		}
+	}
 
-		fclose(f);
-	}
-	else
+	bool Close()
 	{
-		MessageBox(null, Format(TEXT("File not found: %s"), filename).c_str(), TEXT("LoadFile"), MB_ICONERROR);
+		return h.Close();
 	}
-	return buf;
+
+	bool IsOpen() const
+	{
+		return h.Valid();
+	}
+
+	int64 Size()
+	{
+		if(!IsOpen())
+		{
+			error = ERROR_FILE_OFFLINE;
+			return -1;
+		}
+		int64 fileSize = 0;
+		if(GetFileSizeEx(h, (LARGE_INTEGER *)&fileSize))
+		{
+			error = ERROR_SUCCESS;
+			return fileSize;
+		}
+		error = ErrorMsgBox(Format(TEXT("Error getting file size of %s"), name.c_str()).c_str());
+		return -1;
+	}
+
+	DWORD Read(DWORD bytes, void *buffer)
+	{
+		DWORD got;
+		error = ERROR_SUCCESS;
+		if(ReadFile(h, buffer, bytes, &got, null))
+		{
+			return got;
+		}
+		error = GetLastError();
+		return 0;
+	}
+
+	DWORD Write(DWORD bytes, void *buffer)
+	{
+		DWORD wrote;
+		error = ERROR_SUCCESS;
+		if(WriteFile(h, buffer, bytes, &wrote, null))
+		{
+			return wrote;
+		}
+		error = GetLastError();
+		return 0;
+	}
+
+	tstring name;
+	Handle h;
+	long error;
+};
+
+//////////////////////////////////////////////////////////////////////
+// Simple file loader
+
+HRESULT LoadFile(tchar const *filename, void **data, size_t *size)
+{
+	if(filename == null || data == null || size == null)
+	{
+		return E_POINTER;
+	}
+
+	Handle h = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+	if(h == INVALID_HANDLE_VALUE)
+	{
+		return ErrorMsgBox(Format(TEXT("Error opening %s"), filename).c_str());
+	}
+
+	int64 fileSize = 0;
+	if(!GetFileSizeEx(h, (LARGE_INTEGER *)&fileSize))
+	{
+		return ErrorMsgBox(Format(TEXT("Error getting file size of %s"), filename).c_str());
+	}
+
+	if(fileSize > 0x7ffffff - sizeof(tchar))
+	{
+		MessageBox(null, Format(TEXT("Can't load %s (2GB limit, sorry)"), filename).c_str(), TEXT("Error"), MB_ICONEXCLAMATION);
+		return ERROR_FILE_TOO_LARGE;
+	}
+
+	Ptr<uint8> buf(new uint8[fileSize + sizeof(tchar)]);
+	if(buf == null)
+	{
+		MessageBox(null, Format(TEXT("Can't load %s - file > 2GB!"), filename).c_str(), TEXT("Error"), MB_ICONEXCLAMATION);
+		return ERROR_NOT_ENOUGH_MEMORY;
+	}
+
+	DWORD got;
+	if(!ReadFile(h, buf.get(), (DWORD)fileSize, &got, null) || got != fileSize)
+	{
+		return ERROR_FILE_CORRUPT;
+	}
+	*(tchar *)(buf.get() + fileSize) = tchar(0);
+
+	*data = buf.release();
+	*size = fileSize;
+
+	return S_OK;
 }
 
 //////////////////////////////////////////////////////////////////////
