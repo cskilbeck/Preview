@@ -172,11 +172,11 @@ HRESULT VertexShader::CreateInputLayout(void const *blob, size_t size)
 		d.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 		d.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 		d.Format = formats[CountBits(pd.Mask) - 1][pd.ComponentType];
-		uint size1 = SizeOfFormatElement(d.Format);
-		uint size2 = size1 / 8;
+		uint size2 = SizeOfFormatElement(d.Format) / 8;
 		vertexSize += size2;
-		TRACE("Index %d = %s (%d elements, size = %d bytes in total)\n", i, pd.SemanticName, CountBits(pd.Mask), size2);
+		TRACE("Index %d = %s%d (%d elements, size = %d bytes in total)\n", i, pd.SemanticName, pd.SemanticIndex, CountBits(pd.Mask), size2);
 	}
+	TRACE("Total vertexSize: %d\n", vertexSize);
 	vertexLayout.Release();
 	DX(gDevice->CreateInputLayout(&ied[0], (uint)ied.size(), blob, size, &vertexLayout));
 	return S_OK;
@@ -205,8 +205,13 @@ void VertexShader::LoadConstants(ID3D11DeviceContext *context)
 
 void VertexShader::Activate(ID3D11DeviceContext *context)
 {
-	context->VSSetShader(vertexShader, NULL, 0);
+	for(auto i = mConstantBuffers.begin(); i != mConstantBuffers.end(); ++i)
+	{
+		(*i)->Commit(context);
+	}
+	context->IASetInputLayout(vertexLayout);
 	LoadConstants(context);
+	context->VSSetShader(vertexShader, NULL, 0);
 }
 
 //////////////////////////////////////////////////////////////////////

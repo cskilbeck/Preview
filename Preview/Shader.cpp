@@ -51,7 +51,7 @@ HRESULT Shader::CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc)
 	mConstBufferIDs[string(cb->Name)] = i;
 	TRACE("===>mConstBufferIDs[%s] = %d\n", cb->Name, i);
 	AddAt(mConstantBuffers, i, cb);
-	AddAt(mBuffers, i, cb->mConstantBuffer);
+	AddAt(mBuffers, i, cb->mConstantBuffer.get());
 	return S_OK;
 }
 

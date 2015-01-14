@@ -140,3 +140,7 @@ HRESULT ConstantBuffer::Create(ID3D11ShaderReflectionConstantBuffer *b)
 	return S_OK;
 }
 
+void ConstantBuffer::Commit(ID3D11DeviceContext *context)
+{
+	context->UpdateSubresource(mConstantBuffer, 0, null, Buffer.get(), TotalSizeInBytes, 0);
+}

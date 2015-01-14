@@ -18,7 +18,10 @@ HRESULT PixelShader::Create(void const *blob, size_t size)
 
 void PixelShader::LoadConstants(ID3D11DeviceContext *context)
 {
-	context->PSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
+	if(!mBuffers.empty())
+	{
+		context->PSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////

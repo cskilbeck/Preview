@@ -19,11 +19,12 @@ struct ConstantBuffer
 	byte *		GetAddressAndSizeOf(string const &name, size_t &size);
 	byte *		AddressOf(string const &name);
 	byte *		GetBuffer();
+	void		Commit(ID3D11DeviceContext *context);
 
-	char const *	Name;
-	size_t			TotalSizeInBytes;
-	Ptr<byte>		Buffer;
-	ID3D11Buffer *	mConstantBuffer;
+	char const *		Name;
+	size_t				TotalSizeInBytes;
+	Ptr<byte>			Buffer;
+	DXPtr<ID3D11Buffer>	mConstantBuffer;
 
 private:
 

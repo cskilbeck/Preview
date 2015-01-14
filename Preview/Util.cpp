@@ -197,7 +197,7 @@ HRESULT LoadFile(tchar const *filename, void **data, size_t *size)
 		return ErrorMsgBox(Format(TEXT("Error opening %s"), filename).c_str());
 	}
 
-	int64 fileSize = 0;
+	uint64 fileSize = 0;
 	if(!GetFileSizeEx(h, (LARGE_INTEGER *)&fileSize))
 	{
 		return ErrorMsgBox(Format(TEXT("Error getting file size of %s"), filename).c_str());
@@ -209,7 +209,7 @@ HRESULT LoadFile(tchar const *filename, void **data, size_t *size)
 		return ERROR_FILE_TOO_LARGE;
 	}
 
-	Ptr<uint8> buf(new uint8[fileSize + sizeof(tchar)]);
+	Ptr<uint8> buf(new uint8[(size_t)(fileSize + sizeof(tchar))]);
 	if(buf == null)
 	{
 		MessageBox(null, Format(TEXT("Can't load %s - file > 2GB!"), filename).c_str(), TEXT("Error"), MB_ICONEXCLAMATION);
@@ -224,7 +224,7 @@ HRESULT LoadFile(tchar const *filename, void **data, size_t *size)
 	*(tchar *)(buf.get() + fileSize) = tchar(0);
 
 	*data = buf.release();
-	*size = fileSize;
+	*size = (size_t)fileSize;
 
 	return S_OK;
 }

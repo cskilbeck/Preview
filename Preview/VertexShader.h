@@ -33,7 +33,7 @@ template <typename T> struct VertexBuffer
 		return S_OK;
 	}
 
-	HRESULT Update(ID3D11DeviceContext *context)
+	HRESULT Commit(ID3D11DeviceContext *context)
 	{
 		context->UpdateSubresource(buffer, 0, null, memBuffer.get(), 0, 0);
 		return S_OK;

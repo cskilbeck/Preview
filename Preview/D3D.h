@@ -17,8 +17,8 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
-//#define DXTRACE TRACE
-#define DXTRACE if (true) {} else
+#define DXTRACE TRACE
+//#define DXTRACE if (true) {} else
 
 #if defined(DEBUG)
 #define dx(hr, x)		\

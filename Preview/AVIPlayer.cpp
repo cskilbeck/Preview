@@ -215,7 +215,7 @@ bool AVIPlayer::OnCreate()
 
 		colorVertexBuffer[0] = { Vec2(0, 0), Color::Cyan };
 		colorVertexBuffer[1] = { Vec2(100, 100), Color::Magenta };
-		colorVertexBuffer.Update(mContext);
+		colorVertexBuffer.Commit(mContext);
 
 		DXB(LoadShaders());
 		DXB(CreateSampler());
@@ -230,8 +230,6 @@ bool AVIPlayer::OnCreate()
 
 		//mTexture.reset(new Texture(960, 540, Color::BrightBlue));
 
-		//ConstantBuffer *b = mVertexShader.GetCB("VertConstants");
-		//Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
 		//Vec2 *v = (Vec2 *)b->AddressOf("TextureSize");
 
 		//ConstantBuffer *pb = mPixelShader.GetCB("PixelShaderConstants");
@@ -481,11 +479,17 @@ void AVIPlayer::OnDraw()
 			movie1.texture->Activate(mContext);
 			mContext->Draw(ARRAYSIZE(vert), 0);
 		}
+		ConstantBuffer *b = colorVertexShader.GetCB("VertConstants");
+		Matrix *m = (Matrix *)b->AddressOf("ProjectionMatrix");
+		*m = XMMatrixTranspose(matrix);
+
+		colorVertexBuffer.Commit(mContext);
+		colorVertexBuffer.Activate(mContext);
+
+		colorVertexShader.Activate(mContext);
 
 		colorPixelShader.Activate(mContext);
-		colorVertexBuffer.Update(mContext);
-		colorVertexBuffer.Activate(mContext);
-		colorVertexShader.Activate(mContext);
+		mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 		mContext->Draw(2, 0);
 	}
 
