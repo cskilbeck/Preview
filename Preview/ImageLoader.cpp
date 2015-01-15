@@ -489,7 +489,7 @@ void SetDebugInfo(ID3D11Resource **texture, ID3D11ShaderResourceView **textureVi
 {
 #if defined(_DEBUG) || defined(PROFILE)
 
-	string s = StringFromTString(GetFilename(TStringFromWideString(wstring(pstrName)).c_str()));
+	String s = StringFromTString(GetFilename(TStringFromWideString(WString(pstrName)).c_str()));
 
 	if(texture != null && *texture != null)
 	{

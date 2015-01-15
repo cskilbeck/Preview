@@ -6,8 +6,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-#if defined(_DEBUG)
-void TRACE(wchar const *strMsg, ...)
+void Trace(wchar const *strMsg, ...)
 {
 	wchar strBuffer[512];
 	va_list args;
@@ -19,7 +18,7 @@ void TRACE(wchar const *strMsg, ...)
 
 //////////////////////////////////////////////////////////////////////
 
-void TRACE(char const *strMsg, ...)
+void Trace(char const *strMsg, ...)
 {
 	char strBuffer[512];
 	va_list args;
@@ -28,7 +27,6 @@ void TRACE(char const *strMsg, ...)
 	va_end(args);
 	OutputDebugStringA(strBuffer);
 }
-#endif
 
 //////////////////////////////////////////////////////////////////////
 
@@ -175,7 +173,7 @@ struct File
 		return 0;
 	}
 
-	tstring name;
+	TString name;
 	Handle h;
 	long error;
 };
@@ -231,29 +229,29 @@ HRESULT LoadFile(tchar const *filename, void **data, size_t *size)
 
 //////////////////////////////////////////////////////////////////////
 
-wstring Format(wchar const *fmt, ...)
+WString Format(wchar const *fmt, ...)
 {
 	wchar buffer[1024];
 	va_list v;
 	va_start(v, fmt);
 	_vsnwprintf_s(buffer, ARRAYSIZE(buffer), fmt, v);
-	return wstring(buffer);
+	return WString(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-string Format(char const *fmt, ...)
+String Format(char const *fmt, ...)
 {
 	char buffer[1024];
 	va_list v;
 	va_start(v, fmt);
 	_vsnprintf_s(buffer, ARRAYSIZE(buffer), fmt, v);
-	return string(buffer);
+	return String(buffer);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetLastErrorText()
+TString GetLastErrorText()
 {
 	tchar *buf;
 	uint32 retSize = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -265,14 +263,14 @@ tstring GetLastErrorText()
 									0,
 									NULL);
 
-	tstring rc;
+	TString rc;
 	if(retSize == 0 || buf == null)
 	{
-		rc = tstring(TEXT("Unknown error"));
+		rc = TString(TEXT("Unknown error"));
 	}
 	else
 	{
-		rc = tstring(buf);
+		rc = TString(buf);
 		LocalFree((HLOCAL)buf);
 	}
 	return rc;
@@ -280,7 +278,7 @@ tstring GetLastErrorText()
 
 //////////////////////////////////////////////////////////////////////
 
-wstring WideStringFromTString(tstring const &str)
+WString WideStringFromTString(TString const &str)
 {
 #ifdef UNICODE
 	return str;
@@ -291,7 +289,7 @@ wstring WideStringFromTString(tstring const &str)
 
 //////////////////////////////////////////////////////////////////////
 
-tstring TStringFromWideString(wstring const &str)
+TString TStringFromWideString(WString const &str)
 {
 #ifdef UNICODE
 	return str;
@@ -302,7 +300,7 @@ tstring TStringFromWideString(wstring const &str)
 
 //////////////////////////////////////////////////////////////////////
 
-string StringFromTString(tstring const &str)
+String StringFromTString(TString const &str)
 {
 #ifdef UNICODE
 	return StringFromWideString(str);
@@ -313,7 +311,7 @@ string StringFromTString(tstring const &str)
 
 //////////////////////////////////////////////////////////////////////
 
-tstring TStringFromString(string const &str)
+TString TStringFromString(String const &str)
 {
 #ifdef UNICODE
 	return WideStringFromString(str);
@@ -324,44 +322,44 @@ tstring TStringFromString(string const &str)
 
 //////////////////////////////////////////////////////////////////////
 
-wstring WideStringFromString(string const &str)
+WString WideStringFromString(String const &str)
 {
-	vector<wchar> temp;
+	Vector<wchar> temp;
 	temp.resize(str.size() + 1);
 	temp[0] = (wchar)0;
 	MultiByteToWideChar(CP_ACP, 0, str.c_str(), (int)str.size(), &temp[0], (int)str.size());
 	temp[str.size()] = 0;
-	return wstring(&temp[0]);
+	return WString(&temp[0]);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-string StringFromWideString(wstring const &str)
+String StringFromWideString(WString const &str)
 {
-	vector<char> temp;
+	Vector<char> temp;
 	int bufSize = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.size() + 1, NULL, 0, NULL, FALSE);
 	if(bufSize > 0)
 	{
 		temp.resize(bufSize);
 		WideCharToMultiByte(CP_UTF8, 0, str.c_str(), (int)str.size() + 1, &temp[0], bufSize, NULL, FALSE);
-		return string(&temp[0]);
+		return String(&temp[0]);
 	}
-	return string();
+	return String();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetCurrentFolder()
+TString GetCurrentFolder()
 {
 	uint32 l = GetCurrentDirectory(0, null);
 	if(l != 0)
 	{
 		Ptr<tchar> s(new tchar[l]);
 		GetCurrentDirectory(l, s.get());
-		return tstring(s.get());
+		return TString(s.get());
 	}
 	TRACE(TEXT("Error getting current folder: %s"), GetLastErrorText());
-	return tstring();
+	return TString();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -384,36 +382,36 @@ PathComponents SplitPath(tchar const *path, PathComponents &pc)
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetDrive(tchar const *path)
+TString GetDrive(tchar const *path)
 {
 	return SplitPath(path, pc).drive;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetPath(tchar const *path)
+TString GetPath(tchar const *path)
 {
 	return SplitPath(path, pc).dir;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetFilename(tchar const *path)
+TString GetFilename(tchar const *path)
 {
 	return SplitPath(path, pc).name;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring GetExtension(tchar const *path)
+TString GetExtension(tchar const *path)
 {
 	return SplitPath(path, pc).ext;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-tstring SetExtension(tchar const *path, tchar const *ext)
+TString SetExtension(tchar const *path, tchar const *ext)
 {
 	SplitPath(path, pc);
-	return tstring(pc.drive) + pc.dir + pc.name + ext;
+	return TString(pc.drive) + pc.dir + pc.name + ext;
 }

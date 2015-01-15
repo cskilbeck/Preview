@@ -2939,13 +2939,13 @@ HRDescription HRDescriptions[] =
 	{ 0xC02625E0, TEXT("ERROR_GRAPHICS_ONLY_CONSOLE_SESSION_SUPPORTED"), TEXT("This function can be used only if a program is running in the local console session. It cannot be used if the program is running on a remote desktop session or on a terminal server session.") }
 };
 
-tstring GetHRDescription(HRESULT hr)
+TString GetHRDescription(HRESULT hr)
 {
 	for(uint i = 0; i < _countof(HRDescriptions); ++i)
 	{
 		if(HRDescriptions[i].hr == hr)
 		{
-			return tstring(HRDescriptions[i].name) + TEXT(":") + HRDescriptions[i].desc;
+			return TString(HRDescriptions[i].name) + TEXT(":") + HRDescriptions[i].desc;
 		}
 	}
 	return Format(TEXT("Unknown HR code: %08x"), hr);

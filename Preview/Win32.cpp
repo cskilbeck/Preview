@@ -5,7 +5,7 @@
 
 //////////////////////////////////////////////////////////////////////
 
-tstring Win32ErrorMessage(DWORD err)
+TString Win32ErrorMessage(DWORD err)
 {
 	LPTSTR lpMsgBuf;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -15,7 +15,7 @@ tstring Win32ErrorMessage(DWORD err)
 				  (LPTSTR)&lpMsgBuf,
 				  0, NULL);
 
-	tstring r(lpMsgBuf);
+	TString r(lpMsgBuf);
 	LocalFree(lpMsgBuf);
 	return r;
 }
@@ -37,7 +37,7 @@ void ErrorMessageBox(tchar const *format, ...)
 
 void ChangeDirectory(tchar const *relative)
 {
-	vector<tchar> s;
+	Vector<tchar> s;
 	s.resize(GetCurrentDirectory(0, null));
 	GetCurrentDirectory((DWORD)s.size(), &s[0]);
 	s.resize(s.size() - 1);

@@ -53,12 +53,12 @@ struct MyPlayer
 
 	void Update(ID3D11DeviceContext *context, int frameToPlay)
 	{
-		if(currentFrame != frameToPlay)
+		if(currentFrame < frameToPlay)
 		{
 			Movie::Frame *frame = movie.GetFrame(frameToPlay);
 			if(frame != null)
 			{
-				texture->Update(context, (byte *)frame->mem);
+				texture->Update(context, (byte *)frame->mem.get());
 				currentFrame = frame->frame;
 				movie.ReleaseFrame(frame);
 			}
@@ -161,7 +161,7 @@ struct AVIPlayer: DXWindow
 	MyPlayer movie2;
 
 	int frameToPlay;
-	bool frameDropped;
+	int frameDropped;
 
 	PixelShader						colorPixelShader;
 	VertexShader					colorVertexShader;

@@ -290,7 +290,7 @@ struct RectF
 		return topLeft == b.topLeft && bottomRight == b.bottomRight;
 	}
 
-	string ToString() const
+	String ToString() const
 	{
 		return Format("(%f,%f)-(%f,%f)", TopLeft().x, TopLeft().y, BottomRight().x, BottomRight().y);
 	}

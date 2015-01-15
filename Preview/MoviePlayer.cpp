@@ -79,14 +79,13 @@ namespace Movie
 	Frame::Frame(int frameNumber, size_t bufferSize)
 	{
 		frame = frameNumber;
-		mem = new byte[bufferSize];
+		mem.reset(new byte[bufferSize]);
 	}
 
 	//////////////////////////////////////////////////////////////////////
 
 	Frame::~Frame()
 	{
-		delete[] mem;
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -110,7 +109,7 @@ namespace Movie
 
 		// convert from 24bpp to 32bpp
 		int rowPitch = DIBWIDTHBYTES(bmih) / sizeof(uint32);
-		uint32 *dstRow = (uint32 *)f->mem;
+		uint32 *dstRow = (uint32 *)f->mem.get();
 		uint32 const *srcRow = (uint32 *)data;
 		for(int y = 0; y < h; ++y)
 		{
@@ -147,8 +146,7 @@ namespace Movie
 
 	Sampler::~Sampler()
 	{
-		FlushCache();
-		FlushFrames();
+		Abort();
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -156,6 +154,7 @@ namespace Movie
 	void Sampler::Abort()
 	{
 		aborted = true;
+		Flush();
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -235,11 +234,8 @@ namespace Movie
 
 	void Sampler::Flush()
 	{
-		while(!readyFrames.IsEmpty())
-		{
-			readyFrames.Pop();
-		}
-		SetEvent(frameReleased);
+		FlushCache();
+		FlushFrames();
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -269,7 +265,11 @@ namespace Movie
 		byte *data;
 		DX(sample->GetPointer(&data));
 
-		readyFrames.Push(ProcessFrame((int)(frameStart / frameReferenceTime), data));
+		int frameNumber = (int)(frameStart / frameReferenceTime);	// these are counted up from 0 at the last seek point (so if you seek to frame 100, it will report frame 100 as 0)
+
+		//TRACE("Got frame %d\n", frameNumber);
+
+		readyFrames.Push(ProcessFrame(frameNumber, data));
 
 		return S_OK;
 	}
@@ -279,10 +279,18 @@ namespace Movie
 
 	HRESULT Sampler::WaitForRenderTime()
 	{
-		DX(CBaseRenderer::WaitForRenderTime());
+		HRESULT hr = CBaseRenderer::WaitForRenderTime();
+		if(hr == VFW_E_STATE_CHANGED)
+		{
+			return S_OK;
+		}
+		if(FAILED(hr))
+		{
+			return hr;
+		}
 		while(readyFrames.Length() >= (size_t)maxFrameQueueSize && !aborted)
 		{
-			WaitForSingleObject(frameReleased, 16);
+			WaitForSingleObject(frameReleased, 1);
 		}
 		return S_OK;
 	}
@@ -355,6 +363,7 @@ namespace Movie
 
 	HRESULT Player::Close()
 	{
+		//Trace("Player::Close\n");
 		if(IsOpen())
 		{
 			sampler->Abort();
@@ -376,7 +385,6 @@ namespace Movie
 			videoSource.Release();
 			seeker.Release();
 			graph.Release();
-			CoUninitialize();
 		}
 		return S_OK;
 	}
@@ -435,7 +443,7 @@ namespace Movie
 
 	bool Player::IsOpen() const
 	{
-		return graph != null && GetState() != -1;
+		return graph != null && mediaControl != null && GetState() != -1;
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -510,9 +518,10 @@ namespace Movie
 			return E_NOT_VALID_STATE;
 		}
 		int64 f = (int64)frame;
-		sampler->FlushCache();
-		sampler->FlushFrames();
 		DX(seeker->SetPositions(&f, AM_SEEKING_AbsolutePositioning, null, AM_SEEKING_NoPositioning));
+		TRACE("Paused!\n");
+		sampler->Flush();
+		TRACE("Flushed!\n");
 		return S_OK;
 	}
 

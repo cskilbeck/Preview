@@ -28,7 +28,7 @@ struct Texture
 	float FHeight() const;
 	Vec2 FSize() const;
 	bool IsValid() const;
-	tstring const &GetName() const;
+	TString const &GetName() const;
 	void Activate(ID3D11DeviceContext *context, int channel = 0);
 
 //private:
@@ -36,7 +36,7 @@ struct Texture
 	void InitFromPixelBuffer(byte *buffer, DXGI_FORMAT pixelFormat, int width, int height);
 	HRESULT CreateSampler();
 
-	tstring							mName;
+	TString							mName;
 	DXPtr<ID3D11Texture2D>			mTexture2D;
 	DXPtr<ID3D11ShaderResourceView>	mShaderResourceView;
 	DXPtr<ID3D11SamplerState>		mSampler;
@@ -75,7 +75,7 @@ inline bool Texture::IsValid() const
 	return mTexture2D != null;
 }
 
-inline tstring const &Texture::GetName() const
+inline TString const &Texture::GetName() const
 {
 	return mName;
 }

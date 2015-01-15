@@ -18,7 +18,7 @@ Shader::~Shader()
 
 //////////////////////////////////////////////////////////////////////
 
-template <typename T> static void AddAt(vector<T> &v, uint index, T const &item)
+template <typename T> static void AddAt(Vector<T> &v, uint index, T const &item)
 {
 	if(index >= (uint)v.size())
 	{
@@ -47,7 +47,7 @@ HRESULT Shader::CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc)
 	ConstantBuffer *cb = new ConstantBuffer();
 	uint i = desc.BindPoint;
 	DX(cb->Create(mReflector->GetConstantBufferByIndex(i)));	// BUG: this is wrong... BindPoint is not Index if you have other types of exposed structures in the shader (and they're not guaranteed to be same in any case)
-	mConstBufferIDs[string(cb->Name)] = i;
+	mConstBufferIDs[String(cb->Name)] = i;
 	AddAt(mConstantBuffers, i, cb);
 	AddAt(mBuffers, i, cb->mConstantBuffer.get());
 	return S_OK;
@@ -94,7 +94,7 @@ HRESULT Shader::CreateBindings()
 HRESULT Shader::CreateTextureBinding(D3D11_SHADER_INPUT_BIND_DESC desc)
 {
 	AddAt(mTextures, desc.BindPoint, (ID3D11ShaderResourceView *)null);
-	mTextureIDs[string(desc.Name)] = desc.BindPoint;
+	mTextureIDs[String(desc.Name)] = desc.BindPoint;
 	return S_OK;
 }
 

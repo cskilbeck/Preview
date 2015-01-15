@@ -20,7 +20,7 @@ struct Material
 	HRESULT CreateBlendState();
 	HRESULT CreateDepthStencilState();
 
-	vector<Texture *>				mTextures;		// pointers to all the textures that this material needs...
+	Vector<Texture *>				mTextures;		// pointers to all the textures that this material needs...
 
 	DXPtr<ID3D11RasterizerState>	rasterizerState;
 	DXPtr<ID3D11BlendState>			blendState;

@@ -1027,9 +1027,9 @@ static const PCTSTR messageStrings[] = {
 	TEXT("WM_CBT_RESERVED_LAST")
 };
 
-tstring GetMessageName(uint message)
+TString GetMessageName(uint message)
 {
-	return (message < ARRAYSIZE(messageStrings)) ? tstring(messageStrings[message]) : Format(TEXT("?%08x"), message);
+	return (message < ARRAYSIZE(messageStrings)) ? TString(messageStrings[message]) : Format(TEXT("?%08x"), message);
 }
 
 long ErrorMsgBox(tchar const *msg, long error)

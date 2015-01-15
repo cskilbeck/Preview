@@ -188,8 +188,9 @@ void AVIPlayer::OnChar(int key, uintptr flags)
 			}
 			break;
 		case 32:
-			frameToPlay = 1900;
-			movie1.movie.Seek(frameToPlay);
+			frameToPlay = 0;
+			movie1.movie.Seek(1900);
+			movie2.movie.Seek(1900);
 			break;
 	}
 }
@@ -251,7 +252,7 @@ HRESULT AVIPlayer::LoadUntexturedMaterial()
 	{
 		DX(colorVertexShader.Create(r1, r1.Size(), layout, _countof(layout)));
 	}
-	DX(colorVertexBuffer.Create(4));
+	DX(colorVertexBuffer.Create(6));
 
 	r1.Release();
 	r1.Load(IDR_COLORPIXELSHADER);
@@ -317,23 +318,19 @@ bool AVIPlayer::OnCreate()
 		DXB(LoadUntexturedMaterial());
 		DXB(LoadAlphaMaterial());
 
-		ColorVertex *v = colorVertexBuffer.GetBuffer();
-		v[0] = { Vec2(0, 0), Color::Cyan };
-		v[1] = { Vec2(100, 100), Color::Magenta };
-		v[2] = { Vec2(200, 100), Color::Cyan };
-		v[3] = { Vec2(200, 200), Color::Magenta };
-		colorVertexBuffer.Commit(mContext);
-
 		DXB(CreateRasterizerState());
 		DXB(CreateBlendState());
 		DXB(CreateDepthStencilState());
 
 		mHandCursor = LoadCursor(mHINST, MAKEINTRESOURCE(IDC_DRAG));
 
-		frameToPlay = -8;
+		frameToPlay = 0;
 
 		DXB(movie1.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
 		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
+
+		movie1.movie.Play();
+		movie2.movie.Play();
 
 		MoveToMiddleOfMonitor();
 		mTimer.Reset();
@@ -352,32 +349,23 @@ bool AVIPlayer::OnUpdate()
 
 	CalcDrawRect();
 
-	if(frameToPlay < 0)
-	{
-		if(movie1.movie.IsPaused())
-		{
-			DXB(movie1.movie.Play());
-		}
-		if(movie2.movie.IsPaused())
-		{
-			DXB(movie2.movie.Play());
-		}
-		++frameToPlay;
-	}
-	else
-	{
-		movie1.Update(mContext, frameToPlay);
-		movie2.Update(mContext, frameToPlay);
+	//TRACE("Frametoplay: %d\n", frameToPlay);
 
-		if(movie1.CurrentFrame() == frameToPlay && movie2.CurrentFrame() == frameToPlay)
-		{
-			++frameToPlay;
-			frameDropped = false;
-		}
-		else
-		{
-			frameDropped = true;
-		}
+	movie1.Update(mContext, frameToPlay);
+	movie2.Update(mContext, frameToPlay);
+
+	frameDropped = 0;
+	if(movie1.CurrentFrame() != frameToPlay)
+	{
+		frameDropped = 1;
+	}
+	if(movie2.CurrentFrame() != frameToPlay)
+	{
+		frameDropped += 2;
+	}
+	if(frameDropped == 0)
+	{
+		++frameToPlay;
 	}
 	return true;
 }
@@ -419,6 +407,7 @@ void AVIPlayer::OnDraw()
 	alphaPixelShader.SetTexture("picture", movie1.texture->mShaderResourceView);
 	alphaPixelShader.Activate(mContext);
 
+	vp.TopLeftX = 0;
 	mContext->RSSetViewports(1, &vp);
 	mContext->Draw(alphaVertexBuffer.VertexCount(), 0);
 
@@ -430,14 +419,40 @@ void AVIPlayer::OnDraw()
 	mContext->RSSetViewports(1, &vp);
 	mContext->Draw(alphaVertexBuffer.VertexCount(), 0);
 
-	ConstantBuffer &b = *colorVertexShader.GetCB("VertConstants");
-	b.Set("ProjectionMatrix", XMMatrixTranspose(matrix));
-	b.Commit(mContext);
-	colorVertexBuffer.Activate(mContext);
-	colorVertexShader.Activate(mContext);
-	colorPixelShader.Activate(mContext);
-	mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-	mContext->Draw(colorVertexBuffer.VertexCount(), 0);
+	vp.TopLeftX = 0;// Width() / 2.0f;;
+	if(frameDropped != 0)
+	{
+		ColorVertex *d = colorVertexBuffer.GetBuffer();
+		Vertex *s = alphaVertexBuffer.GetBuffer();
+		for(uint i = 0; i < colorVertexBuffer.VertexCount(); ++i)
+		{
+			d[i].mPos = s[i].mPos;
+			d[i].mColor = 0x8080ff00;
+		}
+		colorVertexBuffer.Commit(mContext);
+		ConstantBuffer &b = *colorVertexShader.GetCB("VertConstants");
+		b.Set("ProjectionMatrix", XMMatrixTranspose(matrix));
+		b.Commit(mContext);
+		colorVertexBuffer.Activate(mContext);
+		colorVertexShader.Activate(mContext);
+		colorPixelShader.Activate(mContext);
+	}
+
+	if(frameDropped & 1)
+	{
+		vp.TopLeftX = Width() / 2.0f;;
+		vp.TopLeftX = 0;
+		mContext->RSSetViewports(1, &vp);
+		mContext->Draw(colorVertexBuffer.VertexCount(), 0);
+	}
+
+	if(frameDropped & 2)
+	{
+		mContext->RSSetViewports(1, &vp);
+		mContext->Draw(colorVertexBuffer.VertexCount(), 0);
+	}
+
+
 
 	// info panel
 	HDC dc = GetDC(mHWND);

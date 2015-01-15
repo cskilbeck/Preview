@@ -111,7 +111,8 @@ HRESULT ConstantBuffer::Create(ID3D11ShaderReflectionConstantBuffer *b)
 	Name = sbDesc.Name;
 	Parameters.clear();
 	TotalSizeInBytes = sbDesc.Size;
-	Buffer.reset(new byte[sbDesc.Size]);
+	Buffer.reset((byte *)_aligned_malloc(TotalSizeInBytes, 16));	// this needs to be aligned to 16 bytes
+	DbgAssertAligned(Buffer.get(), 16);
 
 	// create the actual buffer
 	CD3D11_BUFFER_DESC desc(sbDesc.Size, D3D11_BIND_CONSTANT_BUFFER);
@@ -119,17 +120,19 @@ HRESULT ConstantBuffer::Create(ID3D11ShaderReflectionConstantBuffer *b)
 	srd.pSysMem = (void const *)Buffer.get();
 	DX(gDevice->CreateBuffer(&desc, &srd, &mConstantBuffer));
 
+	Parameters.resize(sbDesc.Variables);
+
 	// get the details of the parameters
 	for(uint j = 0; j < sbDesc.Variables; ++j)
 	{
+		Parameter &cbVar = Parameters[j];
 		ID3D11ShaderReflectionVariable *var = b->GetVariableByIndex(j);
 		ID3D11ShaderReflectionType *type = var->GetType();
-		ConstantBuffer::Parameter *cbVar = new ConstantBuffer::Parameter();
-		D3D11_SHADER_VARIABLE_DESC &v = cbVar->Variable;
-		D3D11_SHADER_TYPE_DESC &t = cbVar->Type;
+		D3D11_SHADER_VARIABLE_DESC &v = cbVar.Variable;
+		D3D11_SHADER_TYPE_DESC &t = cbVar.Type;
 		DX(var->GetDesc(&v));
 		DX(type->GetDesc(&t));
-		Parameters[v.Name] = cbVar;
+		ParameterIDs[cbVar.Variable.Name] = j;
 		TRACE("    Parameter: %s%s : %s %s%d %s\n",	v.Name,
 														(t.Elements > 0) ? Format("[%d]", t.Elements).c_str() : "",
 														classNames[t.Class],

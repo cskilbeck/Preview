@@ -28,6 +28,7 @@
 #include <string>
 #include <algorithm>
 #include <memory>
+#include <map>
 #include <unordered_map>
 #include <exception>
 

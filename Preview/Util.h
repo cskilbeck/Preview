@@ -10,9 +10,11 @@
 
 //////////////////////////////////////////////////////////////////////
 
+void Trace(wchar const *strMsg, ...);
+void Trace(char const *strMsg, ...);
+
 #if defined(_DEBUG)
-void TRACE(wchar const *strMsg, ...);
-void TRACE(char const *strMsg, ...);
+#define TRACE Trace
 #else
 #define TRACE(x, ...) if (false) {} else (x);
 #endif
@@ -20,23 +22,23 @@ void TRACE(char const *strMsg, ...);
 HRESULT LoadFile(tchar const *filename, void **data, size_t *size = null);
 HRESULT LoadResource(uint32 resourceID, void **data, size_t *size = null);
 
-wstring WideStringFromTString(tstring const &str);
-wstring WideStringFromString(string const &str);
+WString WideStringFromTString(TString const &str);
+WString WideStringFromString(String const &str);
 
-tstring TStringFromWideString(wstring const &str);
-tstring TStringFromString(string const &str);
+TString TStringFromWideString(WString const &str);
+TString TStringFromString(String const &str);
 
-string StringFromTString(tstring const &str);
-string StringFromWideString(wstring const &str);
+String StringFromTString(TString const &str);
+String StringFromWideString(WString const &str);
 
-wstring Format(wchar const *fmt, ...);
-string Format(char const *fmt, ...);
-tstring GetCurrentFolder();
-tstring GetDrive(tchar const *path);
-tstring GetPath(tchar const *path);
-tstring GetFilename(tchar const *path);
-tstring GetExtension(tchar const *path);
-tstring SetExtension(tchar const *path, tchar const *ext);
+WString Format(wchar const *fmt, ...);
+String Format(char const *fmt, ...);
+TString GetCurrentFolder();
+TString GetDrive(tchar const *path);
+TString GetPath(tchar const *path);
+TString GetFilename(tchar const *path);
+TString GetExtension(tchar const *path);
+TString SetExtension(tchar const *path, tchar const *ext);
 
 #ifndef PI
 #define PI 3.14159265f
@@ -143,18 +145,18 @@ inline float Ease(float d)
 
 //////////////////////////////////////////////////////////////////////
 
-inline string ToLower(string const &s)
+inline String ToLower(String const &s)
 {
-	string r(s);
+	String r(s);
 	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
 	return r;
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline wstring ToLower(wstring const &s)
+inline WString ToLower(WString const &s)
 {
-	wstring r(s);
+	WString r(s);
 	std::transform(r.begin(), r.end(), r.begin(), ::tolower);
 	return r;
 }

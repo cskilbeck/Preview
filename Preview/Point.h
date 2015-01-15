@@ -54,7 +54,7 @@ struct Point2D : POINT
 		return *this;
 	}
 
-	tstring ToString() const
+	TString ToString() const
 	{
 		return Format(TEXT("(x=%d,y=%d)"), x, y);
 	}

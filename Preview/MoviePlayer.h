@@ -16,7 +16,7 @@ namespace Movie
 	public:
 
 		int frame;				// frame number
-		byte *mem;				// 32bpp xRGB data (alpha channel will be garbage, not all 00 or FF)
+		Ptr<byte> mem;				// 32bpp xRGB data (alpha channel will be garbage, not all 00 or FF)
 
 		list_node<Frame> node;
 

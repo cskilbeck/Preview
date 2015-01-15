@@ -51,7 +51,7 @@ Window::Window(int width, int height, tchar const *caption, uint32 windowStyle, 
 	, mRightMouseDown(false)
 	, mMessageWait(true)
 	, mCaption(caption)
-	, mClassName(className == null ? tstring() : className)
+	, mClassName(className == null ? TString() : className)
 	, mWindowStyle(windowStyle)
 	, mParentHWND(parent)
 {

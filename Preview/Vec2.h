@@ -137,7 +137,7 @@ struct Vec2
 	Vec2 &operator = (Point2D const &p);
 	Vec2 operator - (Size2D const &s);
 
-	string ToString() const
+	String ToString() const
 	{
 		return Format("{%f,%f}", x, y);
 	}

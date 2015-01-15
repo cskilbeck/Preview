@@ -21,10 +21,18 @@ typedef ULONG_PTR		uintptr;
 
 static const nullptr_t null = nullptr;
 
-using std::vector;
-using std::string;
-using std::wstring;
+template<typename T> using Vector = std::vector<T>;
+using String = std::string;
+using WString = std::wstring;
+using TString = std::basic_string<tchar>;
 
-using tstring = std::basic_string<tchar>;
+struct AlignedFree
+{
+	inline void operator()(byte *p)
+	{
+		_aligned_free(p);
+	}
+};
 
 template <typename T> using Ptr = std::unique_ptr<T>;
+template <typename T> using AlignedPtr = std::unique_ptr <T, AlignedFree>;

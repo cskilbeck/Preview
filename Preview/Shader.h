@@ -8,20 +8,20 @@ struct Shader
 {
 	//////////////////////////////////////////////////////////////////////
 
-	using IntMap = std::unordered_map<string, int32>;
+	using IntMap = std::unordered_map<String, int32>;
 
 	//////////////////////////////////////////////////////////////////////
 
 	uint								mStartIndex;
-	vector<ID3D11Buffer *>				mBuffers;
+	Vector<ID3D11Buffer *>				mBuffers;
 
 	DXPtr<ID3D11ShaderReflection>		mReflector;
 	D3D11_SHADER_DESC					mShaderDesc;
 
-	vector<ID3D11SamplerState *>		mSamplers;	// client fills these in
-	vector<ID3D11ShaderResourceView *>	mTextures;
+	Vector<ID3D11SamplerState *>		mSamplers;	// client fills these in
+	Vector<ID3D11ShaderResourceView *>	mTextures;
 
-	vector<ConstantBuffer *>			mConstantBuffers;
+	Vector<ConstantBuffer *>			mConstantBuffers;
 
 	IntMap								mConstBufferIDs;
 	IntMap								mSamplerIDs;
@@ -32,18 +32,18 @@ struct Shader
 	Shader();
 	virtual ~Shader();
 
-	int GetTextureIndex(string const &name) const;
-	int GetSamplerIndex(string const &name) const;
-	int GetConstantBufferIndex(string const &name) const;
+	int GetTextureIndex(String const &name) const;
+	int GetSamplerIndex(String const &name) const;
+	int GetConstantBufferIndex(String const &name) const;
 
 	void SetTexture(int index, ID3D11ShaderResourceView *t);
-	void SetTexture(string const &name, ID3D11ShaderResourceView *t);
+	void SetTexture(String const &name, ID3D11ShaderResourceView *t);
 
 	void SetSampler(int index, ID3D11SamplerState *s);
-	void SetSampler(string const &name, ID3D11SamplerState *s);
+	void SetSampler(String const &name, ID3D11SamplerState *s);
 
 	uint GetConstantBufferCount() const;
-	ConstantBuffer *GetCB(string const &name);
+	ConstantBuffer *GetCB(String const &name);
 	ConstantBuffer *GetConstantBuffer(int index);
 
 	HRESULT CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc);
@@ -63,7 +63,7 @@ struct Shader
 
 //////////////////////////////////////////////////////////////////////
 
-static inline int GetIndex(string const &name, Shader::IntMap const &map)
+static inline int GetIndex(String const &name, Shader::IntMap const &map)
 {
 	auto i = map.find(name);
 	return (i == map.end()) ? -1 : i->second;
@@ -71,21 +71,21 @@ static inline int GetIndex(string const &name, Shader::IntMap const &map)
 
 //////////////////////////////////////////////////////////////////////
 
-inline int Shader::GetTextureIndex(string const &name) const
+inline int Shader::GetTextureIndex(String const &name) const
 {
 	return GetIndex(name, mTextureIDs);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline int Shader::GetSamplerIndex(string const &name) const
+inline int Shader::GetSamplerIndex(String const &name) const
 {
 	return GetIndex(name, mSamplerIDs);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-inline int Shader::GetConstantBufferIndex(string const &name) const
+inline int Shader::GetConstantBufferIndex(String const &name) const
 {
 	return GetIndex(name, mConstBufferIDs);
 }
@@ -102,7 +102,7 @@ inline void Shader::SetTexture(int index, ID3D11ShaderResourceView *t)
 
 //////////////////////////////////////////////////////////////////////
 
-inline void Shader::SetTexture(string const &name, ID3D11ShaderResourceView *t)
+inline void Shader::SetTexture(String const &name, ID3D11ShaderResourceView *t)
 {
 	SetTexture(GetTextureIndex(name), t);
 }
@@ -119,7 +119,7 @@ inline void Shader::SetSampler(int index, ID3D11SamplerState *s)
 
 //////////////////////////////////////////////////////////////////////
 
-inline void Shader::SetSampler(string const &name, ID3D11SamplerState *s)
+inline void Shader::SetSampler(String const &name, ID3D11SamplerState *s)
 {
 	SetSampler(GetSamplerIndex(name), s);
 }
@@ -133,7 +133,7 @@ inline uint Shader::GetConstantBufferCount() const
 
 //////////////////////////////////////////////////////////////////////
 
-inline ConstantBuffer *Shader::GetCB(string const &name)
+inline ConstantBuffer *Shader::GetCB(String const &name)
 {
 	int id = GetConstantBufferIndex(name);
 	return (id >= 0) ? mConstantBuffers[id] : null;

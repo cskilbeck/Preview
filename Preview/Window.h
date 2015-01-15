@@ -66,8 +66,8 @@ protected:
 	bool							mLeftMouseDown;
 	bool							mRightMouseDown;
 	bool							mMessageWait;
-	tstring							mCaption;
-	tstring							mClassName;
+	TString							mCaption;
+	TString							mClassName;
 	uint32							mWindowStyle;
 
 	static int						sWindowClassIndex;

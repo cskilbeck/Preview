@@ -161,7 +161,7 @@ HRESULT VertexShader::Create(void const *blob, size_t size, D3D11_INPUT_ELEMENT_
 	DX(Destroy());
 	DX(Shader::Create(blob, size));
 	DX(gDevice->CreateVertexShader(blob, size, null, &vertexShader));
-	vector<D3D11_INPUT_ELEMENT_DESC> ied;
+	Vector<D3D11_INPUT_ELEMENT_DESC> ied;
 	if(inputDesc == null)
 	{
 		ied.resize(mShaderDesc.InputParameters);
