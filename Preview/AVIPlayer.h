@@ -30,6 +30,15 @@ struct MyPlayer
 
 	//////////////////////////////////////////////////////////////////////
 
+	HRESULT Close()
+	{
+		DX(movie.Close());
+		texture.reset();
+		return S_OK;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
 	HRESULT Open(wchar const *filename)
 	{
 		DX(movie.Open(filename, 4));
@@ -75,6 +84,8 @@ struct AVIPlayer: DXWindow
 		Vec2 mPos;
 		Color mColor;
 	};
+
+	static_assert(sizeof(ColorVertex) == 12, "Incorrect size for ColorVertex!?");
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -122,14 +133,12 @@ struct AVIPlayer: DXWindow
 	void OnChar(int key, uintptr flags) override;
 	void OnDestroy() override;
 
-	HRESULT LoadShaders();
-	HRESULT CreateSampler();
-	HRESULT CreateVertexBuffer();
 	HRESULT CreateRasterizerState();
 	HRESULT CreateBlendState();
 	HRESULT CreateDepthStencilState();
-	HRESULT CreateVertexShaderConstants();
-	HRESULT CreatePixelShaderConstants();
+
+	HRESULT LoadUntexturedMaterial();
+	HRESULT LoadAlphaMaterial();
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -147,7 +156,6 @@ struct AVIPlayer: DXWindow
 	float mScale;
 	Timer mTimer;
 	double mDeltaTime;
-	Vertex vert[6];
 
 	MyPlayer movie1;
 	MyPlayer movie2;
@@ -159,14 +167,9 @@ struct AVIPlayer: DXWindow
 	VertexShader					colorVertexShader;
 	VertexBuffer<ColorVertex>		colorVertexBuffer;
 
-	DXPtr<ID3D11InputLayout>		vertexLayout;
-	DXPtr<ID3D11PixelShader>		pixelShader;
-	DXPtr<ID3D11VertexShader>		vertexShader;
-	DXPtr<ID3D11Buffer>				vertexBuffer;
-	DXPtr<ID3D11Buffer>				vertexShaderConstants;
-	DXPtr<ID3D11Buffer>				pixelShaderConstants;
-
-	DXPtr<ID3D11InputLayout>		colorVertexLayout;
+	PixelShader						alphaPixelShader;
+	VertexShader					alphaVertexShader;
+	VertexBuffer<Vertex>			alphaVertexBuffer;
 
 	DXPtr<ID3D11RasterizerState>	rasterizerState;
 	DXPtr<ID3D11BlendState>			blendState;

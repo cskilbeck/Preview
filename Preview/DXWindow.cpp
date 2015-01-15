@@ -105,11 +105,13 @@ bool DXWindow::OpenD3D()
 	};
 	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 
+
+
 	DXGI_SWAP_CHAIN_DESC sd;
 	ZeroMemory(&sd, sizeof(sd));
 	sd.BufferCount = 1;
-	sd.BufferDesc.Width = Width();
-	sd.BufferDesc.Height = Height();
+	sd.BufferDesc.Width = 0;
+	sd.BufferDesc.Height = 0;
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;

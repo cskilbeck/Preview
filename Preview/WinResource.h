@@ -39,6 +39,10 @@ struct Resource
 
 	//////////////////////////////////////////////////////////////////////
 
+	virtual void Release() = 0;
+
+	//////////////////////////////////////////////////////////////////////
+
 protected:
 
 	void *		data;
@@ -50,16 +54,22 @@ protected:
 
 struct FileResource: Resource
 {
+	FileResource();
 	FileResource(tchar const *name);
 	~FileResource();
+	void Release() override;
+	void Load(tchar const *name);
 };
 
 //////////////////////////////////////////////////////////////////////
 
 struct WinResource: Resource
 {
+	WinResource();
 	WinResource(DWORD resourceID);
 	~WinResource();
+	void Release() override;
+	void Load(DWORD resourceID);
 };
 
 //////////////////////////////////////////////////////////////////////

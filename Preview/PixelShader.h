@@ -13,6 +13,5 @@ struct PixelShader: Shader
 
 	HRESULT Create(void const *blob, size_t size);
 	void Activate(ID3D11DeviceContext *context);
-	void LoadConstants(ID3D11DeviceContext *context);
 };
 

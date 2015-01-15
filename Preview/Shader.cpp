@@ -44,12 +44,10 @@ void Shader::DeleteConstantBuffers()
 
 HRESULT Shader::CreateConstantBuffer(D3D11_SHADER_INPUT_BIND_DESC desc)
 {
-	TRACE("  ConstantBuffer: %s at %d\n", desc.Name, desc.BindPoint);
 	ConstantBuffer *cb = new ConstantBuffer();
 	uint i = desc.BindPoint;
 	DX(cb->Create(mReflector->GetConstantBufferByIndex(i)));	// BUG: this is wrong... BindPoint is not Index if you have other types of exposed structures in the shader (and they're not guaranteed to be same in any case)
 	mConstBufferIDs[string(cb->Name)] = i;
-	TRACE("===>mConstBufferIDs[%s] = %d\n", cb->Name, i);
 	AddAt(mConstantBuffers, i, cb);
 	AddAt(mBuffers, i, cb->mConstantBuffer.get());
 	return S_OK;
@@ -86,7 +84,6 @@ HRESULT Shader::CreateBindings()
 	{
 		D3D11_SHADER_INPUT_BIND_DESC d;
 		mReflector->GetResourceBindingDesc(i, &d);
-		TRACE("Binding %d\n", i);
 		DX(CreateBinding(d));
 	}
 	return S_OK;
@@ -96,7 +93,6 @@ HRESULT Shader::CreateBindings()
 
 HRESULT Shader::CreateTextureBinding(D3D11_SHADER_INPUT_BIND_DESC desc)
 {
-	TRACE("  Texture: %s at %d\n", desc.Name, desc.BindPoint);
 	AddAt(mTextures, desc.BindPoint, (ID3D11ShaderResourceView *)null);
 	mTextureIDs[string(desc.Name)] = desc.BindPoint;
 	return S_OK;
@@ -106,7 +102,6 @@ HRESULT Shader::CreateTextureBinding(D3D11_SHADER_INPUT_BIND_DESC desc)
 
 HRESULT Shader::CreateSamplerBinding(D3D11_SHADER_INPUT_BIND_DESC desc)
 {
-	TRACE("  Sampler: %s at %d\n", desc.Name, desc.BindPoint);
 	AddAt(mSamplers, desc.BindPoint, (ID3D11SamplerState *)null);
 	mSamplerIDs[desc.Name] = desc.BindPoint;
 	return S_OK;

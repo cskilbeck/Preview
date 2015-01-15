@@ -126,7 +126,7 @@ uint SizeOfFormatElement(DXGI_FORMAT format)
 
 //////////////////////////////////////////////////////////////////////
 
-static DXGI_FORMAT formats[4][4] =
+DXGI_FORMAT formats[4][4] =
 {
 	{
 		DXGI_FORMAT_R32_TYPELESS,
@@ -156,62 +156,43 @@ static DXGI_FORMAT formats[4][4] =
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT VertexShader::CreateInputLayout(void const *blob, size_t size)
+HRESULT VertexShader::Create(void const *blob, size_t size, D3D11_INPUT_ELEMENT_DESC *inputDesc, int numElements)
 {
-	vector<D3D11_INPUT_ELEMENT_DESC> ied;
-	ied.resize(mShaderDesc.InputParameters);
-	vertexSize = 0;
-	for(uint i = 0; i < mShaderDesc.InputParameters; ++i)
-	{
-		D3D11_INPUT_ELEMENT_DESC &d = ied[i];
-		D3D11_SIGNATURE_PARAMETER_DESC pd;
-		mReflector->GetInputParameterDesc(i, &pd);
-		ZeroMemory(&d, sizeof(d));
-		d.SemanticName = pd.SemanticName;
-		d.SemanticIndex = pd.SemanticIndex;
-		d.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-		d.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-		d.Format = formats[CountBits(pd.Mask) - 1][pd.ComponentType];
-		uint size2 = SizeOfFormatElement(d.Format) / 8;
-		vertexSize += size2;
-		TRACE("Index %d = %s%d (%d elements, size = %d bytes in total)\n", i, pd.SemanticName, pd.SemanticIndex, CountBits(pd.Mask), size2);
-	}
-	TRACE("Total vertexSize: %d\n", vertexSize);
-	vertexLayout.Release();
-	DX(gDevice->CreateInputLayout(&ied[0], (uint)ied.size(), blob, size, &vertexLayout));
-	return S_OK;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-HRESULT VertexShader::Create(void const *blob, size_t size)
-{
-	TRACE(TEXT("VertexShader:\n"));
+	DX(Destroy());
 	DX(Shader::Create(blob, size));
-	vertexShader.Release();
 	DX(gDevice->CreateVertexShader(blob, size, null, &vertexShader));
-	DX(CreateInputLayout(blob, size));
+	vector<D3D11_INPUT_ELEMENT_DESC> ied;
+	if(inputDesc == null)
+	{
+		ied.resize(mShaderDesc.InputParameters);
+		for(uint i = 0; i < mShaderDesc.InputParameters; ++i)
+		{
+			D3D11_INPUT_ELEMENT_DESC &d = ied[i];
+			D3D11_SIGNATURE_PARAMETER_DESC pd;
+			mReflector->GetInputParameterDesc(i, &pd);
+			ZeroMemory(&d, sizeof(d));
+			d.SemanticName = pd.SemanticName;
+			d.SemanticIndex = pd.SemanticIndex;
+			d.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+			d.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+			d.Format = formats[CountBits(pd.Mask) - 1][pd.ComponentType];
+			uint size2 = SizeOfFormatElement(d.Format) / 8;
+		}
+		inputDesc = &ied[0];
+		numElements = (int)ied.size();
+	}
+	vertexLayout.Release();
+	DX(gDevice->CreateInputLayout(inputDesc, numElements, blob, size, &vertexLayout));
 	return S_OK;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void VertexShader::LoadConstants(ID3D11DeviceContext *context)
-{
-	context->VSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
 }
 
 //////////////////////////////////////////////////////////////////////
 
 void VertexShader::Activate(ID3D11DeviceContext *context)
 {
-	for(auto i = mConstantBuffers.begin(); i != mConstantBuffers.end(); ++i)
-	{
-		(*i)->Commit(context);
-	}
 	context->IASetInputLayout(vertexLayout);
-	LoadConstants(context);
-	context->VSSetShader(vertexShader, NULL, 0);
+	context->VSSetConstantBuffers(0, (uint)mBuffers.size(), &mBuffers[0]);
+	context->VSSetShader(vertexShader, null, 0);
 }
 
 //////////////////////////////////////////////////////////////////////

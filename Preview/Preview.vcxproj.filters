@@ -211,11 +211,17 @@
     <None Include="drag.cur">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="CompiledShaders\SimplePixelShader.cso" />
-    <None Include="CompiledShaders\SimpleVertexShader.cso" />
-    <None Include="CompiledShaders\AlphaPixelShader.cso" />
-    <None Include="CompiledShaders\AlphaVertexShader.cso" />
-    <None Include="CompiledShaders\UntexturedPixelShader.cso" />
-    <None Include="CompiledShaders\UntexturedVertexShader.cso" />
+    <None Include="CompiledShaders\AlphaPixelShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CompiledShaders\AlphaVertexShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CompiledShaders\UntexturedPixelShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CompiledShaders\UntexturedVertexShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

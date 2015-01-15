@@ -95,7 +95,8 @@ ConstantBuffer::ConstantBuffer()
 
 ConstantBuffer::~ConstantBuffer()
 {
-	mConstantBuffer->Release();
+	mConstantBuffer.Release();
+	Buffer.reset();
 }
 
 //////////////////////////////////////////////////////////////////////

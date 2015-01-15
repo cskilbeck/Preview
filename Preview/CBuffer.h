@@ -21,8 +21,18 @@ struct ConstantBuffer
 	byte *		GetBuffer();
 	void		Commit(ID3D11DeviceContext *context);
 
+	template <typename T> void Set(char const *name, T &value)
+	{
+		*((T *)AddressOf(name)) = value;
+	}
+
+	byte * operator [] (char const *name)
+	{
+		return AddressOf(name);
+	}
+
 	char const *		Name;
-	size_t				TotalSizeInBytes;
+	uint32				TotalSizeInBytes;
 	Ptr<byte>			Buffer;
 	DXPtr<ID3D11Buffer>	mConstantBuffer;
 
@@ -71,3 +81,4 @@ inline byte *ConstantBuffer::GetBuffer()
 {
 	return Buffer.get();
 }
+
