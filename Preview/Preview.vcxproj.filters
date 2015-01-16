@@ -197,13 +197,13 @@
     <FxCompile Include="UntexturedPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="AlphaPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="AlphaVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="UntexturedVertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="AlphaPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

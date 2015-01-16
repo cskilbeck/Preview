@@ -4,13 +4,11 @@
 
 //////////////////////////////////////////////////////////////////////
 
-HRESULT PixelShader::Create(void const *blob, size_t size)
+HRESULT PixelShader::Create(Resource const &blob)
 {
-	TRACE(TEXT("PixelShader:\n"));
-	DX(Shader::Create(blob, size));
-
-	pixelShader.Release();
-	DX(gDevice->CreatePixelShader(blob, size, null, &pixelShader));
+	DX(Destroy());
+	DX(Shader::Create(blob, blob.Size()));
+	DX(gDevice->CreatePixelShader(blob, blob.Size(), null, &pixelShader));
 	return S_OK;
 }
 
@@ -31,6 +29,8 @@ HRESULT PixelShader::Destroy()
 	pixelShader.Release();
 	return Shader::Destroy();
 }
+
+//////////////////////////////////////////////////////////////////////
 
 PixelShader::~PixelShader()
 {

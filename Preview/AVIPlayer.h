@@ -65,6 +65,18 @@ struct MyPlayer
 		}
 	}
 
+	void TogglePause()
+	{
+		if(movie.IsPaused())
+		{
+			movie.Play();
+		}
+		else
+		{
+			movie.Pause();
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////
 
 	int CurrentFrame() const
@@ -75,54 +87,28 @@ struct MyPlayer
 
 //////////////////////////////////////////////////////////////////////
 
+#define VertexDef(def_vert, element, end_def)								\
+	def_vert(Vertex)														\
+		element(Float, 2, mPosition, POSITION, 0, DXGI_FORMAT_R32G32_FLOAT)	\
+		element(Float, 2, mTexCoord, TEXCOORD, 0, DXGI_FORMAT_R32G32_FLOAT)	\
+	end_def()
+
+vert_GenerateStruct(VertexDef)
+vert_GenerateFields(VertexDef)
+
+#define ColorVertexDef(def_vert, element, end_def)							\
+	def_vert(ColorVertex)													\
+		element(Float, 2, mPos,   POSITION, 0, DXGI_FORMAT_R32G32_FLOAT)	\
+		element(Byte,  4, mColor, COLOR,    0, DXGI_FORMAT_R8G8B8A8_UNORM)	\
+	end_def()
+
+vert_GenerateStruct(ColorVertexDef)
+vert_GenerateFields(ColorVertexDef)
+
+//////////////////////////////////////////////////////////////////////
+
 struct AVIPlayer: DXWindow
 {
-	//////////////////////////////////////////////////////////////////////
-
-	__declspec (align(4)) struct ColorVertex
-	{
-		Vec2 mPos;
-		Color mColor;
-	};
-
-	static_assert(sizeof(ColorVertex) == 12, "Incorrect size for ColorVertex!?");
-
-	//////////////////////////////////////////////////////////////////////
-
-	__declspec (align(4)) struct Vertex
-	{
-		Vec2 mPos;
-		Vec2 mTexCoord;
-
-		void Set(Vec2 const &pos, Vec2 const &texCoord)
-		{
-			mPos = pos;
-			mTexCoord = texCoord;
-		}
-	};
-
-	//////////////////////////////////////////////////////////////////////
-
-	struct PixelShaderConstants
-	{
-		DirectX::XMVECTOR channelMask;
-		DirectX::XMVECTOR channelOffset;
-		DirectX::XMVECTOR gridColor0;
-		DirectX::XMVECTOR gridColor1;
-		DirectX::XMFLOAT2 gridSize;
-		DirectX::XMFLOAT2 gridSize2;
-	};
-
-	//////////////////////////////////////////////////////////////////////
-
-	struct VertexShaderConstants
-	{
-		Matrix matrix;
-		DirectX::XMFLOAT2 textureSize;
-	};
-
-	//////////////////////////////////////////////////////////////////////
-
 	AVIPlayer(int width = 640, int height = 480);
 	~AVIPlayer();
 
@@ -133,48 +119,25 @@ struct AVIPlayer: DXWindow
 	void OnChar(int key, uintptr flags) override;
 	void OnDestroy() override;
 
-	HRESULT CreateRasterizerState();
-	HRESULT CreateBlendState();
-	HRESULT CreateDepthStencilState();
-
-	HRESULT LoadUntexturedMaterial();
-	HRESULT LoadAlphaMaterial();
-
 	//////////////////////////////////////////////////////////////////////
 
-	Vec2 MovieBorder() const;
-	Vec2 DXSize() const;
 	void CalcDrawRect();
 	void SetQuad(bool upsideDown);
 
 	//////////////////////////////////////////////////////////////////////
 
 	HMENU mMenu;
-	Color mBackgroundColor;
-	HCURSOR mHandCursor;
 	RectF mDrawRect;
-	float mScale;
 	Timer mTimer;
 	double mDeltaTime;
-
 	MyPlayer movie1;
 	MyPlayer movie2;
-
 	int frameToPlay;
 	int frameDropped;
-
-	PixelShader						colorPixelShader;
-	VertexShader					colorVertexShader;
-	VertexBuffer<ColorVertex>		colorVertexBuffer;
-
-	PixelShader						alphaPixelShader;
-	VertexShader					alphaVertexShader;
-	VertexBuffer<Vertex>			alphaVertexBuffer;
-
-	DXPtr<ID3D11RasterizerState>	rasterizerState;
-	DXPtr<ID3D11BlendState>			blendState;
-	DXPtr<ID3D11SamplerState>		sampler;
-	DXPtr<ID3D11DepthStencilState>	mDepthStencilState;
+	Material colorMaterial;
+	Material alphaMaterial;
+	VertexBuffer colorVertexBuffer;
+	VertexBuffer alphaVertexBuffer;
 
 	//////////////////////////////////////////////////////////////////////
 

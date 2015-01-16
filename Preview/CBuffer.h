@@ -112,7 +112,7 @@ inline byte *ConstantBuffer::AddressOf(String const &name)
 
 inline byte *ConstantBuffer::AddressOf(int index)
 {
-	assert(index >= 0 && index < Parameters.size());
+	assert(index >= 0 && index < (int)Parameters.size());
 	return Buffer.get() + Parameters[index].Variable.StartOffset;
 }
 
@@ -128,7 +128,7 @@ inline uint ConstantBuffer::SizeOf(String const &name) const
 
 inline uint ConstantBuffer::SizeOf(int index) const
 {
-	assert(index >= 0 && index < Parameters.size());
+	assert(index >= 0 && index < (int)Parameters.size());
 	return Parameters[index].Variable.Size;
 }
 

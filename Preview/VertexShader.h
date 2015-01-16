@@ -7,33 +7,34 @@
 struct VertexShader: Shader
 {
 	DXPtr<ID3D11VertexShader>	vertexShader;
-	DXPtr<ID3D11InputLayout>	vertexLayout;
 
 	virtual ~VertexShader() override;
 	virtual HRESULT Destroy() override;
 
-	HRESULT Create(void const *blob, size_t size, D3D11_INPUT_ELEMENT_DESC *inputDesc, int numElements);
+	HRESULT Create(Resource const &blob, field_definition const inputDesc[], int numElements);
 	void Activate(ID3D11DeviceContext *context);
 	void LoadConstants(ID3D11DeviceContext *context);
 };
 
 //////////////////////////////////////////////////////////////////////
 
-template <typename T> struct VertexBuffer
+struct VertexBuffer
 {
-	HRESULT Create(int vertCount)
+	template <typename T> HRESULT Create(int vertCount, Resource const &vsBlob)
 	{
 		vertexCount = vertCount;
-		TRACE("Vertex Size: %d\n", sizeof(T));
-		memBuffer.reset(new T[vertexCount]);
+		vertexSize = sizeof(T);
+		memBuffer.reset(new byte[vertexCount * vertexSize]);
 		CD3D11_BUFFER_DESC bd(sizeof(T) * vertexCount, D3D11_BIND_VERTEX_BUFFER);
 		D3D11_SUBRESOURCE_DATA InitData = { (void *)memBuffer.get(), 0, 0 };
 		DX(gDevice->CreateBuffer(&bd, &InitData, &buffer));
+		DX(CreateInputLayout(T::fields, _countof(T::fields), vsBlob, vsBlob.Size(), &vertexLayout));
 		return S_OK;
 	}
 
 	void Destroy()
 	{
+		vertexLayout.Release();
 		buffer.Release();
 		memBuffer.reset();
 	}
@@ -45,12 +46,13 @@ template <typename T> struct VertexBuffer
 
 	void Activate(ID3D11DeviceContext *context)
 	{
-		UINT stride = sizeof(T);
+		UINT stride = vertexSize;
 		UINT offset = 0;
+		context->IASetInputLayout(vertexLayout);
 		context->IASetVertexBuffers(0, 1, &buffer, &stride, &offset);
 	}
 
-	T *GetBuffer()
+	byte *GetBuffer()
 	{
 		return memBuffer.get();
 	}
@@ -60,12 +62,15 @@ template <typename T> struct VertexBuffer
 		return vertexCount;
 	}
 
-	size_t VertexSize() const
+	uint VertexSize() const
 	{
-		return sizeof(T);
+		return vertexSize;
 	}
 
 	uint vertexCount;
+	uint vertexSize;
 	DXPtr<ID3D11Buffer> buffer;
-	Ptr<T> memBuffer;
+	DXPtr<ID3D11InputLayout> vertexLayout;
+	Ptr<byte> memBuffer;
 };
+
