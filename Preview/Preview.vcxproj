@@ -175,6 +175,7 @@
     <ClInclude Include="Types.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="Vec2.h" />
+    <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="VertexShader.h" />
     <ClInclude Include="Win32.h" />
     <ClInclude Include="Window.h" />

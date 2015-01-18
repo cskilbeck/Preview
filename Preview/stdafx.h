@@ -62,6 +62,7 @@ using chs::list_node;
 #include "CBuffer.h"
 #include "Shader.h"
 #include "VertexShader.h"
+#include "VertexBuffer.h"
 #include "PixelShader.h"
 #include "Material.h"
 #include "Window.h"

@@ -9,8 +9,8 @@ cbuffer VertConstants
 
 struct VS_INPUT
 {
-	float2 pos : POSITION;
-	float4 col : COLOR0;
+	float2 Pos : POSITION_Float;
+	float4 Color : COLOR_Byte;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -26,8 +26,8 @@ struct PS_INPUT
 PS_INPUT main(VS_INPUT input)
 {
 	PS_INPUT o;
-	o.Pos = mul(float4(input.pos.x, input.pos.y, 0.5, 1.0), ProjectionMatrix);
-	o.col = input.col;
+	o.Pos = mul(float4(input.Pos.x, input.Pos.y, 0.5, 1.0), ProjectionMatrix);
+	o.col = input.Color;
 	return o;
 }
 

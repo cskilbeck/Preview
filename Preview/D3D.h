@@ -234,11 +234,11 @@ struct field_definition
 
 #define struct_def_vert(name) __declspec(align(4)) struct name {
 #define struct_element(type, size, name, meaning, index, format) HLSL::type##size name; 
-#define struct_end_def() static const field_definition fields[]; };
+#define struct_end_def static const field_definition fields[]; };
 
 #define array_def_vert(name) const __declspec(selectany) field_definition name::fields[] = {
 #define array_element(type, size, name, meaning, index, format) { #meaning, index, type##_input, size, format },
-#define array_end_def() };
+#define array_end_def };
 
 #define vert_GenerateStruct(T) T(struct_def_vert, struct_element, struct_end_def)
 #define vert_GenerateFields(T) T(array_def_vert, array_element, array_end_def); 

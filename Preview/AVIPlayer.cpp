@@ -290,14 +290,22 @@ void AVIPlayer::OnDraw()
 	mContext->RSSetViewports(1, &vp);
 	mContext->Draw(alphaVertexBuffer.VertexCount(), 0);
 
+	{
+		static uint32 tot[3] = { 0, 0 };
+		static Random bfoo;
+		tot[bfoo.Ranged(_countof(tot))]++;
+		Trace("%9d,%9d,%9d\n", tot[0], tot[1], tot[2]);
+
+	}
+
 	if(frameDropped != 0)
 	{
 		ColorVertex *d = (ColorVertex *)colorVertexBuffer.GetBuffer();
 		Vertex *s = (Vertex *)alphaVertexBuffer.GetBuffer();
 		for(uint i = 0; i < colorVertexBuffer.VertexCount(); ++i)
 		{
-			d[i].mPos = s[i].mPosition;
-			d[i].mColor = 0x8080ff00;
+			d[i].Pos = s[i].mPosition;
+			d[i].Color = 0x8080ff00;
 		}
 		colorVertexBuffer.Commit(mContext);
 		colorVertexBuffer.Activate(mContext);

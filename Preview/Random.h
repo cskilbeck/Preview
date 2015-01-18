@@ -8,7 +8,21 @@ struct Random
 {
 	//////////////////////////////////////////////////////////////////////
 
+	Random()
+	{
+		Seed((uint32)__rdtsc());
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
 	Random(uint32 seed)
+	{
+		Seed(seed);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+
+	void Seed(uint32 seed)
 	{
 		a = 0xf1ea5eed;
 		b = c = d = seed;
@@ -28,6 +42,34 @@ struct Random
 		c = d + e;
 		d = e + a;
 		return d;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	// 0 <= N < range
+
+	uint32 Ranged(uint32 range)
+	{
+		assert(range != UINT32_MAX);
+
+		uint32 dv = UINT32_MAX / (range + 1);
+		while(true)
+		{
+			uint32 rc = Next() / dv;
+			if(rc < range)
+			{
+				return rc;
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	// min <= N < max
+
+	uint32 Ranged(uint32 min, uint32 max)
+	{
+		assert((max - min) > 1);
+
+		return Ranged(max - min) + min;
 	}
 
 	//////////////////////////////////////////////////////////////////////

@@ -87,20 +87,37 @@ struct MyPlayer
 
 //////////////////////////////////////////////////////////////////////
 
+#define Verty(struct, _, end)                     \
+struct(Vertex)                                    \
+	_(Float3, Position, Float, POSITION_float, 0) \
+	_(Float3, Normal,   Float, NORMAL_float,   0) \
+	_(Float2, UVa,      Float, TEXCOORD_float, 0) \
+	_(Float2, UVb,      Float, TEXCOORD_float, 1) \
+	_(Byte4,  Color,    Float, COLOR_unorm,    0) \
+end
+
+// float
+// sint
+// snorm
+// srgb
+// typeless
+// uint
+// unorm
+
 #define VertexDef(def_vert, element, end_def)								\
 	def_vert(Vertex)														\
 		element(Float, 2, mPosition, POSITION, 0, DXGI_FORMAT_R32G32_FLOAT)	\
 		element(Float, 2, mTexCoord, TEXCOORD, 0, DXGI_FORMAT_R32G32_FLOAT)	\
-	end_def()
+	end_def
 
 vert_GenerateStruct(VertexDef)
 vert_GenerateFields(VertexDef)
 
-#define ColorVertexDef(def_vert, element, end_def)							\
-	def_vert(ColorVertex)													\
-		element(Float, 2, mPos,   POSITION, 0, DXGI_FORMAT_R32G32_FLOAT)	\
-		element(Byte,  4, mColor, COLOR,    0, DXGI_FORMAT_R8G8B8A8_UNORM)	\
-	end_def()
+#define ColorVertexDef(struct, _, end)                                \
+struct(ColorVertex)                                                   \
+	_(Float, 2, Pos,   POSITION_Float, 0, DXGI_FORMAT_R32G32_FLOAT)   \
+	_(Byte,  4, Color, COLOR_Byte,     0, DXGI_FORMAT_R8G8B8A8_UNORM) \
+end
 
 vert_GenerateStruct(ColorVertexDef)
 vert_GenerateFields(ColorVertexDef)
