@@ -3,14 +3,15 @@
 cbuffer VertConstants
 {
 	float4x4 ProjectionMatrix;
+	float bob = 2.0;
 }
 
 //////////////////////////////////////////////////////////////////////
 
 struct VS_INPUT
 {
-	float2 Pos : POSITION_FLOAT32;
-	float4 Color : COLOR_UNORM8;
+	float2 Pos : FLOAT_POSITION;
+	float4 Color : BYTE_COLOR;
 };
 
 //////////////////////////////////////////////////////////////////////
