@@ -16,7 +16,7 @@ protected:
 	void OnPaint(PAINTSTRUCT &ps) override;
 	bool OnUpdate() override;
 	bool OnCreate() override;
-	void OnResize() override;
+	void OnResized() override;
 	void OnDestroy() override;
 
 	bool OpenD3D();

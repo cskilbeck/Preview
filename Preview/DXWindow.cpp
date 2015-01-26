@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 DXWindow::DXWindow(int width, int height, tchar const *caption)
-	: Window(width, height, caption)
+	: Window(width, height, caption, WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW|WS_SIZEBOX|WS_BORDER)
 	, mFrame(0)
 	, mDXWindow(null)
 {
@@ -49,7 +49,7 @@ void DXWindow::OnDraw()
 
 //////////////////////////////////////////////////////////////////////
 
-void DXWindow::OnResize()
+void DXWindow::OnResized()
 {
 	if(ResizeD3D())
 	{

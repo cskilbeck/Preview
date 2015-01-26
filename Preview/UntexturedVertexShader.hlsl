@@ -10,7 +10,7 @@ cbuffer VertConstants
 
 struct VS_INPUT
 {
-	float2 Pos : HALF_Pos;
+	float2 Pos : FLOAT_Position;
 	float4 Color : BYTE_Color;
 };
 

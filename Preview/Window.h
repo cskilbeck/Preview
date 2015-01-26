@@ -13,7 +13,8 @@ struct Window
 	virtual bool OnUpdate();
 	virtual void OnPaint(PAINTSTRUCT &ps);
 	virtual void OnDestroy();
-	virtual void OnResize();
+	virtual void OnMoved();
+	virtual void OnResized();
 	virtual void OnMouseMove(Point2D pos, uintptr flags);
 	virtual void OnMouseWheel(Point2D pos, int delta, uintptr flags);
 	virtual void OnLeftMouseDoubleClick(Point2D pos);
@@ -39,15 +40,22 @@ struct Window
 	Rect2D ClientRect() const;
 	bool SetMessageWait(bool wait);
 	bool GetMessageWait() const;
+	void MoveTo(int x, int y);
 	void SetWindowRect(Rect2D const &r);
 	void SetWindowSize(int newWidth, int newHeight);
 	void SetClientSize(int newWidth, int newHeight);
 	Rect2D GetWindowRectFromClientRect(Rect2D const &clientRect);
 	Rect2D GetClientRectFromWindowRect(Rect2D const &windowRect);
 
+	HWND Handle() const
+	{
+		return mHWND;
+	}
+
 protected:
 
 	void DoResize();
+	void DoMove();
 	bool Init(int width, int height);
 	long GetStyle() const;
 	long GetExStyle() const;
@@ -57,6 +65,7 @@ protected:
 	LRESULT HandleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 	int								mWidth;
 	int								mHeight;

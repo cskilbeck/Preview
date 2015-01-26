@@ -66,6 +66,7 @@ using chs::list_node;
 #include "PixelShader.h"
 #include "Material.h"
 #include "Window.h"
+#include "MovieControlWindow.h"
 #include "DXWindow.h"
 #include "MoviePlayer.h"
 #include "AVIPlayer.h"

@@ -50,7 +50,7 @@ Window::Window(int width, int height, tchar const *caption, uint32 windowStyle, 
 	, mLeftMouseDown(false)
 	, mRightMouseDown(false)
 	, mMessageWait(true)
-	, mCaption(caption)
+	, mCaption(caption == null ? TString() : caption)
 	, mClassName(className == null ? TString() : className)
 	, mWindowStyle(windowStyle)
 	, mParentHWND(parent)
@@ -90,22 +90,21 @@ bool Window::Init(int width, int height)
 	if(mClassName.empty())
 	{
 		mClassName = Format("WindowClass%d", sWindowClassIndex++);
+		WNDCLASSEX wcex;
+		wcex.cbSize = sizeof(WNDCLASSEX);
+		wcex.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+		wcex.lpfnWndProc = WndProc;
+		wcex.cbClsExtra = 0;
+		wcex.cbWndExtra = sizeof(intptr);
+		wcex.hInstance = 0;
+		wcex.hIcon = null;
+		wcex.hCursor = LoadCursor(null, IDC_ARROW);
+		wcex.hbrBackground = null;
+		wcex.lpszMenuName = null;
+		wcex.lpszClassName = mClassName.c_str();
+		wcex.hIconSm = null;
+		RegisterClassEx(&wcex);
 	}
-
-	WNDCLASSEX wcex;
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
-	wcex.lpfnWndProc = WndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = sizeof(Window *);
-	wcex.hInstance = 0;
-	wcex.hIcon = null;
-	wcex.hCursor = LoadCursor(null, IDC_ARROW);
-	wcex.hbrBackground = null;
-	wcex.lpszMenuName = null;
-	wcex.lpszClassName = mClassName.c_str();
-	wcex.hIconSm = null;
-	RegisterClassEx(&wcex);
 
 	mWidth = width;
 	mHeight = height;
@@ -126,7 +125,7 @@ bool Window::Init(int width, int height)
 
 bool Window::OnCreate()
 {
-	MoveToMiddleOfMonitor();
+//	MoveToMiddleOfMonitor();
 	return true;
 }
 
@@ -222,6 +221,13 @@ void Window::SetWindowSize(int newWidth, int newHeight)
 
 //////////////////////////////////////////////////////////////////////
 
+void Window::MoveTo(int x, int y)
+{
+	SetWindowPos(mHWND, null, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 bool Window::Update()
 {
 	MSG msg;
@@ -296,6 +302,10 @@ LRESULT Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case WM_SIZE:
 			DoResize();
+			break;
+
+		case WM_MOVE:
+			DoMove();
 			break;
 
 		case WM_SIZING:
@@ -376,7 +386,18 @@ void Window::DoResize()
 	GetClientRect(mHWND, &rc);
 	mWidth = rc.Width();
 	mHeight = rc.Height();
-	OnResize();
+	OnResized();
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::DoMove()
+{
+	Rect2D rc;
+	GetClientRect(mHWND, &rc);
+	mWidth = rc.Width();
+	mHeight = rc.Height();
+	OnMoved();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -417,7 +438,13 @@ bool Window::OnUpdate()
 
 //////////////////////////////////////////////////////////////////////
 
-void Window::OnResize()
+void Window::OnResized()
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void Window::OnMoved()
 {
 }
 

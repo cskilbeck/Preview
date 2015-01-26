@@ -3,7 +3,9 @@
 // VideoPlayer window with controls for pause, ff, rewind, scrub etc
 // Fix the scaling crap to only resize when the window is resized
 // Maintain aspect ratio of the movies
-// 
+// Movies can be zoomed and panned - joined or independently
+// Movies can be framestepped and paused individually or together
+// MovieController 
 //
 //
 //
@@ -53,8 +55,9 @@ static void Text(HDC dc, int x, int y, tchar const *fmt, ...)
 
 void AVIPlayer::SetQuad(bool upsideDown)
 {
-	float v1 = upsideDown ? 1.0f : 0.0f;
-	float v2 = 1.0f - v1;
+	float v0 = 0.1f;
+	float v1 = upsideDown ? 0.1f : 0.0f;
+	float v2 = 0.1f - v1;
 
 	Vec2 p[4] =
 	{
@@ -67,8 +70,8 @@ void AVIPlayer::SetQuad(bool upsideDown)
 	Vec2 uv[4] =
 	{
 		Vec2(0, v1),
-		Vec2(1, v1),
-		Vec2(1, v2),
+		Vec2(v0, v1),
+		Vec2(v0, v2),
 		Vec2(0, v2)
 	};
 
@@ -87,6 +90,9 @@ void AVIPlayer::SetQuad(bool upsideDown)
 AVIPlayer::AVIPlayer(int width, int height)
 	: DXWindow(width, height)
 	, mMenu(null)
+	, leftControl(null)
+	, rightControl(null)
+	, bothControl(null)
 {
 }
 
@@ -133,11 +139,15 @@ void AVIPlayer::OnChar(int key, uintptr flags)
 
 //////////////////////////////////////////////////////////////////////
 
-void AVIPlayer::OnResize()
+void AVIPlayer::OnResized()
 {
 	SetWindowPos(mDXWindow, null, 0, 0, Width(), Height() / 2, SWP_NOZORDER);
 	CalcDrawRect();
-	DXWindow::OnResize();
+	if(leftControl != null)
+	{
+		leftControl->MoveTo((Width() - leftControl->Width()) / 2, Height() / 2);
+	}
+	DXWindow::OnResized();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -172,7 +182,6 @@ bool AVIPlayer::OnCreate()
 	if(DXWindow::OnCreate())
 	{
 		MoveToMiddleOfMonitor();
-
 		{
 			WinResource vs(IDR_COLORVERTEXSHADER);
 			WinResource ps(IDR_COLORPIXELSHADER);
@@ -201,10 +210,14 @@ bool AVIPlayer::OnCreate()
 		frameToPlay = 0;
 
 		DXB(movie1.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
-		DXB(movie2.Open(L"D:\\AVCaptures\\XB1_intro.avi"));
+		DXB(movie2.Open(L"D:\\AVCaptures\\PS4_intro.avi"));
 
 		movie1.movie.Play();
 		movie2.movie.Play();
+
+		leftControl = new MovieControlWindow(this->mHWND);
+		leftControl->MoveTo((Width() - leftControl->Width()) / 2, Height() / 2);
+		leftControl->Show();
 
 		mTimer.Reset();
 		return true;
@@ -290,15 +303,7 @@ void AVIPlayer::OnDraw()
 	mContext->RSSetViewports(1, &vp);
 	mContext->Draw(alphaVertexBuffer.VertexCount(), 0);
 
-	{
-		static uint32 tot[3] = { 0, 0 };
-		static Random bfoo;
-		tot[bfoo.Ranged(_countof(tot))]++;
-		Trace("%9d,%9d,%9d\n", tot[0], tot[1], tot[2]);
-
-	}
-
-	if(frameDropped != 0)
+	if(frameDropped != 0 && !movie1.movie.IsPaused())
 	{
 		ColorVertex *d = (ColorVertex *)colorVertexBuffer.GetBuffer();
 		Vertex *s = (Vertex *)alphaVertexBuffer.GetBuffer();

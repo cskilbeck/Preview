@@ -115,8 +115,8 @@ vert_GenerateFields(VertexDef)
 
 #define ColorVertexDef(struct, _, end)                                \
 struct(ColorVertex)                                                   \
-	_(Float, 2, Pos,   POSITION_Float, 0, DXGI_FORMAT_R32G32_FLOAT)   \
-	_(Byte,  4, Color, COLOR_Byte,     0, DXGI_FORMAT_R8G8B8A8_UNORM) \
+	_(Float, 2, Pos,   FLOAT_Position, 0, DXGI_FORMAT_R32G32_FLOAT)   \
+	_(Byte,  4, Color, BYTE_Color,     0, DXGI_FORMAT_R8G8B8A8_UNORM) \
 end
 
 vert_GenerateStruct(ColorVertexDef)
@@ -132,7 +132,7 @@ struct AVIPlayer: DXWindow
 	bool OnCreate() override;
 	bool OnUpdate() override;
 	void OnDraw() override;
-	void OnResize() override;
+	void OnResized() override;
 	void OnChar(int key, uintptr flags) override;
 	void OnDestroy() override;
 
@@ -155,6 +155,10 @@ struct AVIPlayer: DXWindow
 	Material alphaMaterial;
 	VertexBuffer colorVertexBuffer;
 	VertexBuffer alphaVertexBuffer;
+
+	MovieControlWindow *leftControl;
+	MovieControlWindow *rightControl;
+	MovieControlWindow *bothControl;
 
 	//////////////////////////////////////////////////////////////////////
 

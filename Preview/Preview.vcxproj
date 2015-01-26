@@ -152,6 +152,7 @@
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="D3D.h" />
     <ClInclude Include="DXWindow.h" />
+    <ClInclude Include="MovieControlWindow.h" />
     <ClInclude Include="linked_list.h" />
     <ClInclude Include="MoviePlayer.h" />
     <ClInclude Include="Random.h" />
