@@ -4,9 +4,15 @@
 
 //////////////////////////////////////////////////////////////////////
 
+enum DepthBufferOption
+{
+	DepthBufferEnabled = 0,
+	DepthBufferDisabled = 1
+};
+
 struct DXWindow: Window
 {
-	DXWindow(int width, int height, tchar const *caption = TEXT("DXWindow"));
+	DXWindow(int width, int height, tchar const *caption = TEXT("DXWindow"), DepthBufferOption depthBufferOption = DepthBufferDisabled);
 	virtual ~DXWindow();
 
 protected:
@@ -30,6 +36,8 @@ protected:
 	HWND							mDXWindow;
 
 	int								mFrame;
+
+	DepthBufferOption				mDepthBufferOption;
 
 	DXPtr<ID3D11DeviceContext>		mContext;
 	DXPtr<ID3D11RenderTargetView>	mRenderTargetView;

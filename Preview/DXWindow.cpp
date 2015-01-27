@@ -4,10 +4,11 @@
 
 //////////////////////////////////////////////////////////////////////
 
-DXWindow::DXWindow(int width, int height, tchar const *caption)
+DXWindow::DXWindow(int width, int height, tchar const *caption, DepthBufferOption depthBufferOption)
 	: Window(width, height, caption, WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_OVERLAPPEDWINDOW|WS_SIZEBOX|WS_BORDER)
 	, mFrame(0)
 	, mDXWindow(null)
+	, mDepthBufferOption(depthBufferOption)
 {
 	mMessageWait = false;
 }
